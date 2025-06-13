@@ -8,67 +8,19 @@ import { LanguageSwitcher } from "@/components/language-switcher"
 import { useTranslations } from "@/lib/i18n/hooks"
 import { Logo } from "@/components/logo"
 
-const homeTranslations = {
-  title: {
-    en: "Build Faster with Pranam",
-    te: "ప్రణామ్‌తో వేగంగా నిర్మించండి",
-  },
-  subtitle: {
-    en: "A modern Next.js starter template with Supabase authentication, responsive design, and everything you need to ship quickly.",
-    te: "సుపాబేస్ ప్రమాణీకరణ, రెస్పాన్సివ్ డిజైన్ మరియు త్వరగా షిప్ చేయడానికి అవసరమైన ప్రతిదానితో కూడిన ఆధునిక Next.js స్టార్టర్ టెంప్లేట్.",
-  },
-  getStarted: {
-    en: "Get Started",
-    te: "ప్రారంభించండి",
-  },
-  viewDemo: {
-    en: "View Demo",
-    te: "డెమో చూడండి",
-  },
-  featuresTitle: {
-    en: "Everything You Need",
-    te: "మీకు అవసరమైనవన్నీ",
-  },
-  featuresSubtitle: {
-    en: "Built with modern technologies and best practices for rapid development.",
-    te: "వేగవంతమైన అభివృద్ధి కోసం ఆధునిక సాంకేతికతలు మరియు ఉత్తమ పద్ధతులతో నిర్మించబడింది.",
-  },
-  authReady: {
-    en: "Authentication Ready",
-    te: "ప్రమాణీకరణ సిద్ధం",
-  },
-  authDescription: {
-    en: "Complete auth flow with Supabase including login, signup, and protected routes.",
-    te: "లాగిన్, సైన్అప్ మరియు రక్షిత మార్గాలతో సహా సుపాబేస్‌తో పూర్తి auth ప్రవాహం.",
-  },
-  responsiveDesign: {
-    en: "Responsive Design",
-    te: "రెస్పాన్సివ్ డిజైన్",
-  },
-  responsiveDescription: {
-    en: "Mobile-first design with beautiful components using shadcn/ui and Tailwind CSS.",
-    te: "shadcn/ui మరియు Tailwind CSS ఉపయోగించి అందమైన కాంపోనెంట్‌లతో మొబైల్-ఫస్ట్ డిజైన్.",
-  },
-  databaseIntegration: {
-    en: "Database Integration",
-    te: "డేటాబేస్ ఇంటిగ్రేషన్",
-  },
-  databaseDescription: {
-    en: "Supabase integration with user management and real-time capabilities.",
-    te: "వినియోగదారు నిర్వహణ మరియు రియల్-టైమ్ సామర్థ్యాలతో సుపాబేస్ ఇంటిగ్రేషన్.",
-  },
-  footerText: {
-    en: "Built with Next.js, Supabase, and Tailwind CSS",
-    te: "Next.js, Supabase మరియు Tailwind CSS తో నిర్మించబడింది",
-  },
-  login: {
-    en: "Login",
-    te: "లాగిన్",
-  },
-}
-
 export default function HomePage() {
-  const { t } = useTranslations(homeTranslations)
+  const { t, loading } = useTranslations("app")
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 flex items-center justify-center">
+        <div className="text-center">
+          <Logo size="lg" showText={false} />
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100">
@@ -76,7 +28,8 @@ export default function HomePage() {
       <header className="border-b bg-white/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Logo size="md" />
+            <Logo size="md" showText={false} />
+            <span className="text-xl font-bold text-gray-900">Pranam</span>
           </div>
           <div className="flex items-center space-x-4">
             <LanguageSwitcher />
@@ -151,7 +104,8 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <Logo size="sm" />
+              <Logo size="sm" showText={false} />
+              <span className="font-semibold text-gray-900">Pranam</span>
             </div>
             <p className="text-gray-600 text-sm">{t("footerText")}</p>
           </div>

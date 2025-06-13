@@ -17,61 +17,6 @@ import { LanguageSwitcher } from "@/components/language-switcher"
 import { useTranslations } from "@/lib/i18n/hooks"
 import { Logo } from "@/components/logo"
 
-const authTranslations = {
-  welcomeTitle: {
-    en: "Welcome to Pranam",
-    te: "ప్రణామ్‌కు స్వాగతం",
-  },
-  welcomeSubtitle: {
-    en: "Sign in to your account or create a new one",
-    te: "మీ ఖాతాలోకి సైన్ ఇన్ చేయండి లేదా కొత్తది సృష్టించండి",
-  },
-  signIn: {
-    en: "Sign In",
-    te: "సైన్ ఇన్",
-  },
-  signUp: {
-    en: "Sign Up",
-    te: "సైన్ అప్",
-  },
-  email: {
-    en: "Email",
-    te: "ఇమెయిల్",
-  },
-  password: {
-    en: "Password",
-    te: "పాస్‌వర్డ్",
-  },
-  enterEmail: {
-    en: "Enter your email",
-    te: "మీ ఇమెయిల్ నమోదు చేయండి",
-  },
-  enterPassword: {
-    en: "Enter your password",
-    te: "మీ పాస్‌వర్డ్ నమోదు చేయండి",
-  },
-  createPassword: {
-    en: "Create a password",
-    te: "పాస్‌వర్డ్ సృష్టించండి",
-  },
-  signingIn: {
-    en: "Signing in...",
-    te: "సైన్ ఇన్ అవుతోంది...",
-  },
-  creatingAccount: {
-    en: "Creating account...",
-    te: "ఖాతా సృష్టించబడుతోంది...",
-  },
-  backToHome: {
-    en: "Back to Home",
-    te: "హోమ్‌కు తిరిగి వెళ్ళండి",
-  },
-  checkEmail: {
-    en: "Check your email for the confirmation link!",
-    te: "నిర్ధారణ లింక్ కోసం మీ ఇమెయిల్ చెక్ చేయండి!",
-  },
-}
-
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -81,7 +26,7 @@ export default function LoginPage() {
   const [message, setMessage] = useState("")
   const router = useRouter()
   const supabase = createClient()
-  const { t } = useTranslations(authTranslations)
+  const { t, loading: translationsLoading } = useTranslations("auth")
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -118,6 +63,17 @@ export default function LoginPage() {
       setMessage(t("checkEmail"))
     }
     setLoading(false)
+  }
+
+  if (translationsLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <Logo size="lg" showText={false} />
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
