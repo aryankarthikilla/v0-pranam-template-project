@@ -17,32 +17,32 @@ import { Logo } from "@/components/logo"
 
 const menuItems = [
   {
-    title: "डैशबोर्ड (Dashboard)",
+    title: "Dashboard",
     url: "/dashboard",
     icon: Home,
   },
   {
-    title: "विश्लेषण (Analytics)",
+    title: "Analytics",
     url: "/dashboard/analytics",
     icon: BarChart3,
   },
   {
-    title: "उपयोगकर्ता (Users)",
+    title: "Users",
     url: "/dashboard/users",
     icon: Users,
   },
   {
-    title: "दस्तावेज़ (Documents)",
+    title: "Documents",
     url: "/dashboard/documents",
     icon: FileText,
   },
   {
-    title: "सेटिंग्स (Settings)",
+    title: "Settings",
     url: "/dashboard/settings",
     icon: Settings,
   },
   {
-    title: "प्रोफ़ाइल (Profile)",
+    title: "Profile",
     url: "/dashboard/profile",
     icon: User,
   },
@@ -50,7 +50,7 @@ const menuItems = [
 
 const supportItems = [
   {
-    title: "सहायता केंद्र (Help Center)",
+    title: "Help Center",
     url: "/dashboard/help",
     icon: HelpCircle,
   },
@@ -71,7 +71,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>मुख्य मेनू (Main Menu)</SidebarGroupLabel>
+          <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -89,7 +89,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>सहायता (Support)</SidebarGroupLabel>
+          <SidebarGroupLabel>Support</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {supportItems.map((item) => (
