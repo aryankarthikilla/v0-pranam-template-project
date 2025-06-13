@@ -13,6 +13,7 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
+import { Logo } from "@/components/logo"
 
 const menuItems = [
   {
@@ -63,11 +64,8 @@ export function AppSidebar({ user }: AppSidebarProps) {
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-2">
-          <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">प्र</span>
-          </div>
-          <span className="text-lg font-semibold">प्रणाम</span>
+        <div className="px-2 py-2">
+          <Logo size="sm" />
         </div>
       </SidebarHeader>
 

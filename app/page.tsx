@@ -6,6 +6,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { ArrowRight, Database, Layout, Shield } from "lucide-react"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { useTranslations } from "@/lib/i18n/hooks"
+import { Logo } from "@/components/logo"
 
 const homeTranslations = {
   title: {
@@ -75,10 +76,7 @@ export default function HomePage() {
       <header className="border-b bg-white/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">प्र</span>
-            </div>
-            <span className="text-xl font-bold text-gray-900">प्रणाम (Pranam)</span>
+            <Logo size="md" />
           </div>
           <div className="flex items-center space-x-4">
             <LanguageSwitcher />
@@ -153,10 +151,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <div className="w-6 h-6 bg-gradient-to-r from-orange-500 to-red-500 rounded flex items-center justify-center">
-                <span className="text-white font-bold text-xs">प्र</span>
-              </div>
-              <span className="font-semibold text-gray-900">प्रणाम (Pranam)</span>
+              <Logo size="sm" />
             </div>
             <p className="text-gray-600 text-sm">{t("footerText")}</p>
           </div>

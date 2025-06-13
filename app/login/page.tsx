@@ -15,6 +15,7 @@ import { createClient } from "@/utils/supabase/client"
 import { Eye, EyeOff, ArrowLeft } from "lucide-react"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { useTranslations } from "@/lib/i18n/hooks"
+import { Logo } from "@/components/logo"
 
 const authTranslations = {
   welcomeTitle: {
@@ -133,8 +134,8 @@ export default function LoginPage() {
 
         <Card>
           <CardHeader className="text-center">
-            <div className="w-12 h-12 bg-indigo-600 rounded-lg flex items-center justify-center mx-auto mb-4">
-              <span className="text-white font-bold text-lg">प्र</span>
+            <div className="mx-auto mb-4">
+              <Logo size="lg" showText={false} />
             </div>
             <CardTitle className="text-2xl">{t("welcomeTitle")}</CardTitle>
             <CardDescription>{t("welcomeSubtitle")}</CardDescription>
