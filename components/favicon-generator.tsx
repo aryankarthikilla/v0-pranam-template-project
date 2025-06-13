@@ -13,21 +13,25 @@ export function FaviconGenerator() {
     canvas.width = 32
     canvas.height = 32
 
-    // Create a simple geometric favicon based on the logo concept
+    // Create gradient
+    const gradient = ctx.createLinearGradient(0, 0, 32, 32)
+    gradient.addColorStop(0, "#1e40af") // Deep blue
+    gradient.addColorStop(1, "#0891b2") // Teal
+
     // Background circle
-    ctx.fillStyle = "#1e40af" // Deep blue
+    ctx.fillStyle = gradient
     ctx.beginPath()
     ctx.arc(16, 16, 14, 0, 2 * Math.PI)
     ctx.fill()
 
-    // Inner circle
-    ctx.fillStyle = "#0891b2" // Teal
+    // Inner white circle
+    ctx.fillStyle = "#ffffff"
     ctx.beginPath()
     ctx.arc(16, 16, 8, 0, 2 * Math.PI)
     ctx.fill()
 
-    // Center dot
-    ctx.fillStyle = "#ffffff"
+    // Center colored dot
+    ctx.fillStyle = "#0891b2"
     ctx.beginPath()
     ctx.arc(16, 16, 3, 0, 2 * Math.PI)
     ctx.fill()

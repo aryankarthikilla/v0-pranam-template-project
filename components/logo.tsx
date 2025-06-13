@@ -1,6 +1,4 @@
 "use client"
-
-import Image from "next/image"
 import { cn } from "@/lib/utils"
 
 interface LogoProps {
@@ -19,8 +17,23 @@ const sizeClasses = {
 export function Logo({ className, size = "md", showText = true }: LogoProps) {
   return (
     <div className={cn("flex items-center space-x-2", className)}>
-      <div className={cn("relative", sizeClasses[size])}>
-        <Image src="/images/pranam-logo.png" alt="Pranam Logo" fill className="object-contain" priority />
+      <div className={cn("relative flex items-center justify-center", sizeClasses[size])}>
+        {/* Fallback geometric logo */}
+        <div className="relative w-full h-full">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-teal-500 rounded-full flex items-center justify-center">
+            <div className="w-1/2 h-1/2 bg-white rounded-full flex items-center justify-center">
+              <div className="w-1/3 h-1/3 bg-gradient-to-br from-blue-600 to-teal-500 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+        {/* Uncomment when image is available */}
+        {/* <Image 
+          src="/images/pranam-logo.png" 
+          alt="Pranam Logo" 
+          fill 
+          className="object-contain" 
+          priority 
+        /> */}
       </div>
       {showText && (
         <span
