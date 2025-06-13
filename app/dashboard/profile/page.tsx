@@ -10,8 +10,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { createClient } from "@/utils/supabase/client"
-import { User, Mail, Save, ArrowLeft } from "lucide-react"
+import { User, Mail, Save, ArrowLeft, Palette } from "lucide-react"
 import Link from "next/link"
+import { ThemeSwitcher } from "@/components/theme-switcher"
 
 export default function ProfilePage() {
   const [fullName, setFullName] = useState("")
@@ -53,14 +54,14 @@ export default function ProfilePage() {
       if (error) {
         setError(error.message)
       } else {
-        setMessage("Profile updated successfully!")
+        setMessage("प्रोफ़ाइल सफलतापूर्वक अपडेट की गई! (Profile updated successfully!)")
         // Refresh the page to show updated data
         setTimeout(() => {
           window.location.reload()
         }, 1000)
       }
     } catch (err) {
-      setError("An unexpected error occurred")
+      setError("एक अप्रत्याशित त्रुटि हुई (An unexpected error occurred)")
     }
 
     setLoading(false)
@@ -72,12 +73,12 @@ export default function ProfilePage() {
         <Link href="/dashboard">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+            डैशबोर्ड पर वापस (Back to Dashboard)
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Profile Settings</h1>
-          <p className="text-muted-foreground">Manage your account information</p>
+          <h1 className="text-3xl font-bold tracking-tight">प्रोफ़ाइल सेटिंग्स (Profile Settings)</h1>
+          <p className="text-muted-foreground">अपनी खाता जानकारी प्रबंधित करें</p>
         </div>
       </div>
 
@@ -86,14 +87,14 @@ export default function ProfilePage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
-              Personal Information
+              व्यक्तिगत जानकारी (Personal Information)
             </CardTitle>
-            <CardDescription>Update your personal details and preferences.</CardDescription>
+            <CardDescription>अपनी व्यक्तिगत जानकारी और प्राथमिकताएं अपडेट करें।</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleUpdateProfile} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email">ईमेल पता (Email Address)</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -102,14 +103,14 @@ export default function ProfilePage() {
                     value={email}
                     disabled
                     className="pl-10 bg-muted"
-                    placeholder="Your email address"
+                    placeholder="आपका ईमेल पता"
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">Email cannot be changed from this page.</p>
+                <p className="text-xs text-muted-foreground">ईमेल इस पृष्ठ से नहीं बदला जा सकता।</p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
+                <Label htmlFor="fullName">पूरा नाम (Full Name)</Label>
                 <div className="relative">
                   <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -118,7 +119,7 @@ export default function ProfilePage() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     className="pl-10"
-                    placeholder="Enter your full name"
+                    placeholder="अपना पूरा नाम दर्ज करें"
                   />
                 </div>
               </div>
@@ -137,7 +138,7 @@ export default function ProfilePage() {
 
               <Button type="submit" disabled={loading} className="w-full sm:w-auto">
                 <Save className="h-4 w-4 mr-2" />
-                {loading ? "Updating..." : "Update Profile"}
+                {loading ? "अपडेट हो रहा है..." : "प्रोफ़ाइल अपडेट करें"}
               </Button>
             </form>
           </CardContent>
@@ -145,22 +146,41 @@ export default function ProfilePage() {
 
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>Account Information</CardTitle>
-            <CardDescription>Your account details and status.</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <Palette className="h-5 w-5" />
+              थीम सेटिंग्स (Theme Settings)
+            </CardTitle>
+            <CardDescription>अपनी पसंदीदा थीम चुनें।</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">रंग थीम (Color Theme)</p>
+                <p className="text-xs text-muted-foreground">अपने इंटरफ़ेस के लिए रंग चुनें</p>
+              </div>
+              <ThemeSwitcher />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>खाता जानकारी (Account Information)</CardTitle>
+            <CardDescription>आपकी खाता विवरण और स्थिति।</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-sm font-medium">Account Status</span>
-                <span className="text-sm text-green-600 font-medium">Active</span>
+                <span className="text-sm font-medium">खाता स्थिति (Account Status)</span>
+                <span className="text-sm text-green-600 font-medium">सक्रिय (Active)</span>
               </div>
               <div className="flex items-center justify-between py-2 border-b">
-                <span className="text-sm font-medium">Plan</span>
-                <span className="text-sm text-muted-foreground">Free</span>
+                <span className="text-sm font-medium">योजना (Plan)</span>
+                <span className="text-sm text-muted-foreground">मुफ़्त (Free)</span>
               </div>
               <div className="flex items-center justify-between py-2">
-                <span className="text-sm font-medium">Member Since</span>
-                <span className="text-sm text-muted-foreground">{new Date().toLocaleDateString()}</span>
+                <span className="text-sm font-medium">सदस्य बने (Member Since)</span>
+                <span className="text-sm text-muted-foreground">{new Date().toLocaleDateString("hi-IN")}</span>
               </div>
             </div>
           </CardContent>

@@ -14,7 +14,7 @@ import { Bell, LogOut, Settings, User } from "lucide-react"
 import { createClient } from "@/utils/supabase/client"
 import { useRouter } from "next/navigation"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
-import { SidebarToggle } from "./sidebar-toggle"
+import { ThemeSwitcher } from "./theme-switcher"
 import Link from "next/link"
 
 interface DashboardHeaderProps {
@@ -24,7 +24,7 @@ interface DashboardHeaderProps {
 export function DashboardHeader({ user }: DashboardHeaderProps) {
   const router = useRouter()
   const supabase = createClient()
-  const userInitials = user.email?.charAt(0).toUpperCase() || "U"
+  const userInitials = user.email?.charAt(0).toUpperCase() || "उ"
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -37,9 +37,11 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
         <div className="flex-1" />
 
         <div className="flex items-center gap-2">
+          <ThemeSwitcher />
+
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <Bell className="h-4 w-4" />
-            <span className="sr-only">Notifications</span>
+            <span className="sr-only">सूचनाएं (Notifications)</span>
           </Button>
 
           <DropdownMenu>
@@ -47,14 +49,18 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="/placeholder.svg" alt={user.email || ""} />
-                  <AvatarFallback className="bg-indigo-600 text-white font-semibold">{userInitials}</AvatarFallback>
+                  <AvatarFallback className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold">
+                    {userInitials}
+                  </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user.user_metadata?.full_name || "Account"}</p>
+                  <p className="text-sm font-medium leading-none">
+                    {user.user_metadata?.full_name || "खाता (Account)"}
+                  </p>
                   <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                 </div>
               </DropdownMenuLabel>
@@ -62,23 +68,22 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
               <DropdownMenuItem asChild>
                 <Link href="/dashboard/profile">
                   <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
+                  <span>प्रोफ़ाइल (Profile)</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
+                <span>सेटिंग्स (Settings)</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleSignOut}>
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
+                <span>लॉग आउट (Log out)</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
-      <SidebarToggle />
     </header>
   )
 }

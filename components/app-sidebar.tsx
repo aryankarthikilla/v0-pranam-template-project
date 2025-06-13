@@ -16,32 +16,32 @@ import type { User as SupabaseUser } from "@supabase/supabase-js"
 
 const menuItems = [
   {
-    title: "Dashboard",
+    title: "डैशबोर्ड (Dashboard)",
     url: "/dashboard",
     icon: Home,
   },
   {
-    title: "Analytics",
+    title: "विश्लेषण (Analytics)",
     url: "/dashboard/analytics",
     icon: BarChart3,
   },
   {
-    title: "Users",
+    title: "उपयोगकर्ता (Users)",
     url: "/dashboard/users",
     icon: Users,
   },
   {
-    title: "Documents",
+    title: "दस्तावेज़ (Documents)",
     url: "/dashboard/documents",
     icon: FileText,
   },
   {
-    title: "Settings",
+    title: "सेटिंग्स (Settings)",
     url: "/dashboard/settings",
     icon: Settings,
   },
   {
-    title: "Profile",
+    title: "प्रोफ़ाइल (Profile)",
     url: "/dashboard/profile",
     icon: User,
   },
@@ -49,7 +49,7 @@ const menuItems = [
 
 const supportItems = [
   {
-    title: "Help Center",
+    title: "सहायता केंद्र (Help Center)",
     url: "/dashboard/help",
     icon: HelpCircle,
   },
@@ -60,22 +60,20 @@ interface AppSidebarProps {
 }
 
 export function AppSidebar({ user }: AppSidebarProps) {
-  const userInitials = user.email?.charAt(0).toUpperCase() || "U"
-
   return (
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-2">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">P</span>
+          <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-sm">प्र</span>
           </div>
-          <span className="text-lg font-semibold">Pranam</span>
+          <span className="text-lg font-semibold">प्रणाम</span>
         </div>
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
+          <SidebarGroupLabel>मुख्य मेनू (Main Menu)</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -93,7 +91,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Support</SidebarGroupLabel>
+          <SidebarGroupLabel>सहायता (Support)</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {supportItems.map((item) => (
