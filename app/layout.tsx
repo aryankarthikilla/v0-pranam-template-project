@@ -5,11 +5,12 @@ import "./globals.css"
 import { ThemeProvider } from "@/contexts/theme-context"
 import { I18nProvider } from "@/lib/i18n/context"
 import { FaviconGenerator } from "@/components/favicon-generator"
+import { DynamicMetadata } from "@/components/dynamic-metadata"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "प्रणाम (Pranam) - Core Life System",
+  title: "Pranam - Core Life System",
   description: "The core life system of apps - Next.js + Supabase starter template",
   icons: {
     icon: "/images/pranam-logo.png",
@@ -28,7 +29,10 @@ export default function RootLayout({
       <body className={inter.className}>
         <FaviconGenerator />
         <I18nProvider>
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>
+            <DynamicMetadata />
+            {children}
+          </ThemeProvider>
         </I18nProvider>
       </body>
     </html>

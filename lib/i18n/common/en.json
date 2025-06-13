@@ -28,5 +28,7 @@
   "close": "Close",
   "open": "Open",
   "yes": "Yes",
-  "no": "No"
+  "no": "No",
+  "pageTitle": "Pranam - Core Life System",
+  "pageDescription": "The core life system of apps - Next.js + Supabase starter template"
 }
