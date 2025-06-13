@@ -4,59 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { BarChart3, TrendingUp, Users, DollarSign } from "lucide-react"
 import { useTranslations } from "@/lib/i18n/hooks"
 
-const analyticsTranslations = {
-  title: {
-    en: "Analytics",
-    te: "విశ్లేషణలు",
-  },
-  subtitle: {
-    en: "Track your application performance and user engagement",
-    te: "మీ అప్లికేషన్ పనితీరు మరియు వినియోగదారు నిమగ్నతను ట్రాక్ చేయండి",
-  },
-  pageViews: {
-    en: "Page Views",
-    te: "పేజీ వీక్షణలు",
-  },
-  uniqueVisitors: {
-    en: "Unique Visitors",
-    te: "ప్రత్యేక సందర్శకులు",
-  },
-  conversionRate: {
-    en: "Conversion Rate",
-    te: "మార్పిడి రేటు",
-  },
-  revenue: {
-    en: "Revenue",
-    te: "ఆదాయం",
-  },
-  lastMonth: {
-    en: "from last month",
-    te: "గత నెల నుండి",
-  },
-  trafficOverview: {
-    en: "Traffic Overview",
-    te: "ట్రాఫిక్ అవలోకనం",
-  },
-  trafficDescription: {
-    en: "Daily page views for the last 30 days",
-    te: "గత 30 రోజులకు రోజువారీ పేజీ వీక్షణలు",
-  },
-  userEngagement: {
-    en: "User Engagement",
-    te: "వినియోగదారు నిమగ్నత",
-  },
-  engagementDescription: {
-    en: "Session duration and bounce rate",
-    te: "సెషన్ వ్యవధి మరియు బౌన్స్ రేటు",
-  },
-  chartPlaceholder: {
-    en: "Chart placeholder - Add your preferred charting library",
-    te: "చార్ట్ ప్లేస్‌హోల్డర్ - మీ ఇష్టమైన చార్టింగ్ లైబ్రరీని జోడించండి",
-  },
-}
-
 export default function AnalyticsPage() {
-  const { t } = useTranslations(analyticsTranslations)
+  const { t } = useTranslations("analytics")
 
   return (
     <div className="space-y-6">

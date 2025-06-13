@@ -19,25 +19,6 @@ import { LanguageSwitcher } from "./language-switcher"
 import Link from "next/link"
 import { useTranslations } from "@/lib/i18n/hooks"
 
-const commonTranslations = {
-  welcome: {
-    en: "Account",
-    te: "ఖాతా",
-  },
-  profile: {
-    en: "Profile",
-    te: "ప్రొఫైల్",
-  },
-  settings: {
-    en: "Settings",
-    te: "సెట్టింగ్‌లు",
-  },
-  logout: {
-    en: "Logout",
-    te: "లాగ్ అవుట్",
-  },
-}
-
 interface DashboardHeaderProps {
   user: SupabaseUser
 }
@@ -45,7 +26,7 @@ interface DashboardHeaderProps {
 export function DashboardHeader({ user }: DashboardHeaderProps) {
   const router = useRouter()
   const supabase = createClient()
-  const { t } = useTranslations(commonTranslations)
+  const { t } = useTranslations("common")
   const userInitials = user.email?.charAt(0).toUpperCase() || "उ"
 
   const handleSignOut = async () => {
@@ -87,14 +68,16 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/profile">
+                <Link href="/profile">
                   <User className="mr-2 h-4 w-4" />
                   <span>{t("profile")}</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>{t("settings")}</span>
+              <DropdownMenuItem asChild>
+                <Link href="/settings">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>{t("settings")}</span>
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleSignOut}>

@@ -3,16 +3,24 @@ import appEn from "@/app/(public)/i18n/en.json"
 import appTe from "@/app/(public)/i18n/te.json"
 import authEn from "@/app/(public)/login/i18n/en.json"
 import authTe from "@/app/(public)/login/i18n/te.json"
-import dashboardEn from "@/app/dashboard/i18n/en.json"
-import dashboardTe from "@/app/dashboard/i18n/te.json"
-import profileEn from "@/app/dashboard/profile/i18n/en.json"
-import profileTe from "@/app/dashboard/profile/i18n/te.json"
+import setupEn from "@/app/(public)/setup/i18n/en.json"
+import setupTe from "@/app/(public)/setup/i18n/te.json"
+import dashboardEn from "@/app/(dashboard)/dashboard/i18n/en.json"
+import dashboardTe from "@/app/(dashboard)/dashboard/i18n/te.json"
+import analyticsEn from "@/app/(dashboard)/analytics/i18n/en.json"
+import analyticsTe from "@/app/(dashboard)/analytics/i18n/te.json"
+import usersEn from "@/app/(dashboard)/users/i18n/en.json"
+import usersTe from "@/app/(dashboard)/users/i18n/te.json"
+import profileEn from "@/app/(dashboard)/profile/i18n/en.json"
+import profileTe from "@/app/(dashboard)/profile/i18n/te.json"
+import settingsEn from "@/app/(dashboard)/settings/i18n/en.json"
+import settingsTe from "@/app/(dashboard)/settings/i18n/te.json"
 import commonEn from "@/lib/i18n/common/en.json"
 import commonTe from "@/lib/i18n/common/te.json"
 
 // Type definitions
 export type Language = "en" | "te"
-export type Section = "app" | "auth" | "dashboard" | "profile" | "common"
+export type Section = "app" | "auth" | "setup" | "dashboard" | "analytics" | "users" | "profile" | "settings" | "common"
 
 // Organized translations object
 export const translations: Record<Section, Record<Language, Record<string, string>>> = {
@@ -24,13 +32,29 @@ export const translations: Record<Section, Record<Language, Record<string, strin
     en: authEn,
     te: authTe,
   },
+  setup: {
+    en: setupEn,
+    te: setupTe,
+  },
   dashboard: {
     en: dashboardEn,
     te: dashboardTe,
   },
+  analytics: {
+    en: analyticsEn,
+    te: analyticsTe,
+  },
+  users: {
+    en: usersEn,
+    te: usersTe,
+  },
   profile: {
     en: profileEn,
     te: profileTe,
+  },
+  settings: {
+    en: settingsEn,
+    te: settingsTe,
   },
   common: {
     en: commonEn,

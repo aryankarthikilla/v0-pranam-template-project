@@ -9,69 +9,6 @@ import { Search, Plus, MoreHorizontal, Mail, Phone } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useTranslations } from "@/lib/i18n/hooks"
 
-const usersTranslations = {
-  title: {
-    en: "Users",
-    te: "వినియోగదారులు",
-  },
-  subtitle: {
-    en: "Manage your application users",
-    te: "మీ అప్లికేషన్ వినియోగదారులను నిర్వహించండి",
-  },
-  addUser: {
-    en: "Add User",
-    te: "వినియోగదారుని జోడించండి",
-  },
-  userManagement: {
-    en: "User Management",
-    te: "వినియోగదారు నిర్వహణ",
-  },
-  searchUsers: {
-    en: "Search users...",
-    te: "వినియోగదారులను వెతకండి...",
-  },
-  managementDescription: {
-    en: "Search and manage all users in your application",
-    te: "మీ అప్లికేషన్‌లోని అన్ని వినియోగదారులను వెతకండి మరియు నిర్వహించండి",
-  },
-  filter: {
-    en: "Filter",
-    te: "ఫిల్టర్",
-  },
-  active: {
-    en: "Active",
-    te: "చురుకుగా",
-  },
-  inactive: {
-    en: "Inactive",
-    te: "నిష్క్రియ",
-  },
-  admin: {
-    en: "Admin",
-    te: "అడ్మిన్",
-  },
-  user: {
-    en: "User",
-    te: "వినియోగదారు",
-  },
-  viewProfile: {
-    en: "View Profile",
-    te: "ప్రొఫైల్ చూడండి",
-  },
-  editUser: {
-    en: "Edit User",
-    te: "వినియోగదారుని సవరించండి",
-  },
-  resetPassword: {
-    en: "Reset Password",
-    te: "పాస్‌వర్డ్ రీసెట్ చేయండి",
-  },
-  deleteUser: {
-    en: "Delete User",
-    te: "వినియోగదారుని తొలగించండి",
-  },
-}
-
 const users = [
   {
     id: 1,
@@ -103,7 +40,7 @@ const users = [
 ]
 
 export default function UsersPage() {
-  const { t } = useTranslations(usersTranslations)
+  const { t } = useTranslations("users")
 
   return (
     <div className="space-y-6">

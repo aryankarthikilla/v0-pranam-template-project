@@ -4,83 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Activity, CreditCard, DollarSign, Users } from "lucide-react"
 import { useTranslations } from "@/lib/i18n/hooks"
 
-const dashboardTranslations = {
-  title: {
-    en: "Dashboard",
-    te: "డ్యాష్‌బోర్డ్",
-  },
-  welcome: {
-    en: "Welcome to your Pranam dashboard",
-    te: "మీ ప్రణామ్ డ్యాష్‌బోర్డ్‌కు స్వాగతం",
-  },
-  totalRevenue: {
-    en: "Total Revenue",
-    te: "మొత్తం ఆదాయం",
-  },
-  subscriptions: {
-    en: "Subscriptions",
-    te: "సబ్‌స్క్రిప్షన్‌లు",
-  },
-  sales: {
-    en: "Sales",
-    te: "అమ్మకాలు",
-  },
-  activeNow: {
-    en: "Active Now",
-    te: "ఇప్పుడు చురుకుగా",
-  },
-  lastMonth: {
-    en: "from last month",
-    te: "గత నెల నుండి",
-  },
-  lastHour: {
-    en: "since last hour",
-    te: "గత గంట నుండి",
-  },
-  overview: {
-    en: "Overview",
-    te: "అవలోకనం",
-  },
-  recentActivity: {
-    en: "Recent Activity",
-    te: "ఇటీవలి కార్యకలాపాలు",
-  },
-  newNotifications: {
-    en: "You have 3 new notifications today.",
-    te: "ఈరోజు మీకు 3 కొత్త నోటిఫికేషన్‌లు ఉన్నాయి.",
-  },
-  chartPlaceholder: {
-    en: "Chart placeholder - Add your preferred charting library",
-    te: "చార్ట్ ప్లేస్‌హోల్డర్ - మీ ఇష్టమైన చార్టింగ్ లైబ్రరీని జోడించండి",
-  },
-  newUserRegistered: {
-    en: "New user registered",
-    te: "కొత్త వినియోగదారు నమోదయ్యారు",
-  },
-  paymentReceived: {
-    en: "Payment received",
-    te: "చెల్లింపు అందింది",
-  },
-  serverMaintenance: {
-    en: "Server maintenance scheduled",
-    te: "సర్వర్ నిర్వహణ షెడ్యూల్ చేయబడింది",
-  },
-  minutesAgo: {
-    en: "minutes ago",
-    te: "నిమిషాల క్రితం",
-  },
-  hourAgo: {
-    en: "hour ago",
-    te: "గంట క్రితం",
-  },
-  hoursAgo: {
-    en: "hours ago",
-    te: "గంటల క్రితం",
-  },
-}
-
 export default function DashboardPage() {
-  const { t } = useTranslations(dashboardTranslations)
+  const { t } = useTranslations("dashboard")
 
   return (
     <div className="space-y-6">

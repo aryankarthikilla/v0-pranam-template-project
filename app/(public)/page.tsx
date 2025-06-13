@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowRight, Database, Layout, Shield } from "lucide-react"
+import { ArrowRight, Database, Layout, Shield, Settings } from "lucide-react"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { useTranslations } from "@/lib/i18n/hooks"
 import { Logo } from "@/components/logo"
@@ -22,6 +22,12 @@ export default function HomePage() {
           </div>
           <div className="flex items-center space-x-4">
             <LanguageSwitcher />
+            <Link href="/setup">
+              <Button variant="ghost">
+                <Settings className="mr-2 h-4 w-4" />
+                Setup
+              </Button>
+            </Link>
             <Link href="/login">
               <Button variant="ghost">{t("login")}</Button>
             </Link>
@@ -38,11 +44,18 @@ export default function HomePage() {
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">{t("title")}</h1>
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">{t("subtitle")}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/login">
+            <Link href="/setup">
               <Button
                 size="lg"
                 className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
               >
+                <Settings className="mr-2 h-4 w-4" />
+                Setup Guide
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+            <Link href="/login">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto border-orange-200 hover:bg-orange-50">
                 {t("getStarted")}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>

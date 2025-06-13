@@ -16,105 +16,6 @@ import { ThemeSwitcher } from "@/components/theme-switcher"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { useTranslations } from "@/lib/i18n/hooks"
 
-const profileTranslations = {
-  title: {
-    en: "Profile Settings",
-    te: "ప్రొఫైల్ సెట్టింగ్‌లు",
-  },
-  subtitle: {
-    en: "Manage your account information",
-    te: "మీ ఖాతా సమాచారాన్ని నిర్వహించండి",
-  },
-  backToDashboard: {
-    en: "Back to Dashboard",
-    te: "డ్యాష్‌బోర్డ్‌కు తిరిగి వెళ్ళండి",
-  },
-  personalInformation: {
-    en: "Personal Information",
-    te: "వ్యక్తిగత సమాచారం",
-  },
-  personalInfoDescription: {
-    en: "Update your personal details and preferences.",
-    te: "మీ వ్యక్తిగత వివరాలు మరియు ప్రాధాన్యతలను అప్‌డేట్ చేయండి.",
-  },
-  emailAddress: {
-    en: "Email Address",
-    te: "ఇమెయిల్ చిరునామా",
-  },
-  emailCannotChange: {
-    en: "Email cannot be changed from this page.",
-    te: "ఈ పేజీ నుండి ఇమెయిల్ మార్చలేరు.",
-  },
-  fullName: {
-    en: "Full Name",
-    te: "పూర్తి పేరు",
-  },
-  enterFullName: {
-    en: "Enter your full name",
-    te: "మీ పూర్తి పేరును నమోదు చేయండి",
-  },
-  updating: {
-    en: "Updating...",
-    te: "అప్‌డేట్ అవుతోంది...",
-  },
-  updateProfile: {
-    en: "Update Profile",
-    te: "ప్రొఫైల్ అప్‌డేట్ చేయండి",
-  },
-  profileUpdated: {
-    en: "Profile updated successfully!",
-    te: "ప్రొఫైల్ విజయవంతంగా అప్‌డేట్ చేయబడింది!",
-  },
-  unexpectedError: {
-    en: "An unexpected error occurred",
-    te: "ఊహించని లోపం సంభవించింది",
-  },
-  themeSettings: {
-    en: "Theme Settings",
-    te: "థీమ్ సెట్టింగ్‌లు",
-  },
-  themeDescription: {
-    en: "Choose your preferred theme.",
-    te: "మీ ఇష్టమైన థీమ్‌ను ఎంచుకోండి.",
-  },
-  colorTheme: {
-    en: "Color Theme",
-    te: "రంగు థీమ్",
-  },
-  chooseColors: {
-    en: "Choose colors for your interface",
-    te: "మీ ఇంటర్‌ఫేస్ కోసం రంగులను ఎంచుకోండి",
-  },
-  accountInformation: {
-    en: "Account Information",
-    te: "ఖాతా సమాచారం",
-  },
-  accountDetails: {
-    en: "Your account details and status.",
-    te: "మీ ఖాతా వివరాలు మరియు స్థితి.",
-  },
-  accountStatus: {
-    en: "Account Status",
-    te: "ఖాతా స్థితి",
-  },
-  active: {
-    en: "Active",
-    te: "చురుకుగా",
-  },
-  plan: {
-    en: "Plan",
-    te: "ప్లాన్",
-  },
-  free: {
-    en: "Free",
-    te: "ఉచితం",
-  },
-  memberSince: {
-    en: "Member Since",
-    te: "సభ్యుడైన తేదీ",
-  },
-}
-
 export default function ProfilePage() {
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
@@ -123,7 +24,7 @@ export default function ProfilePage() {
   const [error, setError] = useState("")
   const router = useRouter()
   const supabase = createClient()
-  const { t } = useTranslations(profileTranslations)
+  const { t } = useTranslations("profile")
 
   useEffect(() => {
     const getProfile = async () => {
