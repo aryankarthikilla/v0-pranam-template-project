@@ -1,10 +1,9 @@
 "use client"
 
-import { Home, Settings, Users, BarChart3, FileText, HelpCircle } from "lucide-react"
+import { Home, Settings, Users, BarChart3, FileText, HelpCircle, User } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -13,8 +12,7 @@ import {
   SidebarMenuItem,
   SidebarHeader,
 } from "@/components/ui/sidebar"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import type { User } from "@supabase/supabase-js"
+import type { User as SupabaseUser } from "@supabase/supabase-js"
 
 const menuItems = [
   {
@@ -42,6 +40,11 @@ const menuItems = [
     url: "/dashboard/settings",
     icon: Settings,
   },
+  {
+    title: "Profile",
+    url: "/dashboard/profile",
+    icon: User,
+  },
 ]
 
 const supportItems = [
@@ -53,7 +56,7 @@ const supportItems = [
 ]
 
 interface AppSidebarProps {
-  user: User
+  user: SupabaseUser
 }
 
 export function AppSidebar({ user }: AppSidebarProps) {
@@ -107,19 +110,6 @@ export function AppSidebar({ user }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-
-      <SidebarFooter>
-        <div className="flex items-center gap-2 px-2 py-2">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src="/placeholder.svg" />
-            <AvatarFallback>{userInitials}</AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{user.email}</p>
-            <p className="text-xs text-muted-foreground">Free Plan</p>
-          </div>
-        </div>
-      </SidebarFooter>
     </Sidebar>
   )
 }
