@@ -33,10 +33,29 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user && !request.nextUrl.pathname.startsWith("/login") && request.nextUrl.pathname.startsWith("/dashboard")) {
-    // no user, potentially respond by redirecting the user to the login page
+  // Check if the user is trying to access a protected route (dashboard routes)
+  const isProtectedRoute =
+    request.nextUrl.pathname.startsWith("/dashboard") ||
+    request.nextUrl.pathname.startsWith("/analytics") ||
+    request.nextUrl.pathname.startsWith("/users") ||
+    request.nextUrl.pathname.startsWith("/documents") ||
+    request.nextUrl.pathname.startsWith("/settings") ||
+    request.nextUrl.pathname.startsWith("/profile") ||
+    request.nextUrl.pathname.startsWith("/help")
+
+  const isPublicRoute = request.nextUrl.pathname === "/" || request.nextUrl.pathname.startsWith("/login")
+
+  // If user is not authenticated and trying to access protected route
+  if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone()
     url.pathname = "/login"
+    return NextResponse.redirect(url)
+  }
+
+  // If user is authenticated and trying to access login page, redirect to dashboard
+  if (user && request.nextUrl.pathname.startsWith("/login")) {
+    const url = request.nextUrl.clone()
+    url.pathname = "/dashboard"
     return NextResponse.redirect(url)
   }
 

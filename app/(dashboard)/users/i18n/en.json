@@ -1,0 +1,17 @@
+{
+  "title": "Users",
+  "subtitle": "Manage your application users",
+  "addUser": "Add User",
+  "userManagement": "User Management",
+  "searchUsers": "Search users...",
+  "managementDescription": "Search and manage all users in your application",
+  "filter": "Filter",
+  "active": "Active",
+  "inactive": "Inactive",
+  "admin": "Admin",
+  "user": "User",
+  "viewProfile": "View Profile",
+  "editUser": "Edit User",
+  "resetPassword": "Reset Password",
+  "deleteUser": "Delete User"
+}

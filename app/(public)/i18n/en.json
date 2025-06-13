@@ -1,0 +1,16 @@
+{
+  "title": "Build Faster with Pranam",
+  "subtitle": "A modern Next.js starter template with Supabase authentication, responsive design, and everything you need to ship quickly.",
+  "getStarted": "Get Started",
+  "viewDemo": "View Demo",
+  "featuresTitle": "Everything You Need",
+  "featuresSubtitle": "Built with modern technologies and best practices for rapid development.",
+  "authReady": "Authentication Ready",
+  "authDescription": "Complete auth flow with Supabase including login, signup, and protected routes.",
+  "responsiveDesign": "Responsive Design",
+  "responsiveDescription": "Mobile-first design with beautiful components using shadcn/ui and Tailwind CSS.",
+  "databaseIntegration": "Database Integration",
+  "databaseDescription": "Supabase integration with user management and real-time capabilities.",
+  "footerText": "Built with Next.js, Supabase, and Tailwind CSS",
+  "login": "Login"
+}

@@ -1,0 +1,14 @@
+{
+  "title": "Analytics",
+  "subtitle": "Track your application performance and user engagement",
+  "pageViews": "Page Views",
+  "uniqueVisitors": "Unique Visitors",
+  "conversionRate": "Conversion Rate",
+  "revenue": "Revenue",
+  "lastMonth": "from last month",
+  "trafficOverview": "Traffic Overview",
+  "trafficDescription": "Daily page views for the last 30 days",
+  "userEngagement": "User Engagement",
+  "engagementDescription": "Session duration and bounce rate",
+  "chartPlaceholder": "Chart placeholder - Add your preferred charting library"
+}

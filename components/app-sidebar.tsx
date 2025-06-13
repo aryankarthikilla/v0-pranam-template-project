@@ -23,27 +23,27 @@ const menuItems = [
   },
   {
     title: "Analytics",
-    url: "/dashboard/analytics",
+    url: "/analytics",
     icon: BarChart3,
   },
   {
     title: "Users",
-    url: "/dashboard/users",
+    url: "/users",
     icon: Users,
   },
   {
     title: "Documents",
-    url: "/dashboard/documents",
+    url: "/documents",
     icon: FileText,
   },
   {
     title: "Settings",
-    url: "/dashboard/settings",
+    url: "/settings",
     icon: Settings,
   },
   {
     title: "Profile",
-    url: "/dashboard/profile",
+    url: "/profile",
     icon: User,
   },
 ]
@@ -51,7 +51,7 @@ const menuItems = [
 const supportItems = [
   {
     title: "Help Center",
-    url: "/dashboard/help",
+    url: "/help",
     icon: HelpCircle,
   },
 ]
