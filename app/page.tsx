@@ -1,9 +1,74 @@
+"use client"
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowRight, Database, Layout, Shield } from "lucide-react"
+import { LanguageSwitcher } from "@/components/language-switcher"
+import { useTranslations } from "@/lib/i18n/hooks"
+
+const homeTranslations = {
+  title: {
+    en: "Build Faster with Pranam",
+    te: "ప్రణామ్‌తో వేగంగా నిర్మించండి",
+  },
+  subtitle: {
+    en: "A modern Next.js starter template with Supabase authentication, responsive design, and everything you need to ship quickly.",
+    te: "సుపాబేస్ ప్రమాణీకరణ, రెస్పాన్సివ్ డిజైన్ మరియు త్వరగా షిప్ చేయడానికి అవసరమైన ప్రతిదానితో కూడిన ఆధునిక Next.js స్టార్టర్ టెంప్లేట్.",
+  },
+  getStarted: {
+    en: "Get Started",
+    te: "ప్రారంభించండి",
+  },
+  viewDemo: {
+    en: "View Demo",
+    te: "డెమో చూడండి",
+  },
+  featuresTitle: {
+    en: "Everything You Need",
+    te: "మీకు అవసరమైనవన్నీ",
+  },
+  featuresSubtitle: {
+    en: "Built with modern technologies and best practices for rapid development.",
+    te: "వేగవంతమైన అభివృద్ధి కోసం ఆధునిక సాంకేతికతలు మరియు ఉత్తమ పద్ధతులతో నిర్మించబడింది.",
+  },
+  authReady: {
+    en: "Authentication Ready",
+    te: "ప్రమాణీకరణ సిద్ధం",
+  },
+  authDescription: {
+    en: "Complete auth flow with Supabase including login, signup, and protected routes.",
+    te: "లాగిన్, సైన్అప్ మరియు రక్షిత మార్గాలతో సహా సుపాబేస్‌తో పూర్తి auth ప్రవాహం.",
+  },
+  responsiveDesign: {
+    en: "Responsive Design",
+    te: "రెస్పాన్సివ్ డిజైన్",
+  },
+  responsiveDescription: {
+    en: "Mobile-first design with beautiful components using shadcn/ui and Tailwind CSS.",
+    te: "shadcn/ui మరియు Tailwind CSS ఉపయోగించి అందమైన కాంపోనెంట్‌లతో మొబైల్-ఫస్ట్ డిజైన్.",
+  },
+  databaseIntegration: {
+    en: "Database Integration",
+    te: "డేటాబేస్ ఇంటిగ్రేషన్",
+  },
+  databaseDescription: {
+    en: "Supabase integration with user management and real-time capabilities.",
+    te: "వినియోగదారు నిర్వహణ మరియు రియల్-టైమ్ సామర్థ్యాలతో సుపాబేస్ ఇంటిగ్రేషన్.",
+  },
+  footerText: {
+    en: "Built with Next.js, Supabase, and Tailwind CSS",
+    te: "Next.js, Supabase మరియు Tailwind CSS తో నిర్మించబడింది",
+  },
+  login: {
+    en: "Login",
+    te: "లాగిన్",
+  },
+}
 
 export default function HomePage() {
+  const { t } = useTranslations(homeTranslations)
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100">
       {/* Header */}
@@ -16,11 +81,12 @@ export default function HomePage() {
             <span className="text-xl font-bold text-gray-900">प्रणाम (Pranam)</span>
           </div>
           <div className="flex items-center space-x-4">
+            <LanguageSwitcher />
             <Link href="/login">
-              <Button variant="ghost">लॉगिन (Login)</Button>
+              <Button variant="ghost">{t("login")}</Button>
             </Link>
             <Link href="/login">
-              <Button>शुरू करें (Get Started)</Button>
+              <Button>{t("getStarted")}</Button>
             </Link>
           </div>
         </div>
@@ -29,25 +95,20 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16 md:py-24">
         <div className="text-center max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            तेज़ी से बनाएं <span className="text-orange-600">प्रणाम</span> के साथ
-          </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            एक आधुनिक Next.js स्टार्टर टेम्प्लेट Supabase प्रमाणीकरण, रेस्पॉन्सिव डिज़ाइन के साथ, और सब कुछ जो आपको तुरंत शिप करने के लिए
-            चाहिए।
-          </p>
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">{t("title")}</h1>
+          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">{t("subtitle")}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/login">
               <Button
                 size="lg"
                 className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
               >
-                शुरू करें (Get Started)
+                {t("getStarted")}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
             <Button variant="outline" size="lg" className="w-full sm:w-auto border-orange-200 hover:bg-orange-50">
-              डेमो देखें (View Demo)
+              {t("viewDemo")}
             </Button>
           </div>
         </div>
@@ -56,36 +117,32 @@ export default function HomePage() {
       {/* Features */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">सब कुछ जो आपको चाहिए</h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            आधुनिक तकनीकों और सर्वोत्तम प्रथाओं के साथ तेज़ विकास के लिए बनाया गया।
-          </p>
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">{t("featuresTitle")}</h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">{t("featuresSubtitle")}</p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
           <Card className="border-orange-100 hover:border-orange-200 transition-colors">
             <CardHeader>
               <Shield className="h-10 w-10 text-orange-600 mb-2" />
-              <CardTitle>प्रमाणीकरण तैयार</CardTitle>
-              <CardDescription>Supabase के साथ पूर्ण auth flow जिसमें लॉगिन, साइनअप, और संरक्षित रूट शामिल हैं।</CardDescription>
+              <CardTitle>{t("authReady")}</CardTitle>
+              <CardDescription>{t("authDescription")}</CardDescription>
             </CardHeader>
           </Card>
 
           <Card className="border-orange-100 hover:border-orange-200 transition-colors">
             <CardHeader>
               <Layout className="h-10 w-10 text-orange-600 mb-2" />
-              <CardTitle>रेस्पॉन्सिव डिज़ाइन</CardTitle>
-              <CardDescription>
-                shadcn/ui और Tailwind CSS का उपयोग करके सुंदर घटकों के साथ मोबाइल-फर्स्ट डिज़ाइन।
-              </CardDescription>
+              <CardTitle>{t("responsiveDesign")}</CardTitle>
+              <CardDescription>{t("responsiveDescription")}</CardDescription>
             </CardHeader>
           </Card>
 
           <Card className="border-orange-100 hover:border-orange-200 transition-colors">
             <CardHeader>
               <Database className="h-10 w-10 text-orange-600 mb-2" />
-              <CardTitle>डेटाबेस एकीकरण</CardTitle>
-              <CardDescription>उपयोगकर्ता प्रबंधन और रीयल-टाइम क्षमताओं के साथ Supabase एकीकरण।</CardDescription>
+              <CardTitle>{t("databaseIntegration")}</CardTitle>
+              <CardDescription>{t("databaseDescription")}</CardDescription>
             </CardHeader>
           </Card>
         </div>
@@ -101,7 +158,7 @@ export default function HomePage() {
               </div>
               <span className="font-semibold text-gray-900">प्रणाम (Pranam)</span>
             </div>
-            <p className="text-gray-600 text-sm">Next.js, Supabase, और Tailwind CSS के साथ बनाया गया</p>
+            <p className="text-gray-600 text-sm">{t("footerText")}</p>
           </div>
         </div>
       </footer>

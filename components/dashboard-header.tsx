@@ -15,7 +15,28 @@ import { createClient } from "@/utils/supabase/client"
 import { useRouter } from "next/navigation"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 import { ThemeSwitcher } from "./theme-switcher"
+import { LanguageSwitcher } from "./language-switcher"
 import Link from "next/link"
+import { useTranslations } from "@/lib/i18n/hooks"
+
+const commonTranslations = {
+  welcome: {
+    en: "Account",
+    te: "ఖాతా",
+  },
+  profile: {
+    en: "Profile",
+    te: "ప్రొఫైల్",
+  },
+  settings: {
+    en: "Settings",
+    te: "సెట్టింగ్‌లు",
+  },
+  logout: {
+    en: "Logout",
+    te: "లాగ్ అవుట్",
+  },
+}
 
 interface DashboardHeaderProps {
   user: SupabaseUser
@@ -24,6 +45,7 @@ interface DashboardHeaderProps {
 export function DashboardHeader({ user }: DashboardHeaderProps) {
   const router = useRouter()
   const supabase = createClient()
+  const { t } = useTranslations(commonTranslations)
   const userInitials = user.email?.charAt(0).toUpperCase() || "उ"
 
   const handleSignOut = async () => {
@@ -37,11 +59,12 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
         <div className="flex-1" />
 
         <div className="flex items-center gap-2">
+          <LanguageSwitcher />
           <ThemeSwitcher />
 
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <Bell className="h-4 w-4" />
-            <span className="sr-only">सूचनाएं (Notifications)</span>
+            <span className="sr-only">Notifications</span>
           </Button>
 
           <DropdownMenu>
@@ -58,9 +81,7 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    {user.user_metadata?.full_name || "खाता (Account)"}
-                  </p>
+                  <p className="text-sm font-medium leading-none">{user.user_metadata?.full_name || t("welcome")}</p>
                   <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                 </div>
               </DropdownMenuLabel>
@@ -68,17 +89,17 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
               <DropdownMenuItem asChild>
                 <Link href="/dashboard/profile">
                   <User className="mr-2 h-4 w-4" />
-                  <span>प्रोफ़ाइल (Profile)</span>
+                  <span>{t("profile")}</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Settings className="mr-2 h-4 w-4" />
-                <span>सेटिंग्स (Settings)</span>
+                <span>{t("settings")}</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleSignOut}>
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>लॉग आउट (Log out)</span>
+                <span>{t("logout")}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

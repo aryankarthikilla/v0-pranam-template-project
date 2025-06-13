@@ -1,0 +1,31 @@
+{
+  "en": {
+    "title": "Build Faster with Pranam",
+    "subtitle": "A modern Next.js starter template with Supabase authentication, responsive design, and everything you need to ship quickly.",
+    "getStarted": "Get Started",
+    "viewDemo": "View Demo",
+    "featuresTitle": "Everything You Need",
+    "featuresSubtitle": "Built with modern technologies and best practices for rapid development.",
+    "authReady": "Authentication Ready",
+    "authDescription": "Complete auth flow with Supabase including login, signup, and protected routes.",
+    "responsiveDesign": "Responsive Design",
+    "responsiveDescription": "Mobile-first design with beautiful components using shadcn/ui and Tailwind CSS.",
+    "databaseIntegration": "Database Integration",
+    "databaseDescription": "Supabase integration with user management and real-time capabilities.",
+    "footerText": "Built with Next.js, Supabase, and Tailwind CSS"
+  },
+  "te": {
+    "title": "ప్రణామ్‌తో వేగంగా నిర్మించండి",
+    "subtitle": "సుపాబేస్ ప్రమాణీకరణ, రెస్పాన్సివ్ డిజైన్ మరియు త్వరగా షిప్ చేయడానికి అవసరమైన ప్రతిదానితో కూడిన ఆధునిక Next.js స్టార్టర్ టెంప్లేట్.",
+    "getStarted": "ప్రారంభించండి",
+    "viewDemo": "డెమో చూడండి",
+    "featuresTitle": "మీకు అవసరమైనవన్నీ",
+    "featuresSubtitle": "వేగవంతమైన అభివృద్ధి కోసం ఆధునిక సాంకేతికతలు మరియు ఉత్తమ పద్ధతులతో నిర్మించబడింది.",
+    "authReady": "ప్రమాణీకరణ సిద్ధం",
+    "authDescription": "లాగిన్, సైన్అప్ మరియు రక్షిత మార్గాలతో సహా సుపాబేస్‌తో పూర్తి auth ప్రవాహం.",
+    "responsiveDesign": "రెస్పాన్సివ్ డిజైన్",
+    "responsiveDescription": "shadcn/ui మరియు Tailwind CSS ఉపయోగించి అందమైన కాంపోనెంట్‌లతో మొబైల్-ఫస్ట్ డిజైన్.",
+    "databaseIntegration": "డేటాబేస్ ఇంటిగ్రేషన్",
+    "databaseDescription": "వినియోగదారు నిర్వహణ మరియు రియల్-టైమ్ సామర్థ్యాలతో సుపాబేస్ ఇంటిగ్రేషన్."
+  }
+}
