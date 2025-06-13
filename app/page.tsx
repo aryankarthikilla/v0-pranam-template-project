@@ -9,18 +9,7 @@ import { useTranslations } from "@/lib/i18n/hooks"
 import { Logo } from "@/components/logo"
 
 export default function HomePage() {
-  const { t, loading } = useTranslations("app")
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100 flex items-center justify-center">
-        <div className="text-center">
-          <Logo size="lg" showText={false} />
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    )
-  }
+  const { t } = useTranslations("app")
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100">

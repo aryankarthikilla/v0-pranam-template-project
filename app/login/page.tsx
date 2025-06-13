@@ -26,7 +26,7 @@ export default function LoginPage() {
   const [message, setMessage] = useState("")
   const router = useRouter()
   const supabase = createClient()
-  const { t, loading: translationsLoading } = useTranslations("auth")
+  const { t } = useTranslations("auth")
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -63,17 +63,6 @@ export default function LoginPage() {
       setMessage(t("checkEmail"))
     }
     setLoading(false)
-  }
-
-  if (translationsLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <Logo size="lg" showText={false} />
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    )
   }
 
   return (
