@@ -93,8 +93,8 @@ export function AppSidebar({ user }: AppSidebarProps) {
             </TooltipTrigger>
             <TooltipContent
               side="right"
-              className="bg-popover text-popover-foreground border border-border shadow-lg rounded-md px-3 py-2"
-              sideOffset={8}
+              className="bg-card text-card-foreground border border-border shadow-lg rounded-md px-3 py-2 ml-2"
+              sideOffset={12}
             >
               <p className="text-sm font-medium">{item.title}</p>
             </TooltipContent>
@@ -107,7 +107,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
   }
 
   return (
-    <Sidebar className="border-r border-border bg-background/95 backdrop-blur-sm">
+    <Sidebar className="border-r border-border bg-background/95 backdrop-blur-sm" collapsible="icon">
       <SidebarHeader className="border-b border-border/50">
         <div className={`px-3 py-3 ${isCollapsed ? "flex justify-center" : ""}`}>
           <Logo size={isCollapsed ? "xs" : "sm"} />
