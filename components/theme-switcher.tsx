@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Palette, Check } from "lucide-react"
 import { useTheme } from "@/contexts/theme-context"
-import { useI18n } from "@/lib/i18n/context"
 import { themes, type ThemeKey } from "@/lib/themes"
+import { useI18n } from "@/lib/i18n/context"
 
 export function ThemeSwitcher() {
   const { theme, setTheme } = useTheme()

@@ -28,21 +28,30 @@ interface I18nProviderProps {
 
 export function I18nProvider({ children, initialLanguage = defaultLanguage }: I18nProviderProps) {
   const [language, setLanguageState] = useState<Language>(initialLanguage)
+  const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
-    // Load language from localStorage
-    const savedLanguage = localStorage.getItem("language") as Language
-    if (savedLanguage && (savedLanguage === "en" || savedLanguage === "te")) {
-      setLanguageState(savedLanguage)
+    setIsClient(true)
+    // Load language from localStorage only on client side
+    if (typeof window !== "undefined") {
+      const savedLanguage = localStorage.getItem("language") as Language
+      if (savedLanguage && (savedLanguage === "en" || savedLanguage === "te")) {
+        setLanguageState(savedLanguage)
+      }
     }
   }, [])
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang)
-    localStorage.setItem("language", lang)
+    if (typeof window !== "undefined") {
+      localStorage.setItem("language", lang)
+    }
   }
 
   const t = (key: string, translations: Record<string, string>) => {
+    if (!translations || typeof translations !== "object") {
+      return key
+    }
     return translations[language] || translations[defaultLanguage] || key
   }
 

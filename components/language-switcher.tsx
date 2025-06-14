@@ -19,7 +19,7 @@ export function LanguageSwitcher() {
           <span className="sr-only">Switch language</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-40">
+      <DropdownMenuContent align="end" className="w-56">
         {Object.entries(languages).map(([key, langData]) => (
           <DropdownMenuItem
             key={key}

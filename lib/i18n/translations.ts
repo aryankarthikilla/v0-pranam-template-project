@@ -23,60 +23,70 @@ export type Language = "en" | "te"
 export type Section = "app" | "auth" | "setup" | "dashboard" | "analytics" | "users" | "profile" | "settings" | "common"
 
 // Organized translations object
-export const translations: Record<Section, Record<Language, Record<string, string>>> = {
+export const translations: Record<Section, Record<Language, Record<string, any>>> = {
   app: {
-    en: appEn,
-    te: appTe,
+    en: appEn || {},
+    te: appTe || {},
   },
   auth: {
-    en: authEn,
-    te: authTe,
+    en: authEn || {},
+    te: authTe || {},
   },
   setup: {
-    en: setupEn,
-    te: setupTe,
+    en: setupEn || {},
+    te: setupTe || {},
   },
   dashboard: {
-    en: dashboardEn,
-    te: dashboardTe,
+    en: dashboardEn || {},
+    te: dashboardTe || {},
   },
   analytics: {
-    en: analyticsEn,
-    te: analyticsTe,
+    en: analyticsEn || {},
+    te: analyticsTe || {},
   },
   users: {
-    en: usersEn,
-    te: usersTe,
+    en: usersEn || {},
+    te: usersTe || {},
   },
   profile: {
-    en: profileEn,
-    te: profileTe,
+    en: profileEn || {},
+    te: profileTe || {},
   },
   settings: {
-    en: settingsEn,
-    te: settingsTe,
+    en: settingsEn || {},
+    te: settingsTe || {},
   },
   common: {
-    en: commonEn,
-    te: commonTe,
+    en: commonEn || {},
+    te: commonTe || {},
   },
 }
 
 // Helper function to get translations
-export function getTranslations(section: Section, language: Language): Record<string, string> {
-  return translations[section]?.[language] || translations[section]?.["en"] || {}
+export function getTranslations(section: Section, language: Language): Record<string, any> {
+  try {
+    return translations[section]?.[language] || translations[section]?.["en"] || {}
+  } catch (error) {
+    console.warn(`Error getting translations for section "${section}" and language "${language}":`, error)
+    return {}
+  }
 }
 
 // Helper function to get a specific translation
 export function getTranslation(section: Section, language: Language, key: string): string {
-  const sectionTranslations = getTranslations(section, language)
-  const keys = key.split(".")
-  let value: any = sectionTranslations
+  try {
+    const sectionTranslations = getTranslations(section, language)
+    const keys = key.split(".")
+    let value: any = sectionTranslations
 
-  for (const k of keys) {
-    value = value?.[k]
-    if (value === undefined) break
+    for (const k of keys) {
+      value = value?.[k]
+      if (value === undefined) break
+    }
+
+    return typeof value === "string" ? value : key
+  } catch (error) {
+    console.warn(`Error getting translation for key "${key}":`, error)
+    return key
   }
-
-  return typeof value === "string" ? value : key
 }
