@@ -15,10 +15,11 @@ interface TaskCardProps {
   task: any
   level?: number
   onEdit: (task: any) => void
+  onDelete?: (task: any) => void
   onRefresh: () => void
 }
 
-export function TaskCard({ task, level = 0, onEdit, onRefresh }: TaskCardProps) {
+export function TaskCard({ task, level = 0, onEdit, onDelete, onRefresh }: TaskCardProps) {
   const { t } = useTranslations("tasks")
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [isToggling, setIsToggling] = useState(false)
@@ -32,6 +33,14 @@ export function TaskCard({ task, level = 0, onEdit, onRefresh }: TaskCardProps) 
       console.error("Error toggling task status:", error)
     } finally {
       setIsToggling(false)
+    }
+  }
+
+  const handleDeleteClick = () => {
+    if (onDelete) {
+      onDelete(task)
+    } else {
+      setIsDeleteOpen(true)
     }
   }
 
@@ -106,7 +115,7 @@ export function TaskCard({ task, level = 0, onEdit, onRefresh }: TaskCardProps) 
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem
-                    onClick={() => setIsDeleteOpen(true)}
+                    onClick={handleDeleteClick}
                     className="text-red-600 dark:text-red-400 hover:bg-accent"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />

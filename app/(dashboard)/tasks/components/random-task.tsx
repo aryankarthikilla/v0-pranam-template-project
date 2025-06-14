@@ -1,12 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Shuffle, CheckCircle, RefreshCw } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Shuffle, RefreshCw, CheckCircle } from "lucide-react"
 import { useTranslations } from "@/lib/i18n/hooks"
-import { getRandomTask, markTaskComplete } from "../actions/task-actions"
+import { getRandomTask, toggleTaskStatus } from "../actions/task-actions"
 
 interface RandomTaskProps {
   onRefresh: () => void
@@ -35,7 +35,7 @@ export function RandomTask({ onRefresh }: RandomTaskProps) {
 
     setIsCompleting(true)
     try {
-      await markTaskComplete(randomTask.id)
+      await toggleTaskStatus(randomTask.id)
       onRefresh()
       // Get a new random task after completing this one
       await fetchRandomTask()
@@ -72,7 +72,7 @@ export function RandomTask({ onRefresh }: RandomTaskProps) {
           <Shuffle className="h-5 w-5 text-primary" />
           {t("randomTask")}
         </CardTitle>
-        <p className="text-sm text-muted-foreground">{t("randomTaskDescription")}</p>
+        <CardDescription className="text-muted-foreground">{t("randomTaskDescription")}</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -96,7 +96,7 @@ export function RandomTask({ onRefresh }: RandomTaskProps) {
                 variant="outline"
                 size="sm"
                 disabled={isLoading}
-                className="border-border hover:bg-accent"
+                className="border-border hover:bg-accent text-foreground"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 {t("getAnother")}
@@ -105,7 +105,7 @@ export function RandomTask({ onRefresh }: RandomTaskProps) {
                 onClick={handleMarkComplete}
                 size="sm"
                 disabled={isCompleting}
-                className="bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-colors"
               >
                 {isCompleting ? (
                   <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
@@ -123,7 +123,7 @@ export function RandomTask({ onRefresh }: RandomTaskProps) {
               onClick={fetchRandomTask}
               variant="outline"
               size="sm"
-              className="mt-2 border-border hover:bg-accent"
+              className="mt-2 border-border hover:bg-accent text-foreground"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
               {t("refresh")}
