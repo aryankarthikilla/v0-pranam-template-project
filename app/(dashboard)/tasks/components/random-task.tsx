@@ -1,12 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Shuffle, CheckCircle, RefreshCw } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Shuffle, RefreshCw, CheckCircle } from "lucide-react"
 import { useTranslations } from "@/lib/i18n/hooks"
-import { getRandomTask, toggleTaskStatus } from "../actions/task-actions"
+import { getRandomTask, markTaskComplete } from "../actions/task-actions"
 
 interface RandomTaskProps {
   onRefresh: () => void
@@ -30,24 +30,21 @@ export function RandomTask({ onRefresh }: RandomTaskProps) {
     }
   }
 
-  const handleCompleteTask = async () => {
+  const handleMarkComplete = async () => {
     if (!randomTask) return
 
     setIsCompleting(true)
     try {
-      await toggleTaskStatus(randomTask.id)
+      await markTaskComplete(randomTask.id)
       onRefresh()
-      fetchRandomTask() // Get a new random task
+      // Get a new random task after completing this one
+      await fetchRandomTask()
     } catch (error) {
-      console.error("Error completing task:", error)
+      console.error("Error marking task complete:", error)
     } finally {
       setIsCompleting(false)
     }
   }
-
-  useEffect(() => {
-    fetchRandomTask()
-  }, [])
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -64,69 +61,72 @@ export function RandomTask({ onRefresh }: RandomTaskProps) {
     }
   }
 
+  useEffect(() => {
+    fetchRandomTask()
+  }, [])
+
   return (
-    <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20 dark:from-primary/10 dark:to-primary/20">
+    <Card className="border-border bg-card">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-card-foreground">
           <Shuffle className="h-5 w-5 text-primary" />
           {t("randomTask")}
         </CardTitle>
-        <CardDescription className="text-muted-foreground">{t("randomTaskDescription")}</CardDescription>
+        <p className="text-sm text-muted-foreground">{t("randomTaskDescription")}</p>
       </CardHeader>
       <CardContent>
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <RefreshCw className="h-6 w-6 animate-spin text-primary" />
+            <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : randomTask ? (
           <div className="space-y-4">
-            <div>
-              <h3 className="font-medium text-lg text-card-foreground">{randomTask.title}</h3>
-              {randomTask.description && <p className="text-muted-foreground mt-1">{randomTask.description}</p>}
-            </div>
-
-            <div className="flex items-center justify-between">
-              <Badge className={getPriorityColor(randomTask.priority)}>{t(`priority.${randomTask.priority}`)}</Badge>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={fetchRandomTask}
-                  disabled={isLoading}
-                  className="border-border hover:bg-accent"
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  {t("getAnother")}
-                </Button>
-
-                <Button
-                  size="sm"
-                  onClick={handleCompleteTask}
-                  disabled={isCompleting}
-                  className="bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white"
-                >
-                  {isCompleting ? (
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                  )}
-                  {t("markComplete")}
-                </Button>
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h3 className="font-medium text-card-foreground">{randomTask.title}</h3>
+                {randomTask.description && (
+                  <p className="text-sm text-muted-foreground mt-1">{randomTask.description}</p>
+                )}
               </div>
+              <Badge className={getPriorityColor(randomTask.priority)}>{t(`priority.${randomTask.priority}`)}</Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={fetchRandomTask}
+                variant="outline"
+                size="sm"
+                disabled={isLoading}
+                className="border-border hover:bg-accent"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                {t("getAnother")}
+              </Button>
+              <Button
+                onClick={handleMarkComplete}
+                size="sm"
+                disabled={isCompleting}
+                className="bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white"
+              >
+                {isCompleting ? (
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                )}
+                {t("markComplete")}
+              </Button>
             </div>
           </div>
         ) : (
           <div className="text-center py-8">
             <p className="text-muted-foreground">{t("noTasksAvailable")}</p>
             <Button
+              onClick={fetchRandomTask}
               variant="outline"
               size="sm"
-              onClick={fetchRandomTask}
               className="mt-2 border-border hover:bg-accent"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
-              {t("tryAgain")}
+              {t("refresh")}
             </Button>
           </div>
         )}

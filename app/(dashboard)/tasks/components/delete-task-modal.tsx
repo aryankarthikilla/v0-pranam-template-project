@@ -14,6 +14,7 @@ import {
 import { Loader2, Trash2, AlertTriangle } from "lucide-react"
 import { useTranslations } from "@/lib/i18n/hooks"
 import { deleteTask } from "../actions/task-actions"
+import { toast } from "sonner"
 
 interface DeleteTaskModalProps {
   open: boolean
@@ -27,13 +28,22 @@ export function DeleteTaskModal({ open, onOpenChange, task, onSuccess }: DeleteT
   const [isDeleting, setIsDeleting] = useState(false)
 
   const handleDelete = async () => {
+    if (!task?.id) {
+      console.error("No task ID provided")
+      return
+    }
+
     setIsDeleting(true)
     try {
-      await deleteTask(task.id)
-      onSuccess()
-      onOpenChange(false)
+      const result = await deleteTask(task.id)
+      if (result.success) {
+        toast.success(t("taskDeleted"))
+        onSuccess()
+        onOpenChange(false)
+      }
     } catch (error) {
       console.error("Error deleting task:", error)
+      toast.error(t("deleteTaskError"))
     } finally {
       setIsDeleting(false)
     }
@@ -48,7 +58,7 @@ export function DeleteTaskModal({ open, onOpenChange, task, onSuccess }: DeleteT
             {t("deleteTask")}
           </AlertDialogTitle>
           <AlertDialogDescription className="text-muted-foreground">
-            {t("deleteTaskConfirmation", { title: task?.title })}
+            {t("deleteTaskConfirmation", { title: task?.title || "this task" })}
             <br />
             <span className="text-red-600 dark:text-red-400 font-medium">{t("deleteTaskWarning")}</span>
           </AlertDialogDescription>

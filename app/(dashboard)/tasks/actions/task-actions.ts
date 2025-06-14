@@ -45,7 +45,7 @@ export async function createTask(taskData: any) {
     throw new Error(`Error creating task: ${error.message}`)
   }
 
-  revalidatePath("/tasks")
+  revalidatePath("/dashboard/tasks")
   return data
 }
 
@@ -74,7 +74,7 @@ export async function updateTask(taskId: string, taskData: any) {
     throw new Error(`Error updating task: ${error.message}`)
   }
 
-  revalidatePath("/tasks")
+  revalidatePath("/dashboard/tasks")
   return data
 }
 
@@ -88,6 +88,21 @@ export async function deleteTask(taskId: string) {
     throw new Error("User not authenticated")
   }
 
+  // First, soft delete all subtasks
+  const { error: subtaskError } = await supabase
+    .from("tasks")
+    .update({
+      is_deleted: true,
+      updated_by: user.id,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("parent_id", taskId)
+
+  if (subtaskError) {
+    console.error("Error deleting subtasks:", subtaskError)
+  }
+
+  // Then soft delete the main task
   const { error } = await supabase
     .from("tasks")
     .update({
@@ -101,7 +116,8 @@ export async function deleteTask(taskId: string) {
     throw new Error(`Error deleting task: ${error.message}`)
   }
 
-  revalidatePath("/tasks")
+  revalidatePath("/dashboard/tasks")
+  return { success: true }
 }
 
 export async function toggleTaskStatus(taskId: string) {
@@ -139,7 +155,7 @@ export async function toggleTaskStatus(taskId: string) {
     throw new Error(`Error updating task status: ${error.message}`)
   }
 
-  revalidatePath("/tasks")
+  revalidatePath("/dashboard/tasks")
   return data
 }
 
@@ -164,4 +180,33 @@ export async function getRandomTask() {
   // Return a random task from the results
   const randomIndex = Math.floor(Math.random() * data.length)
   return data[randomIndex]
+}
+
+export async function markTaskComplete(taskId: string) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error("User not authenticated")
+  }
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .update({
+      status: "completed",
+      updated_by: user.id,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", taskId)
+    .select()
+    .single()
+
+  if (error) {
+    throw new Error(`Error marking task complete: ${error.message}`)
+  }
+
+  revalidatePath("/dashboard/tasks")
+  return data
 }
