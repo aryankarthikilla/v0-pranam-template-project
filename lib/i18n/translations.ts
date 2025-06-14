@@ -17,10 +17,22 @@ import settingsEn from "@/app/(dashboard)/settings/i18n/en.json"
 import settingsTe from "@/app/(dashboard)/settings/i18n/te.json"
 import commonEn from "@/lib/i18n/common/en.json"
 import commonTe from "@/lib/i18n/common/te.json"
+import legalEn from "@/app/(public)/legal/i18n/en.json"
+import legalTe from "@/app/(public)/legal/i18n/te.json"
 
 // Type definitions
 export type Language = "en" | "te"
-export type Section = "app" | "auth" | "setup" | "dashboard" | "analytics" | "users" | "profile" | "settings" | "common"
+export type Section =
+  | "app"
+  | "auth"
+  | "setup"
+  | "dashboard"
+  | "analytics"
+  | "users"
+  | "profile"
+  | "settings"
+  | "common"
+  | "legal"
 
 // Organized translations object
 export const translations: Record<Section, Record<Language, Record<string, any>>> = {
@@ -59,6 +71,10 @@ export const translations: Record<Section, Record<Language, Record<string, any>>
   common: {
     en: commonEn || {},
     te: commonTe || {},
+  },
+  legal: {
+    en: legalEn || {},
+    te: legalTe || {},
   },
 }
 

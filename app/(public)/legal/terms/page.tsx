@@ -32,7 +32,7 @@ export default function TermsPage() {
             </div>
           </div>
 
-          <Card className="border-border/50 bg-card/95 backdrop-blur-sm shadow-lg">
+          <Card className="border-0 bg-card/80 backdrop-blur-xl shadow-2xl shadow-primary/10">
             <CardHeader className="text-center">
               <div className="mx-auto mb-4">
                 <Logo size="lg" showText={true} />
@@ -43,17 +43,17 @@ export default function TermsPage() {
             <CardContent className="prose prose-slate dark:prose-invert max-w-none">
               <div className="space-y-6 text-foreground">
                 <section>
-                  <h2 className="text-xl font-semibold mb-3">{t("acceptance")}</h2>
+                  <h2 className="text-xl font-semibold mb-3 text-foreground">{t("acceptance")}</h2>
                   <p className="text-muted-foreground leading-relaxed">{t("acceptanceText")}</p>
                 </section>
 
                 <section>
-                  <h2 className="text-xl font-semibold mb-3">{t("serviceDescription")}</h2>
+                  <h2 className="text-xl font-semibold mb-3 text-foreground">{t("serviceDescription")}</h2>
                   <p className="text-muted-foreground leading-relaxed">{t("serviceDescriptionText")}</p>
                 </section>
 
                 <section>
-                  <h2 className="text-xl font-semibold mb-3">{t("userAccounts")}</h2>
+                  <h2 className="text-xl font-semibold mb-3 text-foreground">{t("userAccounts")}</h2>
                   <p className="text-muted-foreground leading-relaxed mb-3">{t("userAccountsText")}</p>
                   <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                     <li>{t("accountResponsibility1")}</li>
@@ -63,7 +63,7 @@ export default function TermsPage() {
                 </section>
 
                 <section>
-                  <h2 className="text-xl font-semibold mb-3">{t("prohibitedUse")}</h2>
+                  <h2 className="text-xl font-semibold mb-3 text-foreground">{t("prohibitedUse")}</h2>
                   <p className="text-muted-foreground leading-relaxed mb-3">{t("prohibitedUseText")}</p>
                   <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                     <li>{t("prohibited1")}</li>
@@ -74,22 +74,22 @@ export default function TermsPage() {
                 </section>
 
                 <section>
-                  <h2 className="text-xl font-semibold mb-3">{t("intellectualProperty")}</h2>
+                  <h2 className="text-xl font-semibold mb-3 text-foreground">{t("intellectualProperty")}</h2>
                   <p className="text-muted-foreground leading-relaxed">{t("intellectualPropertyText")}</p>
                 </section>
 
                 <section>
-                  <h2 className="text-xl font-semibold mb-3">{t("termination")}</h2>
+                  <h2 className="text-xl font-semibold mb-3 text-foreground">{t("termination")}</h2>
                   <p className="text-muted-foreground leading-relaxed">{t("terminationText")}</p>
                 </section>
 
                 <section>
-                  <h2 className="text-xl font-semibold mb-3">{t("disclaimer")}</h2>
+                  <h2 className="text-xl font-semibold mb-3 text-foreground">{t("disclaimer")}</h2>
                   <p className="text-muted-foreground leading-relaxed">{t("disclaimerText")}</p>
                 </section>
 
                 <section>
-                  <h2 className="text-xl font-semibold mb-3">{t("contactUs")}</h2>
+                  <h2 className="text-xl font-semibold mb-3 text-foreground">{t("contactUs")}</h2>
                   <p className="text-muted-foreground leading-relaxed">{t("contactText")}</p>
                 </section>
               </div>

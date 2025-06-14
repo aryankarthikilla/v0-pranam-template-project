@@ -32,7 +32,7 @@ export default function PrivacyPage() {
             </div>
           </div>
 
-          <Card className="border-border/50 bg-card/95 backdrop-blur-sm shadow-lg">
+          <Card className="border-0 bg-card/80 backdrop-blur-xl shadow-2xl shadow-primary/10">
             <CardHeader className="text-center">
               <div className="mx-auto mb-4">
                 <Logo size="lg" showText={true} />
@@ -43,7 +43,7 @@ export default function PrivacyPage() {
             <CardContent className="prose prose-slate dark:prose-invert max-w-none">
               <div className="space-y-6 text-foreground">
                 <section>
-                  <h2 className="text-xl font-semibold mb-3">{t("informationCollection")}</h2>
+                  <h2 className="text-xl font-semibold mb-3 text-foreground">{t("informationCollection")}</h2>
                   <p className="text-muted-foreground leading-relaxed mb-3">{t("informationCollectionText")}</p>
                   <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                     <li>{t("personalInfo1")}</li>
@@ -53,7 +53,7 @@ export default function PrivacyPage() {
                 </section>
 
                 <section>
-                  <h2 className="text-xl font-semibold mb-3">{t("informationUse")}</h2>
+                  <h2 className="text-xl font-semibold mb-3 text-foreground">{t("informationUse")}</h2>
                   <p className="text-muted-foreground leading-relaxed mb-3">{t("informationUseText")}</p>
                   <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                     <li>{t("useCase1")}</li>
@@ -64,22 +64,22 @@ export default function PrivacyPage() {
                 </section>
 
                 <section>
-                  <h2 className="text-xl font-semibold mb-3">{t("informationSharing")}</h2>
+                  <h2 className="text-xl font-semibold mb-3 text-foreground">{t("informationSharing")}</h2>
                   <p className="text-muted-foreground leading-relaxed">{t("informationSharingText")}</p>
                 </section>
 
                 <section>
-                  <h2 className="text-xl font-semibold mb-3">{t("dataSecurity")}</h2>
+                  <h2 className="text-xl font-semibold mb-3 text-foreground">{t("dataSecurity")}</h2>
                   <p className="text-muted-foreground leading-relaxed">{t("dataSecurityText")}</p>
                 </section>
 
                 <section>
-                  <h2 className="text-xl font-semibold mb-3">{t("cookies")}</h2>
+                  <h2 className="text-xl font-semibold mb-3 text-foreground">{t("cookies")}</h2>
                   <p className="text-muted-foreground leading-relaxed">{t("cookiesText")}</p>
                 </section>
 
                 <section>
-                  <h2 className="text-xl font-semibold mb-3">{t("thirdPartyServices")}</h2>
+                  <h2 className="text-xl font-semibold mb-3 text-foreground">{t("thirdPartyServices")}</h2>
                   <p className="text-muted-foreground leading-relaxed mb-3">{t("thirdPartyServicesText")}</p>
                   <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                     <li>{t("thirdParty1")}</li>
@@ -89,7 +89,7 @@ export default function PrivacyPage() {
                 </section>
 
                 <section>
-                  <h2 className="text-xl font-semibold mb-3">{t("userRights")}</h2>
+                  <h2 className="text-xl font-semibold mb-3 text-foreground">{t("userRights")}</h2>
                   <p className="text-muted-foreground leading-relaxed mb-3">{t("userRightsText")}</p>
                   <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                     <li>{t("right1")}</li>
@@ -100,12 +100,12 @@ export default function PrivacyPage() {
                 </section>
 
                 <section>
-                  <h2 className="text-xl font-semibold mb-3">{t("policyChanges")}</h2>
+                  <h2 className="text-xl font-semibold mb-3 text-foreground">{t("policyChanges")}</h2>
                   <p className="text-muted-foreground leading-relaxed">{t("policyChangesText")}</p>
                 </section>
 
                 <section>
-                  <h2 className="text-xl font-semibold mb-3">{t("contactUs")}</h2>
+                  <h2 className="text-xl font-semibold mb-3 text-foreground">{t("contactUs")}</h2>
                   <p className="text-muted-foreground leading-relaxed">{t("privacyContactText")}</p>
                 </section>
               </div>
