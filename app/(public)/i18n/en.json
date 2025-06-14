@@ -28,5 +28,7 @@
   "languageSwitch": "Switch Language",
   "currentLanguage": "Current Language",
   "availableLanguages": "Available Languages",
-  "moreLanguagesComing": "More languages coming soon!"
+  "moreLanguagesComing": "More languages coming soon!",
+  "themeBuilder": "Theme Builder",
+  "themeShowcase": "Theme Showcase"
 }

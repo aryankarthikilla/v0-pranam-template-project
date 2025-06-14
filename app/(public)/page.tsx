@@ -1,101 +1,271 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Sparkles } from "lucide-react"
+"use client"
+
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  ArrowRight,
+  Database,
+  Layout,
+  Shield,
+  Settings,
+  Globe,
+  Palette,
+  Rocket,
+  Paintbrush,
+  Sparkles,
+} from "lucide-react"
+import { LanguageSwitcher } from "@/components/language-switcher"
+import { useTranslations } from "@/lib/i18n/hooks"
+import { Logo } from "@/components/logo"
+import { PageTitle } from "@/components/page-title"
 
-export default function Home() {
+export default function HomePage() {
+  const { t } = useTranslations("app")
+
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">Welcome to the SaaS Starter</h1>
+    <>
+      <PageTitle section="app" titleKey="title" />
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100">
+        {/* Header */}
+        <header className="border-b bg-white/80 backdrop-blur-sm">
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Logo size="md" showText={false} />
+              <span className="text-xl font-bold text-gray-900">Pranam</span>
+            </div>
+            <div className="flex items-center space-x-4">
+              {/* Make language switcher more prominent */}
+              <div className="flex items-center space-x-2 px-3 py-1 bg-orange-50 rounded-lg border border-orange-200">
+                <Globe className="h-4 w-4 text-orange-600" />
+                <LanguageSwitcher />
+              </div>
+              <Link href="/theme-showcase">
+                <Button variant="ghost">
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  {t("themeShowcase")}
+                </Button>
+              </Link>
+              <Link href="/theme-builder">
+                <Button variant="ghost">
+                  <Paintbrush className="mr-2 h-4 w-4" />
+                  {t("themeBuilder")}
+                </Button>
+              </Link>
+              <Link href="/setup">
+                <Button variant="ghost">
+                  <Settings className="mr-2 h-4 w-4" />
+                  {t("setup")}
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button variant="ghost">{t("login")}</Button>
+              </Link>
+              <Link href="/login">
+                <Button>{t("getStarted")}</Button>
+              </Link>
+            </div>
+          </div>
+        </header>
 
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-2">Key Features</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Authentication</CardTitle>
-              <CardDescription>Secure user authentication with NextAuth.js.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>Implement robust authentication flows, including social logins and password management.</p>
-            </CardContent>
-          </Card>
+        {/* Hero Section */}
+        <section className="container mx-auto px-4 py-16 md:py-24">
+          <div className="text-center max-w-4xl mx-auto">
+            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">{t("title")}</h1>
+            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">{t("subtitle")}</p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/theme-showcase">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+                >
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  {t("themeShowcase")}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/theme-builder">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                >
+                  <Paintbrush className="mr-2 h-4 w-4" />
+                  {t("themeBuilder")}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/setup">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  {t("setupGuide")}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto border-orange-200 hover:bg-orange-50">
+                  {t("getStarted")}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Database Integration</CardTitle>
-              <CardDescription>Connect to your database of choice with Prisma.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>Easily manage your data models and interact with your database using Prisma's intuitive API.</p>
-            </CardContent>
-          </Card>
+        {/* Language Notice Section */}
+        <section className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="bg-gradient-to-r from-orange-100 to-red-100 rounded-lg p-6 border border-orange-200">
+              <div className="flex items-center justify-center mb-3">
+                <Globe className="h-6 w-6 text-orange-600 mr-2" />
+                <h3 className="text-lg font-semibold text-gray-900">{t("multiLanguage")}</h3>
+              </div>
+              <p className="text-gray-700 mb-4">{t("multiLanguageDescription")}</p>
+              <div className="flex items-center justify-center space-x-4">
+                <div className="flex items-center space-x-2 px-4 py-2 bg-white rounded-lg border border-orange-200">
+                  <span className="text-lg">🇺🇸</span>
+                  <span className="text-sm font-medium">English</span>
+                </div>
+                <div className="flex items-center space-x-2 px-4 py-2 bg-white rounded-lg border border-orange-200">
+                  <span className="text-lg">🇮🇳</span>
+                  <span className="text-sm font-medium">తెలుగు (Telugu)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>UI Components</CardTitle>
-              <CardDescription>Beautifully designed UI components with Shadcn UI.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>Build stunning user interfaces quickly with a comprehensive library of pre-built components.</p>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+        {/* Features */}
+        <section className="container mx-auto px-4 py-16">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">{t("featuresTitle")}</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">{t("featuresSubtitle")}</p>
+          </div>
 
-      <section className="mb-8">
-        <h2 className="text-2xl font-semibold mb-2">Getting Started</h2>
-        <Accordion type="single" collapsible>
-          <AccordionItem value="item-1">
-            <AccordionTrigger>Installation</AccordionTrigger>
-            <AccordionContent>
-              <ol className="list-decimal pl-5">
-                <li>Clone the repository.</li>
-                <li>Install dependencies: `npm install`</li>
-                <li>Configure your environment variables.</li>
-                <li>Run the development server: `npm run dev`</li>
-              </ol>
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="item-2">
-            <AccordionTrigger>Configuration</AccordionTrigger>
-            <AccordionContent>
-              <p>
-                Refer to the documentation for detailed instructions on configuring authentication, database
-                connections, and other settings.
-              </p>
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="item-3">
-            <AccordionTrigger>Deployment</AccordionTrigger>
-            <AccordionContent>
-              <p>
-                Deploy your application to your preferred hosting platform. Consider using platforms like Vercel or
-                Netlify for seamless deployment.
-              </p>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </section>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <Card className="border-orange-100 hover:border-orange-200 transition-colors">
+              <CardHeader>
+                <Shield className="h-10 w-10 text-orange-600 mb-2" />
+                <CardTitle>{t("authReady")}</CardTitle>
+                <CardDescription>{t("authDescription")}</CardDescription>
+              </CardHeader>
+            </Card>
 
-      <section>
-        <h2 className="text-2xl font-semibold mb-2">Navigation</h2>
-        <div className="flex flex-col space-y-2">
-          <Link href="/theme-builder">
-            <Button variant="outline" className="w-full">
-              <Sparkles className="h-4 w-4 mr-2" />
-              Theme Builder
-            </Button>
-          </Link>
-          <Link href="/theme-showcase">
-            <Button variant="outline" className="w-full">
-              <Sparkles className="h-4 w-4 mr-2" />
-              Browse Theme Showcase
-            </Button>
-          </Link>
-        </div>
-      </section>
-    </div>
+            <Card className="border-orange-100 hover:border-orange-200 transition-colors">
+              <CardHeader>
+                <Layout className="h-10 w-10 text-orange-600 mb-2" />
+                <CardTitle>{t("responsiveDesign")}</CardTitle>
+                <CardDescription>{t("responsiveDescription")}</CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="border-orange-100 hover:border-orange-200 transition-colors">
+              <CardHeader>
+                <Database className="h-10 w-10 text-orange-600 mb-2" />
+                <CardTitle>{t("databaseIntegration")}</CardTitle>
+                <CardDescription>{t("databaseDescription")}</CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="border-orange-100 hover:border-orange-200 transition-colors">
+              <CardHeader>
+                <Globe className="h-10 w-10 text-orange-600 mb-2" />
+                <CardTitle>{t("multiLanguage")}</CardTitle>
+                <CardDescription>{t("multiLanguageDescription")}</CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="border-orange-100 hover:border-orange-200 transition-colors">
+              <CardHeader>
+                <Palette className="h-10 w-10 text-orange-600 mb-2" />
+                <CardTitle>{t("themeCustomization")}</CardTitle>
+                <CardDescription>{t("themeCustomizationDescription")}</CardDescription>
+              </CardHeader>
+            </Card>
+
+            <Card className="border-orange-100 hover:border-orange-200 transition-colors">
+              <CardHeader>
+                <Rocket className="h-10 w-10 text-orange-600 mb-2" />
+                <CardTitle>{t("readyToDeploy")}</CardTitle>
+                <CardDescription>{t("readyToDeployDescription")}</CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="border-t bg-white">
+          <div className="container mx-auto px-4 py-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Brand Section */}
+              <div className="flex flex-col items-center md:items-start">
+                <div className="flex items-center space-x-2 mb-4">
+                  <Logo size="sm" showText={false} />
+                  <span className="font-semibold text-gray-900">Pranam</span>
+                </div>
+                <p className="text-gray-600 text-sm text-center md:text-left">{t("footerText")}</p>
+              </div>
+
+              {/* Language Section */}
+              <div className="flex flex-col items-center">
+                <h4 className="font-semibold text-gray-900 mb-4 flex items-center">
+                  <Globe className="h-4 w-4 mr-2" />
+                  {t("availableLanguages")}
+                </h4>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <span className="text-lg">🇺🇸</span>
+                    <span>English</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <span className="text-lg">🇮🇳</span>
+                    <span>తెలుగు (Telugu)</span>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-3 text-center">{t("moreLanguagesComing")}</p>
+              </div>
+
+              {/* Quick Links */}
+              <div className="flex flex-col items-center md:items-end">
+                <h4 className="font-semibold text-gray-900 mb-4">{t("quickStart")}</h4>
+                <div className="space-y-2 text-center md:text-right">
+                  <div>
+                    <Link href="/setup" className="text-sm text-gray-600 hover:text-gray-900">
+                      {t("setupGuide")}
+                    </Link>
+                  </div>
+                  <div>
+                    <Link href="/theme-showcase" className="text-sm text-gray-600 hover:text-gray-900">
+                      {t("themeShowcase")}
+                    </Link>
+                  </div>
+                  <div>
+                    <Link href="/theme-builder" className="text-sm text-gray-600 hover:text-gray-900">
+                      {t("themeBuilder")}
+                    </Link>
+                  </div>
+                  <div>
+                    <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900">
+                      {t("login")}
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Bar */}
+            <div className="border-t mt-8 pt-6 flex flex-col md:flex-row items-center justify-between">
+              <p className="text-gray-600 text-sm mb-4 md:mb-0">© 2024 Pranam. All rights reserved.</p>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-500">{t("languageSwitch")}:</span>
+                <LanguageSwitcher />
+              </div>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </>
   )
 }
