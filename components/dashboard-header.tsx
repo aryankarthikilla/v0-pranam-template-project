@@ -58,9 +58,9 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
                 variant="ghost"
                 className="relative h-8 w-8 rounded-full hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
-                <Avatar className="h-8 w-8 ring-1 ring-gray-200 hover:ring-gray-300 transition-all duration-200">
+                <Avatar className="h-8 w-8 ring-2 ring-secondary hover:ring-secondary/80 transition-all duration-200 ring-offset-2 ring-offset-background">
                   <AvatarImage src="/placeholder.svg" alt={user.email || ""} />
-                  <AvatarFallback className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground font-semibold text-xs shadow-sm">
+                  <AvatarFallback className="bg-secondary/10 border-2 border-secondary text-secondary font-semibold text-xs shadow-sm">
                     {userInitials}
                   </AvatarFallback>
                 </Avatar>
