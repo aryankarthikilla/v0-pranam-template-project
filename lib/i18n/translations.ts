@@ -15,6 +15,8 @@ import profileEn from "@/app/(dashboard)/profile/i18n/en.json"
 import profileTe from "@/app/(dashboard)/profile/i18n/te.json"
 import settingsEn from "@/app/(dashboard)/settings/i18n/en.json"
 import settingsTe from "@/app/(dashboard)/settings/i18n/te.json"
+import tasksEn from "@/app/(dashboard)/tasks/i18n/en.json"
+import tasksTe from "@/app/(dashboard)/tasks/i18n/te.json"
 import commonEn from "@/lib/i18n/common/en.json"
 import commonTe from "@/lib/i18n/common/te.json"
 import legalEn from "@/app/(public)/legal/i18n/en.json"
@@ -31,6 +33,7 @@ export type Section =
   | "users"
   | "profile"
   | "settings"
+  | "tasks"
   | "common"
   | "legal"
 
@@ -67,6 +70,10 @@ export const translations: Record<Section, Record<Language, Record<string, any>>
   settings: {
     en: settingsEn || {},
     te: settingsTe || {},
+  },
+  tasks: {
+    en: tasksEn || {},
+    te: tasksTe || {},
   },
   common: {
     en: commonEn || {},
