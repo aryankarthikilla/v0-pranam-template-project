@@ -17,6 +17,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 import { Logo } from "@/components/logo"
 import { useTranslations } from "@/lib/i18n/hooks"
+import Link from "next/link"
 
 interface AppSidebarProps {
   user: SupabaseUser
@@ -69,12 +70,12 @@ export function AppSidebar({ user }: AppSidebarProps) {
   ]
 
   const SidebarMenuItemWithTooltip = ({ item }: { item: (typeof menuItems)[0] }) => {
-    const content = (
-      <SidebarMenuButton asChild className="text-foreground hover:bg-muted hover:text-primary transition-colors">
-        <a href={item.url} className="flex items-center gap-2">
+    const menuButton = (
+      <SidebarMenuButton asChild className="text-foreground hover:bg-muted hover:text-primary transition-colors w-full">
+        <Link href={item.url} className="flex items-center gap-3 px-3 py-2">
           <item.icon className="h-4 w-4 flex-shrink-0" />
-          {!isCollapsed && <span>{item.title}</span>}
-        </a>
+          {!isCollapsed && <span className="truncate">{item.title}</span>}
+        </Link>
       </SidebarMenuButton>
     )
 
@@ -82,35 +83,41 @@ export function AppSidebar({ user }: AppSidebarProps) {
       return (
         <TooltipProvider>
           <Tooltip>
-            <TooltipTrigger asChild>{content}</TooltipTrigger>
+            <TooltipTrigger asChild>
+              <div className="w-full">{menuButton}</div>
+            </TooltipTrigger>
             <TooltipContent
               side="right"
-              className="bg-popover text-popover-foreground border border-border shadow-md"
-              sideOffset={5}
+              className="bg-popover text-popover-foreground border border-border shadow-lg rounded-md px-3 py-2"
+              sideOffset={8}
             >
-              <p>{item.title}</p>
+              <p className="text-sm font-medium">{item.title}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
       )
     }
 
-    return content
+    return menuButton
   }
 
   return (
     <Sidebar className="border-r border-border bg-background/95 backdrop-blur-sm">
       <SidebarHeader className="border-b border-border/50">
-        <div className="px-2 py-2">
+        <div className={`px-3 py-3 ${isCollapsed ? "flex justify-center" : ""}`}>
           <Logo size={isCollapsed ? "xs" : "sm"} />
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="px-2">
         <SidebarGroup>
-          {!isCollapsed && <SidebarGroupLabel className="text-muted-foreground">{t("mainMenu")}</SidebarGroupLabel>}
+          {!isCollapsed && (
+            <SidebarGroupLabel className="text-muted-foreground px-3 py-2 text-xs font-semibold uppercase tracking-wider">
+              {t("mainMenu")}
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuItemWithTooltip item={item} />
@@ -120,10 +127,14 @@ export function AppSidebar({ user }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          {!isCollapsed && <SidebarGroupLabel className="text-muted-foreground">{t("support")}</SidebarGroupLabel>}
+        <SidebarGroup className="mt-6">
+          {!isCollapsed && (
+            <SidebarGroupLabel className="text-muted-foreground px-3 py-2 text-xs font-semibold uppercase tracking-wider">
+              {t("support")}
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {supportItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuItemWithTooltip item={item} />

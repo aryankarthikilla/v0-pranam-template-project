@@ -56,9 +56,9 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="relative h-8 w-8 rounded-full hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="relative h-8 w-8 rounded-full hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
-                <Avatar className="h-8 w-8 ring-2 ring-primary/20 hover:ring-primary/40 transition-all duration-200">
+                <Avatar className="h-8 w-8 ring-1 ring-gray-200 hover:ring-gray-300 transition-all duration-200">
                   <AvatarImage src="/placeholder.svg" alt={user.email || ""} />
                   <AvatarFallback className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground font-semibold text-xs shadow-sm">
                     {userInitials}
