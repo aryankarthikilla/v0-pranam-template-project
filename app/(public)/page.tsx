@@ -61,13 +61,13 @@ export default function HomePage() {
                   {t("setup")}
                 </Button>
               </Link>
-              <Link href="/login">
+              <Link href="/auth/login">
                 <Button variant="ghost" className="hover:bg-primary/10 hover:text-primary">
                   {t("login")}
                 </Button>
               </Link>
-              <Link href="/login">
-                <Button className="btn-primary-gradient hover-lift-primary">{t("getStarted")}</Button>
+              <Link href="/auth/signup">
+                <Button className="btn-primary-gradient hover-lift-primary">{t("signUp")}</Button>
               </Link>
             </div>
           </div>
@@ -109,7 +109,7 @@ export default function HomePage() {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Link href="/login">
+              <Link href="/auth/signup">
                 <Button
                   size="lg"
                   variant="outline"
@@ -278,7 +278,7 @@ export default function HomePage() {
                   </div>
                   <div>
                     <Link
-                      href="/login"
+                      href="/auth/login"
                       className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200"
                     >
                       {t("login")}
@@ -292,7 +292,7 @@ export default function HomePage() {
             <div className="border-t border-border/50 mt-8 pt-6 flex flex-col md:flex-row items-center justify-between">
               <p className="text-muted-foreground text-sm mb-4 md:mb-0">© 2024 Pranam. All rights reserved.</p>
               <div className="flex items-center space-x-4">
-                <span className="text-sm text-muted-foreground">{t("languageSwitch")}:</span>
+                <span className="text-sm text-muted-foreground">{t("languageSwitch")}: </span>
                 <LanguageSwitcher />
                 <div className="h-4 w-px bg-border" />
                 <ThemeSwitcher />
