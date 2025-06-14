@@ -1,6 +1,6 @@
 export const themes = {
   light: {
-    name: "Light",
+    name: "light",
     value: "light",
     icon: "☀️",
     colors: {
@@ -22,7 +22,7 @@ export const themes = {
     },
   },
   dark: {
-    name: "Dark",
+    name: "dark",
     value: "dark",
     icon: "🌙",
     colors: {
@@ -44,7 +44,7 @@ export const themes = {
     },
   },
   pink: {
-    name: "Gulabi (Pink)",
+    name: "pink",
     value: "pink",
     icon: "🌸",
     colors: {
@@ -66,7 +66,7 @@ export const themes = {
     },
   },
   purple: {
-    name: "Baingani (Purple)",
+    name: "purple",
     value: "purple",
     icon: "🔮",
     colors: {
@@ -88,7 +88,7 @@ export const themes = {
     },
   },
   blue: {
-    name: "Neela (Blue)",
+    name: "blue",
     value: "blue",
     icon: "💙",
     colors: {
@@ -110,7 +110,7 @@ export const themes = {
     },
   },
   green: {
-    name: "Hara (Light Green)",
+    name: "green",
     value: "green",
     icon: "🌿",
     colors: {
