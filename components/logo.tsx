@@ -5,11 +5,12 @@ import { useTranslations } from "@/lib/i18n/hooks"
 
 interface LogoProps {
   className?: string
-  size?: "sm" | "md" | "lg" | "xl"
+  size?: "xs" | "sm" | "md" | "lg" | "xl"
   showText?: boolean
 }
 
 const sizeClasses = {
+  xs: "w-5 h-5",
   sm: "w-6 h-6",
   md: "w-8 h-8",
   lg: "w-12 h-12",
@@ -17,6 +18,7 @@ const sizeClasses = {
 }
 
 const textSizeClasses = {
+  xs: "text-xs",
   sm: "text-sm",
   md: "text-lg",
   lg: "text-xl",
@@ -41,7 +43,7 @@ export function Logo({ className, size = "md", showText = true }: LogoProps) {
         </div>
       </div>
 
-      {/* Only the text changes based on language */}
+      {/* Only show text when showText is true */}
       {showText && (
         <span className={cn("font-bold text-foreground transition-colors duration-200", textSizeClasses[size])}>
           {t("appName")}
