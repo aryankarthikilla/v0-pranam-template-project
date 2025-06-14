@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowRight, Database, Layout, Shield, Settings, Globe, Palette, Rocket } from "lucide-react"
+import { ArrowRight, Database, Layout, Shield, Settings, Globe, Palette, Rocket, Paintbrush } from "lucide-react"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { useTranslations } from "@/lib/i18n/hooks"
 import { Logo } from "@/components/logo"
@@ -25,6 +25,12 @@ export default function HomePage() {
             </div>
             <div className="flex items-center space-x-4">
               <LanguageSwitcher />
+              <Link href="/theme-builder">
+                <Button variant="ghost">
+                  <Paintbrush className="mr-2 h-4 w-4" />
+                  Theme Builder
+                </Button>
+              </Link>
               <Link href="/setup">
                 <Button variant="ghost">
                   <Settings className="mr-2 h-4 w-4" />
@@ -47,6 +53,16 @@ export default function HomePage() {
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">{t("title")}</h1>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">{t("subtitle")}</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/theme-builder">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                >
+                  <Paintbrush className="mr-2 h-4 w-4" />
+                  Theme Builder
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
               <Link href="/setup">
                 <Button
                   size="lg"
@@ -63,9 +79,6 @@ export default function HomePage() {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Button variant="outline" size="lg" className="w-full sm:w-auto border-orange-200 hover:bg-orange-50">
-                {t("viewDemo")}
-              </Button>
             </div>
           </div>
         </section>
