@@ -1,0 +1,167 @@
+"use server"
+
+import { createClient } from "@/utils/supabase/server"
+import { revalidatePath } from "next/cache"
+
+export async function getTasks(showCompleted = false) {
+  const supabase = await createClient()
+
+  let query = supabase.from("tasks").select("*").eq("is_deleted", false).order("created_at", { ascending: false })
+
+  if (!showCompleted) {
+    query = query.neq("status", "completed")
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    throw new Error(`Error fetching tasks: ${error.message}`)
+  }
+
+  return data || []
+}
+
+export async function createTask(taskData: any) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error("User not authenticated")
+  }
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .insert({
+      ...taskData,
+      created_by: user.id,
+      updated_by: user.id,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    throw new Error(`Error creating task: ${error.message}`)
+  }
+
+  revalidatePath("/tasks")
+  return data
+}
+
+export async function updateTask(taskId: string, taskData: any) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error("User not authenticated")
+  }
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .update({
+      ...taskData,
+      updated_by: user.id,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", taskId)
+    .select()
+    .single()
+
+  if (error) {
+    throw new Error(`Error updating task: ${error.message}`)
+  }
+
+  revalidatePath("/tasks")
+  return data
+}
+
+export async function deleteTask(taskId: string) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error("User not authenticated")
+  }
+
+  const { error } = await supabase
+    .from("tasks")
+    .update({
+      is_deleted: true,
+      updated_by: user.id,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", taskId)
+
+  if (error) {
+    throw new Error(`Error deleting task: ${error.message}`)
+  }
+
+  revalidatePath("/tasks")
+}
+
+export async function toggleTaskStatus(taskId: string) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error("User not authenticated")
+  }
+
+  // First get the current task
+  const { data: task, error: fetchError } = await supabase.from("tasks").select("status").eq("id", taskId).single()
+
+  if (fetchError) {
+    throw new Error(`Error fetching task: ${fetchError.message}`)
+  }
+
+  // Toggle status
+  const newStatus = task.status === "completed" ? "pending" : "completed"
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .update({
+      status: newStatus,
+      updated_by: user.id,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", taskId)
+    .select()
+    .single()
+
+  if (error) {
+    throw new Error(`Error updating task status: ${error.message}`)
+  }
+
+  revalidatePath("/tasks")
+  return data
+}
+
+export async function getRandomTask() {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("is_deleted", false)
+    .neq("status", "completed")
+    .limit(50) // Get 50 tasks and pick random from them
+
+  if (error) {
+    throw new Error(`Error fetching random task: ${error.message}`)
+  }
+
+  if (!data || data.length === 0) {
+    return null
+  }
+
+  // Return a random task from the results
+  const randomIndex = Math.floor(Math.random() * data.length)
+  return data[randomIndex]
+}

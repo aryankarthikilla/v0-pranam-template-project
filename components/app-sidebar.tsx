@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, Settings, Users, BarChart3, FileText, HelpCircle, User } from "lucide-react"
+import { Home, Settings, Users, BarChart3, FileText, HelpCircle, User, CheckSquare } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -38,6 +38,11 @@ export function AppSidebar({ user }: AppSidebarProps) {
       title: t("analytics"),
       url: "/analytics",
       icon: BarChart3,
+    },
+    {
+      title: t("tasks"),
+      url: "/tasks",
+      icon: CheckSquare,
     },
     {
       title: t("users"),
