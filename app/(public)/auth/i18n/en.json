@@ -7,6 +7,7 @@
   "forgotPasswordSubtitle": "Enter your email to reset your password",
   "resetPasswordTitle": "Reset Password",
   "resetPasswordSubtitle": "Enter your new password",
+  "authError": "Authentication Error",
   "email": "Email",
   "password": "Password",
   "newPassword": "New Password",

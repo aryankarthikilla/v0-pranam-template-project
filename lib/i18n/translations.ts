@@ -1,8 +1,8 @@
 // Import all translations from their respective page folders
 import appEn from "@/app/(public)/i18n/en.json"
 import appTe from "@/app/(public)/i18n/te.json"
-import authEn from "@/app/(public)/login/i18n/en.json"
-import authTe from "@/app/(public)/login/i18n/te.json"
+import authEn from "@/app/(public)/auth/i18n/en.json"
+import authTe from "@/app/(public)/auth/i18n/te.json"
 import setupEn from "@/app/(public)/setup/i18n/en.json"
 import setupTe from "@/app/(public)/setup/i18n/te.json"
 import dashboardEn from "@/app/(dashboard)/dashboard/i18n/en.json"
