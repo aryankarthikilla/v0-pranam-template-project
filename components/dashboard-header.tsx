@@ -35,7 +35,7 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
   }
 
   return (
-    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-14 items-center gap-4 px-4 md:px-6">
         <div className="flex-1" />
 
@@ -43,44 +43,50 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
           <LanguageSwitcher />
           <ThemeSwitcher />
 
-          <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted"
+          >
             <Bell className="h-4 w-4" />
             <span className="sr-only">Notifications</span>
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:bg-muted">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="/placeholder.svg" alt={user.email || ""} />
-                  <AvatarFallback className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold">
+                  <AvatarFallback className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold">
                     {userInitials}
                   </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuContent className="w-56 border-border bg-background" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user.user_metadata?.full_name || t("welcome")}</p>
+                  <p className="text-sm font-medium leading-none text-foreground">
+                    {user.user_metadata?.full_name || t("welcome")}
+                  </p>
                   <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                 </div>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
+              <DropdownMenuSeparator className="bg-border" />
+              <DropdownMenuItem asChild className="text-foreground hover:bg-muted focus:bg-muted">
                 <Link href="/profile">
                   <User className="mr-2 h-4 w-4" />
                   <span>{t("profile")}</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
+              <DropdownMenuItem asChild className="text-foreground hover:bg-muted focus:bg-muted">
                 <Link href="/settings">
                   <Settings className="mr-2 h-4 w-4" />
                   <span>{t("settings")}</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleSignOut}>
+              <DropdownMenuSeparator className="bg-border" />
+              <DropdownMenuItem onClick={handleSignOut} className="text-foreground hover:bg-muted focus:bg-muted">
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>{t("logout")}</span>
               </DropdownMenuItem>

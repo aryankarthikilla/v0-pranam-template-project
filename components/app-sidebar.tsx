@@ -62,8 +62,8 @@ interface AppSidebarProps {
 
 export function AppSidebar({ user }: AppSidebarProps) {
   return (
-    <Sidebar>
-      <SidebarHeader>
+    <Sidebar className="border-r border-border bg-background/95 backdrop-blur-sm">
+      <SidebarHeader className="border-b border-border/50">
         <div className="px-2 py-2">
           <Logo size="sm" />
         </div>
@@ -71,12 +71,15 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-muted-foreground">Main Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton
+                    asChild
+                    className="text-foreground hover:bg-muted hover:text-primary transition-colors"
+                  >
                     <a href={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
@@ -89,12 +92,15 @@ export function AppSidebar({ user }: AppSidebarProps) {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Support</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-muted-foreground">Support</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {supportItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton
+                    asChild
+                    className="text-foreground hover:bg-muted hover:text-primary transition-colors"
+                  >
                     <a href={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>

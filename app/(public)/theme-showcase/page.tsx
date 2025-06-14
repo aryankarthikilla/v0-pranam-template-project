@@ -23,6 +23,8 @@ import { showcaseThemes, categories, useCases, colorTags, type ShowcaseTheme } f
 import { ThemePreview } from "@/components/theme-builder/theme-preview"
 import { generateTailwindConfig, generateGlobalCSS } from "@/lib/theme-builder/utils"
 import { useRouter } from "next/navigation"
+import { LanguageSwitcher } from "@/components/language-switcher"
+import { ThemeSwitcher } from "@/components/theme-switcher"
 
 export default function ThemeShowcasePage() {
   const router = useRouter()
@@ -32,6 +34,12 @@ export default function ThemeShowcasePage() {
   const [selectedColor, setSelectedColor] = useState("all")
   const [selectedTheme, setSelectedTheme] = useState<ShowcaseTheme | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
+
+  const useThemeInBuilder = (theme: ShowcaseTheme) => {
+    // Store the selected theme in localStorage to pass to theme builder
+    localStorage.setItem("selectedShowcaseTheme", JSON.stringify(theme))
+    router.push("/theme-builder")
+  }
 
   const filteredThemes = useMemo(() => {
     return showcaseThemes.filter((theme) => {
@@ -98,31 +106,30 @@ export default function ThemeShowcasePage() {
     })
   }
 
-  const useThemeInBuilder = (theme: ShowcaseTheme) => {
-    // Store the selected theme in localStorage to pass to theme builder
-    localStorage.setItem("selectedShowcaseTheme", JSON.stringify(theme))
-    router.push("/theme-builder")
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/5 transition-colors duration-300">
       {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-40">
+      <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Link href="/" className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900">
+              <Link
+                href="/"
+                className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Home
               </Link>
               <div className="flex items-center space-x-2">
-                <Sparkles className="h-6 w-6 text-purple-600" />
-                <h1 className="text-xl font-bold text-gray-900">Theme Showcase</h1>
+                <Sparkles className="h-6 w-6 text-primary" />
+                <h1 className="text-xl font-bold text-foreground">Theme Showcase</h1>
               </div>
             </div>
             <div className="flex items-center space-x-2">
+              <LanguageSwitcher />
+              <ThemeSwitcher />
               <Link href="/theme-builder">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="border-border hover:bg-muted">
                   <Palette className="h-4 w-4 mr-2" />
                   Theme Builder
                 </Button>
@@ -134,20 +141,20 @@ export default function ThemeShowcasePage() {
           <div className="mt-6 space-y-4">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search themes by name, description, or tags..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 border-border bg-background text-foreground placeholder:text-muted-foreground"
                 />
               </div>
               <div className="flex gap-2">
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger className="w-48">
+                  <SelectTrigger className="w-48 border-border bg-background">
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="border-border bg-background">
                     {categories.map((category) => (
                       <SelectItem key={category} value={category}>
                         {category}
@@ -157,10 +164,10 @@ export default function ThemeShowcasePage() {
                 </Select>
 
                 <Select value={selectedUseCase} onValueChange={setSelectedUseCase}>
-                  <SelectTrigger className="w-48">
+                  <SelectTrigger className="w-48 border-border bg-background">
                     <SelectValue placeholder="Use Case" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="border-border bg-background">
                     <SelectItem value="all">All Use Cases</SelectItem>
                     {useCases.map((useCase) => (
                       <SelectItem key={useCase} value={useCase}>
@@ -171,10 +178,10 @@ export default function ThemeShowcasePage() {
                 </Select>
 
                 <Select value={selectedColor} onValueChange={setSelectedColor}>
-                  <SelectTrigger className="w-48">
+                  <SelectTrigger className="w-48 border-border bg-background">
                     <SelectValue placeholder="Color" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="border-border bg-background">
                     <SelectItem value="all">All Colors</SelectItem>
                     {colorTags.map((color) => (
                       <SelectItem key={color} value={color}>
@@ -190,42 +197,39 @@ export default function ThemeShowcasePage() {
             {(selectedCategory !== "All" || selectedUseCase !== "all" || selectedColor !== "all" || searchQuery) && (
               <div className="flex flex-wrap gap-2">
                 {searchQuery && (
-                  <Badge variant="secondary" className="gap-1">
+                  <Badge variant="secondary" className="gap-1 bg-secondary/50 text-secondary-foreground">
                     Search: {searchQuery}
-                    <button onClick={() => setSearchQuery("")} className="ml-1 hover:bg-gray-200 rounded-full p-0.5">
+                    <button onClick={() => setSearchQuery("")} className="ml-1 hover:bg-muted rounded-full p-0.5">
                       ×
                     </button>
                   </Badge>
                 )}
                 {selectedCategory !== "All" && (
-                  <Badge variant="secondary" className="gap-1">
+                  <Badge variant="secondary" className="gap-1 bg-secondary/50 text-secondary-foreground">
                     Category: {selectedCategory}
                     <button
                       onClick={() => setSelectedCategory("All")}
-                      className="ml-1 hover:bg-gray-200 rounded-full p-0.5"
+                      className="ml-1 hover:bg-muted rounded-full p-0.5"
                     >
                       ×
                     </button>
                   </Badge>
                 )}
                 {selectedUseCase !== "all" && (
-                  <Badge variant="secondary" className="gap-1">
+                  <Badge variant="secondary" className="gap-1 bg-secondary/50 text-secondary-foreground">
                     Use Case: {selectedUseCase}
                     <button
                       onClick={() => setSelectedUseCase("all")}
-                      className="ml-1 hover:bg-gray-200 rounded-full p-0.5"
+                      className="ml-1 hover:bg-muted rounded-full p-0.5"
                     >
                       ×
                     </button>
                   </Badge>
                 )}
                 {selectedColor !== "all" && (
-                  <Badge variant="secondary" className="gap-1">
+                  <Badge variant="secondary" className="gap-1 bg-secondary/50 text-secondary-foreground">
                     Color: {selectedColor}
-                    <button
-                      onClick={() => setSelectedColor("all")}
-                      className="ml-1 hover:bg-gray-200 rounded-full p-0.5"
-                    >
+                    <button onClick={() => setSelectedColor("all")} className="ml-1 hover:bg-muted rounded-full p-0.5">
                       ×
                     </button>
                   </Badge>
@@ -240,10 +244,10 @@ export default function ThemeShowcasePage() {
       <main className="container mx-auto px-4 py-8">
         {/* Results Summary */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <h2 className="text-2xl font-bold text-foreground mb-2">
             {filteredThemes.length} Theme{filteredThemes.length !== 1 ? "s" : ""} Found
           </h2>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Discover professionally crafted themes inspired by popular websites and design systems
           </p>
         </div>
@@ -251,8 +255,11 @@ export default function ThemeShowcasePage() {
         {/* Theme Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredThemes.map((theme) => (
-            <Card key={theme.id} className="group hover:shadow-lg transition-all duration-200 overflow-hidden">
-              <div className="aspect-video bg-gray-100 relative overflow-hidden">
+            <Card
+              key={theme.id}
+              className="group hover:shadow-lg transition-all duration-200 overflow-hidden border-border/50 bg-card/95 backdrop-blur-sm"
+            >
+              <div className="aspect-video bg-muted/50 relative overflow-hidden">
                 <img
                   src={theme.previewImage || "/placeholder.svg"}
                   alt={`${theme.name} preview`}
@@ -267,6 +274,7 @@ export default function ThemeShowcasePage() {
                       setSelectedTheme(theme)
                       setPreviewOpen(true)
                     }}
+                    className="bg-background/80 border-border hover:bg-muted"
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
@@ -276,11 +284,11 @@ export default function ThemeShowcasePage() {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <CardTitle className="text-lg mb-1">{theme.name}</CardTitle>
-                    <CardDescription className="text-sm">{theme.description}</CardDescription>
+                    <CardTitle className="text-lg mb-1 text-card-foreground">{theme.name}</CardTitle>
+                    <CardDescription className="text-sm text-muted-foreground">{theme.description}</CardDescription>
                   </div>
                   {theme.websiteUrl && (
-                    <Button variant="ghost" size="sm" asChild>
+                    <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground">
                       <a href={theme.websiteUrl} target="_blank" rel="noopener noreferrer">
                         <ExternalLink className="h-4 w-4" />
                       </a>
@@ -289,16 +297,16 @@ export default function ThemeShowcasePage() {
                 </div>
 
                 <div className="flex flex-wrap gap-1 mt-2">
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="text-xs border-border">
                     {theme.category}
                   </Badge>
                   {theme.tags.slice(0, 2).map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
+                    <Badge key={tag} variant="secondary" className="text-xs bg-secondary/50">
                       {tag}
                     </Badge>
                   ))}
                   {theme.tags.length > 2 && (
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-xs bg-secondary/50">
                       +{theme.tags.length - 2}
                     </Badge>
                   )}
@@ -306,12 +314,12 @@ export default function ThemeShowcasePage() {
 
                 {/* Color Palette Preview */}
                 <div className="flex items-center gap-2 mt-3">
-                  <span className="text-xs text-gray-500">Colors:</span>
+                  <span className="text-xs text-muted-foreground">Colors:</span>
                   <div className="flex gap-1">
                     {theme.primaryColors.slice(0, 4).map((color, index) => (
                       <div
                         key={index}
-                        className="w-4 h-4 rounded-full border border-gray-200"
+                        className="w-4 h-4 rounded-full border border-border"
                         style={{ backgroundColor: color }}
                         title={color}
                       />
@@ -322,14 +330,28 @@ export default function ThemeShowcasePage() {
 
               <CardContent className="pt-0">
                 <div className="flex gap-2">
-                  <Button size="sm" className="flex-1" onClick={() => useThemeInBuilder(theme)}>
+                  <Button
+                    size="sm"
+                    className="flex-1 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                    onClick={() => useThemeInBuilder(theme)}
+                  >
                     <Palette className="h-4 w-4 mr-2" />
                     Use Theme
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => downloadThemeFiles(theme)}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => downloadThemeFiles(theme)}
+                    className="border-border hover:bg-muted"
+                  >
                     <Download className="h-4 w-4" />
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => copyThemeCode(theme, "json")}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => copyThemeCode(theme, "json")}
+                    className="border-border hover:bg-muted"
+                  >
                     <Copy className="h-4 w-4" />
                   </Button>
                 </div>
@@ -341,11 +363,11 @@ export default function ThemeShowcasePage() {
         {/* Empty State */}
         {filteredThemes.length === 0 && (
           <div className="text-center py-12">
-            <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-              <Search className="h-8 w-8 text-gray-400" />
+            <div className="w-24 h-24 mx-auto mb-4 bg-muted/50 rounded-full flex items-center justify-center">
+              <Search className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No themes found</h3>
-            <p className="text-gray-600 mb-4">Try adjusting your search criteria or filters</p>
+            <h3 className="text-lg font-semibold text-foreground mb-2">No themes found</h3>
+            <p className="text-muted-foreground mb-4">Try adjusting your search criteria or filters</p>
             <Button
               variant="outline"
               onClick={() => {
@@ -354,6 +376,7 @@ export default function ThemeShowcasePage() {
                 setSelectedUseCase("all")
                 setSelectedColor("all")
               }}
+              className="border-border hover:bg-muted"
             >
               Clear All Filters
             </Button>
@@ -363,25 +386,40 @@ export default function ThemeShowcasePage() {
 
       {/* Theme Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh]">
+        <DialogContent className="max-w-6xl max-h-[90vh] border-border bg-background">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Palette className="h-5 w-5" />
+            <DialogTitle className="flex items-center gap-2 text-foreground">
+              <Palette className="h-5 w-5 text-primary" />
               {selectedTheme?.name}
             </DialogTitle>
-            <DialogDescription>{selectedTheme?.description}</DialogDescription>
+            <DialogDescription className="text-muted-foreground">{selectedTheme?.description}</DialogDescription>
           </DialogHeader>
 
           {selectedTheme && (
             <Tabs defaultValue="preview" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="preview">Preview</TabsTrigger>
-                <TabsTrigger value="details">Details</TabsTrigger>
-                <TabsTrigger value="code">Code</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-3 bg-muted/50">
+                <TabsTrigger
+                  value="preview"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  Preview
+                </TabsTrigger>
+                <TabsTrigger
+                  value="details"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  Details
+                </TabsTrigger>
+                <TabsTrigger
+                  value="code"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  Code
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="preview" className="mt-4">
-                <ScrollArea className="h-[60vh]">
+                <ScrollArea className="h-[60vh] border border-border rounded-md">
                   <ThemePreview themeData={selectedTheme.themeData} />
                 </ScrollArea>
               </TabsContent>
@@ -389,53 +427,53 @@ export default function ThemeShowcasePage() {
               <TabsContent value="details" className="mt-4">
                 <div className="space-y-6">
                   <div>
-                    <h4 className="font-semibold mb-2">Theme Information</h4>
+                    <h4 className="font-semibold mb-2 text-foreground">Theme Information</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <span className="text-sm font-medium">Category:</span>
+                        <span className="text-sm font-medium text-foreground">Category:</span>
                         <p className="text-sm text-muted-foreground">{selectedTheme.category}</p>
                       </div>
                       <div>
-                        <span className="text-sm font-medium">Inspiration:</span>
+                        <span className="text-sm font-medium text-foreground">Inspiration:</span>
                         <p className="text-sm text-muted-foreground">{selectedTheme.inspiration}</p>
                       </div>
                     </div>
                   </div>
 
-                  <Separator />
+                  <Separator className="bg-border" />
 
                   <div>
-                    <h4 className="font-semibold mb-2">Use Cases</h4>
+                    <h4 className="font-semibold mb-2 text-foreground">Use Cases</h4>
                     <div className="flex flex-wrap gap-2">
                       {selectedTheme.useCase.map((useCase) => (
-                        <Badge key={useCase} variant="outline">
+                        <Badge key={useCase} variant="outline" className="border-border">
                           {useCase}
                         </Badge>
                       ))}
                     </div>
                   </div>
 
-                  <Separator />
+                  <Separator className="bg-border" />
 
                   <div>
-                    <h4 className="font-semibold mb-2">Color Palette</h4>
+                    <h4 className="font-semibold mb-2 text-foreground">Color Palette</h4>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       {selectedTheme.primaryColors.map((color, index) => (
                         <div key={index} className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded border border-gray-200" style={{ backgroundColor: color }} />
-                          <span className="text-sm font-mono">{color}</span>
+                          <div className="w-8 h-8 rounded border border-border" style={{ backgroundColor: color }} />
+                          <span className="text-sm font-mono text-foreground">{color}</span>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  <Separator />
+                  <Separator className="bg-border" />
 
                   <div>
-                    <h4 className="font-semibold mb-2">Tags</h4>
+                    <h4 className="font-semibold mb-2 text-foreground">Tags</h4>
                     <div className="flex flex-wrap gap-2">
                       {selectedTheme.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary">
+                        <Badge key={tag} variant="secondary" className="bg-secondary/50">
                           {tag}
                         </Badge>
                       ))}
@@ -447,21 +485,36 @@ export default function ThemeShowcasePage() {
               <TabsContent value="code" className="mt-4">
                 <div className="space-y-4">
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => copyThemeCode(selectedTheme, "tailwind")}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => copyThemeCode(selectedTheme, "tailwind")}
+                      className="border-border hover:bg-muted"
+                    >
                       <Code className="h-4 w-4 mr-2" />
                       Copy Tailwind Config
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => copyThemeCode(selectedTheme, "css")}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => copyThemeCode(selectedTheme, "css")}
+                      className="border-border hover:bg-muted"
+                    >
                       <Layers className="h-4 w-4 mr-2" />
                       Copy CSS
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => copyThemeCode(selectedTheme, "json")}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => copyThemeCode(selectedTheme, "json")}
+                      className="border-border hover:bg-muted"
+                    >
                       <Copy className="h-4 w-4 mr-2" />
                       Copy JSON
                     </Button>
                   </div>
-                  <ScrollArea className="h-96 w-full border rounded-md p-4">
-                    <pre className="text-sm">
+                  <ScrollArea className="h-96 w-full border border-border rounded-md p-4 bg-muted/20">
+                    <pre className="text-sm text-foreground">
                       <code>{JSON.stringify(selectedTheme.themeData, null, 2)}</code>
                     </pre>
                   </ScrollArea>
@@ -471,11 +524,14 @@ export default function ThemeShowcasePage() {
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPreviewOpen(false)}>
+            <Button variant="outline" onClick={() => setPreviewOpen(false)} className="border-border hover:bg-muted">
               Close
             </Button>
             {selectedTheme && (
-              <Button onClick={() => useThemeInBuilder(selectedTheme)}>
+              <Button
+                onClick={() => useThemeInBuilder(selectedTheme)}
+                className="bg-gradient-to-r from-primary to-primary/80"
+              >
                 <Palette className="h-4 w-4 mr-2" />
                 Use in Theme Builder
               </Button>
