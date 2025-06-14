@@ -14,53 +14,56 @@ import {
 } from "@/components/ui/sidebar"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 import { Logo } from "@/components/logo"
-
-const menuItems = [
-  {
-    title: "Dashboard",
-    url: "/dashboard",
-    icon: Home,
-  },
-  {
-    title: "Analytics",
-    url: "/analytics",
-    icon: BarChart3,
-  },
-  {
-    title: "Users",
-    url: "/users",
-    icon: Users,
-  },
-  {
-    title: "Documents",
-    url: "/documents",
-    icon: FileText,
-  },
-  {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
-  },
-  {
-    title: "Profile",
-    url: "/profile",
-    icon: User,
-  },
-]
-
-const supportItems = [
-  {
-    title: "Help Center",
-    url: "/help",
-    icon: HelpCircle,
-  },
-]
+import { useTranslations } from "@/lib/i18n/hooks"
 
 interface AppSidebarProps {
   user: SupabaseUser
 }
 
 export function AppSidebar({ user }: AppSidebarProps) {
+  const { t } = useTranslations("common")
+
+  const menuItems = [
+    {
+      title: t("dashboard"),
+      url: "/dashboard",
+      icon: Home,
+    },
+    {
+      title: t("analytics"),
+      url: "/analytics",
+      icon: BarChart3,
+    },
+    {
+      title: t("users"),
+      url: "/users",
+      icon: Users,
+    },
+    {
+      title: t("documents"),
+      url: "/documents",
+      icon: FileText,
+    },
+    {
+      title: t("settings"),
+      url: "/settings",
+      icon: Settings,
+    },
+    {
+      title: t("profile"),
+      url: "/profile",
+      icon: User,
+    },
+  ]
+
+  const supportItems = [
+    {
+      title: t("helpCenter"),
+      url: "/help",
+      icon: HelpCircle,
+    },
+  ]
+
   return (
     <Sidebar className="border-r border-border bg-background/95 backdrop-blur-sm">
       <SidebarHeader className="border-b border-border/50">
@@ -71,7 +74,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-muted-foreground">Main Menu</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-muted-foreground">{t("mainMenu")}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -92,7 +95,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-muted-foreground">Support</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-muted-foreground">{t("support")}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {supportItems.map((item) => (

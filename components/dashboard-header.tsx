@@ -54,39 +54,55 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full hover:bg-muted">
-                <Avatar className="h-8 w-8">
+              <Button
+                variant="ghost"
+                className="relative h-8 w-8 rounded-full hover:bg-accent hover:text-accent-foreground transition-colors"
+              >
+                <Avatar className="h-8 w-8 ring-2 ring-transparent hover:ring-primary/20 transition-all">
                   <AvatarImage src="/placeholder.svg" alt={user.email || ""} />
-                  <AvatarFallback className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold">
+                  <AvatarFallback className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold text-xs">
                     {userInitials}
                   </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 border-border bg-background" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
+            <DropdownMenuContent
+              className="w-56 border border-border bg-card/95 backdrop-blur-sm shadow-lg"
+              align="end"
+              forceMount
+            >
+              <DropdownMenuLabel className="font-normal p-3">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none text-foreground">
+                  <p className="text-sm font-medium leading-none text-card-foreground">
                     {user.user_metadata?.full_name || t("welcome")}
                   </p>
-                  <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                  <p className="text-xs leading-none text-muted-foreground truncate">{user.email}</p>
                 </div>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-border" />
-              <DropdownMenuItem asChild className="text-foreground hover:bg-muted focus:bg-muted">
-                <Link href="/profile">
+              <DropdownMenuSeparator className="bg-border/50" />
+              <DropdownMenuItem
+                asChild
+                className="text-card-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground cursor-pointer"
+              >
+                <Link href="/profile" className="flex items-center w-full">
                   <User className="mr-2 h-4 w-4" />
                   <span>{t("profile")}</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="text-foreground hover:bg-muted focus:bg-muted">
-                <Link href="/settings">
+              <DropdownMenuItem
+                asChild
+                className="text-card-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground cursor-pointer"
+              >
+                <Link href="/settings" className="flex items-center w-full">
                   <Settings className="mr-2 h-4 w-4" />
                   <span>{t("settings")}</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-border" />
-              <DropdownMenuItem onClick={handleSignOut} className="text-foreground hover:bg-muted focus:bg-muted">
+              <DropdownMenuSeparator className="bg-border/50" />
+              <DropdownMenuItem
+                onClick={handleSignOut}
+                className="text-card-foreground hover:bg-destructive hover:text-destructive-foreground focus:bg-destructive focus:text-destructive-foreground cursor-pointer"
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>{t("logout")}</span>
               </DropdownMenuItem>
