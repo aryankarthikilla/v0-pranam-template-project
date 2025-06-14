@@ -29,21 +29,28 @@ export function DeleteTaskModal({ open, onOpenChange, task, onSuccess }: DeleteT
 
   const handleDelete = async () => {
     if (!task?.id) {
-      console.error("No task ID provided")
+      console.error("No task ID provided for deletion")
+      toast.error("Invalid task selected")
       return
     }
 
     setIsDeleting(true)
     try {
+      console.log("Attempting to delete task:", task.id, task.title)
+
       const result = await deleteTask(task.id)
+
       if (result.success) {
-        toast.success(t("taskDeleted"))
+        console.log("Task deleted successfully:", result.deletedTask)
+        toast.success(`Task "${task.title}" deleted successfully`)
         onSuccess()
         onOpenChange(false)
+      } else {
+        throw new Error("Delete operation failed")
       }
     } catch (error) {
       console.error("Error deleting task:", error)
-      toast.error(t("deleteTaskError"))
+      toast.error(`Failed to delete task: ${error.message}`)
     } finally {
       setIsDeleting(false)
     }
@@ -58,9 +65,11 @@ export function DeleteTaskModal({ open, onOpenChange, task, onSuccess }: DeleteT
             {t("deleteTask")}
           </AlertDialogTitle>
           <AlertDialogDescription className="text-muted-foreground">
-            {t("deleteTaskConfirmation", { title: task?.title || "this task" })}
+            Are you sure you want to delete <strong>"{task?.title}"</strong>?
             <br />
-            <span className="text-red-600 dark:text-red-400 font-medium">{t("deleteTaskWarning")}</span>
+            <span className="text-red-600 dark:text-red-400 font-medium">
+              This action will mark the task as deleted and cannot be undone.
+            </span>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

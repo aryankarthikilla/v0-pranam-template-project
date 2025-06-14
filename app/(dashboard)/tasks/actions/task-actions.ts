@@ -6,7 +6,11 @@ import { revalidatePath } from "next/cache"
 export async function getTasks(showCompleted = false) {
   const supabase = await createClient()
 
-  let query = supabase.from("tasks").select("*").eq("is_deleted", false).order("created_at", { ascending: false })
+  let query = supabase
+    .from("tasks")
+    .select("*")
+    .eq("is_deleted", false) // Always filter out deleted tasks
+    .order("created_at", { ascending: false })
 
   if (!showCompleted) {
     query = query.neq("status", "completed")
@@ -15,6 +19,7 @@ export async function getTasks(showCompleted = false) {
   const { data, error } = await query
 
   if (error) {
+    console.error("Database error:", error)
     throw new Error(`Error fetching tasks: ${error.message}`)
   }
 
@@ -84,11 +89,14 @@ export async function deleteTask(taskId: string) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
+
   if (!user) {
     throw new Error("User not authenticated")
   }
 
-  // First, soft delete all subtasks
+  console.log("Deleting task with ID:", taskId)
+
+  // First, mark all subtasks as deleted
   const { error: subtaskError } = await supabase
     .from("tasks")
     .update({
@@ -97,13 +105,14 @@ export async function deleteTask(taskId: string) {
       updated_at: new Date().toISOString(),
     })
     .eq("parent_id", taskId)
+    .eq("is_deleted", false)
 
   if (subtaskError) {
     console.error("Error deleting subtasks:", subtaskError)
   }
 
-  // Then soft delete the main task
-  const { error } = await supabase
+  // Then mark the main task as deleted
+  const { data, error } = await supabase
     .from("tasks")
     .update({
       is_deleted: true,
@@ -111,13 +120,20 @@ export async function deleteTask(taskId: string) {
       updated_at: new Date().toISOString(),
     })
     .eq("id", taskId)
+    .eq("is_deleted", false)
+    .select()
 
   if (error) {
+    console.error("Database error:", error)
     throw new Error(`Error deleting task: ${error.message}`)
   }
 
+  if (!data || data.length === 0) {
+    throw new Error("Task not found or already deleted")
+  }
+
   revalidatePath("/dashboard/tasks")
-  return { success: true }
+  return { success: true, deletedTask: data[0] }
 }
 
 export async function toggleTaskStatus(taskId: string) {
@@ -165,11 +181,12 @@ export async function getRandomTask() {
   const { data, error } = await supabase
     .from("tasks")
     .select("*")
-    .eq("is_deleted", false)
+    .eq("is_deleted", false) // Only non-deleted tasks
     .neq("status", "completed")
-    .limit(50) // Get 50 tasks and pick random from them
+    .limit(50)
 
   if (error) {
+    console.error("Database error:", error)
     throw new Error(`Error fetching random task: ${error.message}`)
   }
 
@@ -177,7 +194,6 @@ export async function getRandomTask() {
     return null
   }
 
-  // Return a random task from the results
   const randomIndex = Math.floor(Math.random() * data.length)
   return data[randomIndex]
 }
