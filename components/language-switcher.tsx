@@ -19,18 +19,16 @@ export function LanguageSwitcher() {
           <span className="sr-only">Switch language</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-20">
         {Object.entries(languages).map(([key, langData]) => (
           <DropdownMenuItem
             key={key}
             onClick={() => setLanguage(key as Language)}
             className="flex items-center justify-between cursor-pointer"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <span className="text-lg">{langData.flag}</span>
-              <span className="font-medium">
-                {key === "en" ? "EN" : "తె"} {langData.nativeName}
-              </span>
+              <span className="font-medium">{key === "en" ? "EN" : "తె"}</span>
             </div>
             {language === key && <Check className="h-4 w-4 text-green-600" />}
           </DropdownMenuItem>
