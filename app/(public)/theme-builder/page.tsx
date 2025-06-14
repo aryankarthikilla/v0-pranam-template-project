@@ -34,12 +34,14 @@ import {
   Monitor,
   Smartphone,
   Tablet,
+  Sparkles,
 } from "lucide-react"
 import { ColorPicker } from "@/components/theme-builder/color-picker"
 import { ComponentEditor } from "@/components/theme-builder/component-editor"
 import { ThemePreview } from "@/components/theme-builder/theme-preview"
 import { createClient } from "@/utils/supabase/client"
 import type { ThemeData, ThemeColors, ComponentStyles, Theme } from "@/lib/theme-builder/types"
+import type { ShowcaseTheme } from "@/lib/theme-showcase/data"
 import {
   getDefaultTheme,
   downloadThemeFiles,
@@ -48,6 +50,7 @@ import {
 } from "@/lib/theme-builder/utils"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
+import { UsageGuide } from "@/components/theme-builder/usage-guide"
 
 const componentNames = [
   "button",
@@ -115,11 +118,28 @@ export default function ThemeBuilderPage() {
   const [themeDescription, setThemeDescription] = useState("")
   const [isPublic, setIsPublic] = useState(false)
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "tablet" | "mobile">("desktop")
+  const [showcaseTheme, setShowcaseTheme] = useState<ShowcaseTheme | null>(null)
 
   const supabase = createClient()
 
   useEffect(() => {
     loadSavedThemes()
+
+    // Check if a theme was selected from showcase
+    const selectedShowcaseTheme = localStorage.getItem("selectedShowcaseTheme")
+    if (selectedShowcaseTheme) {
+      try {
+        const theme: ShowcaseTheme = JSON.parse(selectedShowcaseTheme)
+        setCurrentTheme(theme.themeData)
+        setThemeName(theme.name)
+        setThemeDescription(theme.description)
+        setShowcaseTheme(theme)
+        setIsDirty(true)
+        localStorage.removeItem("selectedShowcaseTheme")
+      } catch (error) {
+        console.error("Error loading showcase theme:", error)
+      }
+    }
   }, [])
 
   const loadSavedThemes = async () => {
@@ -162,6 +182,9 @@ export default function ThemeBuilderPage() {
 
   const resetTheme = () => {
     setCurrentTheme(getDefaultTheme())
+    setShowcaseTheme(null)
+    setThemeName("")
+    setThemeDescription("")
     setIsDirty(false)
   }
 
@@ -201,6 +224,7 @@ export default function ThemeBuilderPage() {
 
   const loadTheme = (theme: Theme) => {
     setCurrentTheme(theme.theme_data)
+    setShowcaseTheme(null)
     setIsDirty(false)
   }
 
@@ -257,6 +281,13 @@ export default function ThemeBuilderPage() {
             </div>
           </div>
           <div className="flex items-center space-x-2">
+            <Link href="/theme-showcase">
+              <Button variant="outline" size="sm">
+                <Sparkles className="h-4 w-4 mr-2" />
+                Browse Themes
+              </Button>
+            </Link>
+            <UsageGuide />
             <Button variant="outline" size="sm" onClick={() => setPreviewMode(!previewMode)}>
               {previewMode ? <EyeOff className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />}
               {previewMode ? "Edit Mode" : "Preview Mode"}
@@ -320,6 +351,37 @@ export default function ThemeBuilderPage() {
       </header>
 
       <div className="container mx-auto px-4 py-6">
+        {/* Showcase Theme Banner */}
+        {showcaseTheme && (
+          <Card className="mb-6 border-purple-200 bg-purple-50">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-purple-600" />
+                    Editing: {showcaseTheme.name}
+                  </CardTitle>
+                  <CardDescription>
+                    Inspired by {showcaseTheme.inspiration} • {showcaseTheme.category}
+                  </CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  {showcaseTheme.websiteUrl && (
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={showcaseTheme.websiteUrl} target="_blank" rel="noopener noreferrer">
+                        View Original
+                      </a>
+                    </Button>
+                  )}
+                  <Button variant="outline" size="sm" onClick={() => setShowcaseTheme(null)}>
+                    Clear
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+        )}
+
         {previewMode ? (
           <div className="space-y-6">
             {/* Preview Controls */}
