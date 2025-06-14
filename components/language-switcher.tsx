@@ -7,18 +7,7 @@ import { useI18n } from "@/lib/i18n/context"
 import { languages, type Language } from "@/lib/i18n"
 
 export function LanguageSwitcher() {
-  const { language, setLanguage, t } = useI18n()
-
-  const translations = {
-    selectLanguage: {
-      en: "Language",
-      te: "భాష",
-    },
-    currentLanguage: {
-      en: "Current: English",
-      te: "ప్రస్తుతం: తెలుగు",
-    },
-  }
+  const { language, setLanguage } = useI18n()
 
   const currentLanguageData = languages[language]
 
@@ -30,7 +19,7 @@ export function LanguageSwitcher() {
           <span className="sr-only">Switch language</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-40">
         {Object.entries(languages).map(([key, langData]) => (
           <DropdownMenuItem
             key={key}
@@ -39,7 +28,9 @@ export function LanguageSwitcher() {
           >
             <div className="flex items-center gap-3">
               <span className="text-lg">{langData.flag}</span>
-              <span className="font-medium">{langData.nativeName}</span>
+              <span className="font-medium">
+                {key === "en" ? "EN" : "తె"} {langData.nativeName}
+              </span>
             </div>
             {language === key && <Check className="h-4 w-4 text-green-600" />}
           </DropdownMenuItem>

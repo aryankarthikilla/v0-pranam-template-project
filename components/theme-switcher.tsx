@@ -11,10 +11,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Palette, Check } from "lucide-react"
 import { useTheme } from "@/contexts/theme-context"
+import { useI18n } from "@/lib/i18n/context"
 import { themes, type ThemeKey } from "@/lib/themes"
 
 export function ThemeSwitcher() {
   const { theme, setTheme } = useTheme()
+  const { t } = useI18n()
 
   return (
     <DropdownMenu>
@@ -25,7 +27,7 @@ export function ThemeSwitcher() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>रंग चुनें (Choose Theme)</DropdownMenuLabel>
+        <DropdownMenuLabel>{t("chooseTheme")}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {Object.entries(themes).map(([key, themeData]) => (
           <DropdownMenuItem
@@ -35,7 +37,7 @@ export function ThemeSwitcher() {
           >
             <div className="flex items-center gap-2">
               <span className="text-lg">{themeData.icon}</span>
-              <span>{themeData.name}</span>
+              <span>{t(`themes.${key}`)}</span>
             </div>
             {theme === key && <Check className="h-4 w-4" />}
           </DropdownMenuItem>

@@ -1,3 +1,21 @@
 {
-  "appName": "Pranam"
+  "appName": "Pranam",
+  "dashboard": "Dashboard",
+  "analytics": "Analytics",
+  "users": "Users",
+  "profile": "Profile",
+  "settings": "Settings",
+  "documents": "Documents",
+  "helpCenter": "Help Center",
+  "mainMenu": "Main Menu",
+  "support": "Support",
+  "chooseTheme": "Choose Theme",
+  "themes": {
+    "light": "Light",
+    "dark": "Dark",
+    "pink": "Pink",
+    "purple": "Purple",
+    "blue": "Blue",
+    "green": "Green"
+  }
 }

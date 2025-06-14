@@ -1,3 +1,21 @@
 {
-  "appName": "ప్రణామ్"
+  "appName": "ప్రణామ్",
+  "dashboard": "డ్యాష్‌బోర్డ్",
+  "analytics": "విశ్లేషణలు",
+  "users": "వినియోగదారులు",
+  "profile": "ప్రొఫైల్",
+  "settings": "సెట్టింగులు",
+  "documents": "పత్రాలు",
+  "helpCenter": "సహాయ కేంద్రం",
+  "mainMenu": "ప్రధాన మెను",
+  "support": "మద్దతు",
+  "chooseTheme": "థీమ్ ఎంచుకోండి",
+  "themes": {
+    "light": "వెలుగు",
+    "dark": "చీకటి",
+    "pink": "గులాబీ",
+    "purple": "ఊదా",
+    "blue": "నీలం",
+    "green": "ఆకుపచ్చ"
+  }
 }
