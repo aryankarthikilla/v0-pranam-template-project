@@ -32,3 +32,6 @@ export function LanguageSwitcher() {
     </DropdownMenu>
   )
 }
+
+// Add default export
+export default LanguageSwitcher
