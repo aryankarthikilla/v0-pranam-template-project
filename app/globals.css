@@ -77,9 +77,32 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border transition-colors;
   }
   body {
     @apply bg-background text-foreground;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Ensure smooth theme transitions */
+  html {
+    transition: background-color 0.3s ease;
+  }
+
+  /* Custom scrollbar styling that respects theme */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-md;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
   }
 }
