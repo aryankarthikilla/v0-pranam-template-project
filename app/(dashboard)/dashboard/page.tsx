@@ -3,9 +3,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Users, TrendingUp, DollarSign, Activity, ArrowUpRight, ArrowDownRight } from "lucide-react"
+import { Users, TrendingUp, IndianRupee, Activity, ArrowUpRight, ArrowDownRight } from "lucide-react"
 import { useTranslations } from "@/lib/i18n/hooks"
 import { PageTitle } from "@/components/page-title"
+import { formatCurrency } from "@/lib/utils/common"
 
 export default function DashboardPage() {
   const { t } = useTranslations("dashboard")
@@ -15,30 +16,38 @@ export default function DashboardPage() {
       title: t("totalUsers"),
       value: "2,350",
       change: "+20.1%",
-      trend: "up",
+      trend: "up" as const,
       icon: Users,
     },
     {
       title: t("revenue"),
-      value: "$45,231.89",
+      value: formatCurrency(4523189),
       change: "+12.5%",
-      trend: "up",
-      icon: DollarSign,
+      trend: "up" as const,
+      icon: IndianRupee,
     },
     {
       title: t("activeUsers"),
       value: "1,234",
       change: "-2.3%",
-      trend: "down",
+      trend: "down" as const,
       icon: Activity,
     },
     {
       title: t("growth"),
       value: "+573",
       change: "+8.2%",
-      trend: "up",
+      trend: "up" as const,
       icon: TrendingUp,
     },
+  ]
+
+  const salesData = [
+    { name: "Rajesh Kumar", email: "rajesh.kumar@email.com", amount: formatCurrency(199900) },
+    { name: "Priya Sharma", email: "priya.sharma@email.com", amount: formatCurrency(3900) },
+    { name: "Arjun Patel", email: "arjun.patel@email.com", amount: formatCurrency(29900) },
+    { name: "Sneha Reddy", email: "sneha.reddy@email.com", amount: formatCurrency(9900) },
+    { name: "Vikram Singh", email: "vikram.singh@email.com", amount: formatCurrency(3900) },
   ]
 
   return (
@@ -113,13 +122,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {[
-                  { name: "Olivia Martin", email: "olivia.martin@email.com", amount: "+$1,999.00" },
-                  { name: "Jackson Lee", email: "jackson.lee@email.com", amount: "+$39.00" },
-                  { name: "Isabella Nguyen", email: "isabella.nguyen@email.com", amount: "+$299.00" },
-                  { name: "William Kim", email: "will@email.com", amount: "+$99.00" },
-                  { name: "Sofia Davis", email: "sofia.davis@email.com", amount: "+$39.00" },
-                ].map((sale, index) => (
+                {salesData.map((sale, index) => (
                   <div key={index} className="flex items-center space-x-4">
                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                       <span className="text-xs font-medium text-primary">

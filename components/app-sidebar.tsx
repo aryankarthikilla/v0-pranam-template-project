@@ -11,12 +11,12 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 import { Logo } from "@/components/logo"
 import { useTranslations } from "@/lib/i18n/hooks"
-import { useSidebar } from "@/components/ui/sidebar"
 
 interface AppSidebarProps {
   user: SupabaseUser
@@ -69,7 +69,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
   ]
 
   const SidebarMenuItemWithTooltip = ({ item }: { item: (typeof menuItems)[0] }) => {
-    const menuButton = (
+    const content = (
       <SidebarMenuButton asChild className="text-foreground hover:bg-muted hover:text-primary transition-colors">
         <a href={item.url} className="flex items-center gap-2">
           <item.icon className="h-4 w-4 flex-shrink-0" />
@@ -82,8 +82,12 @@ export function AppSidebar({ user }: AppSidebarProps) {
       return (
         <TooltipProvider>
           <Tooltip>
-            <TooltipTrigger asChild>{menuButton}</TooltipTrigger>
-            <TooltipContent side="right" className="bg-popover text-popover-foreground border border-border shadow-md">
+            <TooltipTrigger asChild>{content}</TooltipTrigger>
+            <TooltipContent
+              side="right"
+              className="bg-popover text-popover-foreground border border-border shadow-md"
+              sideOffset={5}
+            >
               <p>{item.title}</p>
             </TooltipContent>
           </Tooltip>
@@ -91,7 +95,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
       )
     }
 
-    return menuButton
+    return content
   }
 
   return (
