@@ -38,26 +38,26 @@ export function TaskCard({ task, level = 0, onEdit, onRefresh }: TaskCardProps) 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "urgent":
-        return "bg-red-100 text-red-800 border-red-200"
+        return "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800"
       case "high":
-        return "bg-orange-100 text-orange-800 border-orange-200"
+        return "bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300 border-orange-200 dark:border-orange-800"
       case "medium":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200"
+        return "bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800"
       case "low":
-        return "bg-green-100 text-green-800 border-green-200"
+        return "bg-emerald-100 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200"
+        return "bg-muted text-muted-foreground border-border"
     }
   }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "completed":
-        return <CheckCircle className="h-4 w-4 text-green-600" />
+        return <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
       case "in_progress":
-        return <Clock className="h-4 w-4 text-blue-600" />
+        return <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
       default:
-        return <Circle className="h-4 w-4 text-gray-400" />
+        return <Circle className="h-4 w-4 text-muted-foreground" />
     }
   }
 
@@ -65,7 +65,7 @@ export function TaskCard({ task, level = 0, onEdit, onRefresh }: TaskCardProps) 
 
   return (
     <div className={`ml-${level * 4}`}>
-      <Card className={`mb-2 ${task.status === "completed" ? "opacity-60" : ""}`}>
+      <Card className={`mb-2 border-border bg-card ${task.status === "completed" ? "opacity-60" : ""}`}>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -74,36 +74,41 @@ export function TaskCard({ task, level = 0, onEdit, onRefresh }: TaskCardProps) 
                 size="sm"
                 onClick={handleToggleStatus}
                 disabled={isToggling}
-                className="p-1 h-auto"
+                className="p-1 h-auto hover:bg-accent"
               >
                 {getStatusIcon(task.status)}
               </Button>
               <div>
-                <h3 className={`font-medium ${task.status === "completed" ? "line-through" : ""}`}>{task.title}</h3>
+                <h3 className={`font-medium text-card-foreground ${task.status === "completed" ? "line-through" : ""}`}>
+                  {task.title}
+                </h3>
                 {task.description && <p className="text-sm text-muted-foreground mt-1">{task.description}</p>}
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {isOverdue && <AlertTriangle className="h-4 w-4 text-red-500" />}
+              {isOverdue && <AlertTriangle className="h-4 w-4 text-red-500 dark:text-red-400" />}
               <Badge className={getPriorityColor(task.priority)}>{t(`priority.${task.priority}`)}</Badge>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" className="hover:bg-accent">
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onEdit(task)}>
+                <DropdownMenuContent align="end" className="bg-popover border-border">
+                  <DropdownMenuItem onClick={() => onEdit(task)} className="hover:bg-accent">
                     <Edit className="h-4 w-4 mr-2" />
                     {t("edit")}
                   </DropdownMenuItem>
                   {task.level < 4 && (
-                    <DropdownMenuItem onClick={() => onEdit({ parent_id: task.id })}>
+                    <DropdownMenuItem onClick={() => onEdit({ parent_id: task.id })} className="hover:bg-accent">
                       <Plus className="h-4 w-4 mr-2" />
                       {t("addSubtask")}
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onClick={() => setIsDeleteOpen(true)} className="text-red-600">
+                  <DropdownMenuItem
+                    onClick={() => setIsDeleteOpen(true)}
+                    className="text-red-600 dark:text-red-400 hover:bg-accent"
+                  >
                     <Trash2 className="h-4 w-4 mr-2" />
                     {t("delete")}
                   </DropdownMenuItem>
@@ -117,7 +122,7 @@ export function TaskCard({ task, level = 0, onEdit, onRefresh }: TaskCardProps) 
           <CardContent className="pt-0">
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               {task.due_date && (
-                <span className={isOverdue ? "text-red-600" : ""}>
+                <span className={isOverdue ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}>
                   {t("dueDate")}: {formatDistanceToNow(new Date(task.due_date), { addSuffix: true })}
                 </span>
               )}

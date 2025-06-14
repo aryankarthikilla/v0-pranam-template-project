@@ -41,24 +41,26 @@ export function DeleteTaskModal({ open, onOpenChange, task, onSuccess }: DeleteT
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent className="bg-background border-border">
         <AlertDialogHeader>
-          <AlertDialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-red-500" />
+          <AlertDialogTitle className="flex items-center gap-2 text-foreground">
+            <AlertTriangle className="h-5 w-5 text-red-500 dark:text-red-400" />
             {t("deleteTask")}
           </AlertDialogTitle>
-          <AlertDialogDescription>
+          <AlertDialogDescription className="text-muted-foreground">
             {t("deleteTaskConfirmation", { title: task?.title })}
             <br />
-            <span className="text-red-600 font-medium">{t("deleteTaskWarning")}</span>
+            <span className="text-red-600 dark:text-red-400 font-medium">{t("deleteTaskWarning")}</span>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>{t("cancel")}</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting} className="border-border hover:bg-accent">
+            {t("cancel")}
+          </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
             disabled={isDeleting}
-            className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            className="bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 focus:ring-red-600 text-white"
           >
             {isDeleting ? (
               <>

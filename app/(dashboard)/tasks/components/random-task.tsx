@@ -52,36 +52,36 @@ export function RandomTask({ onRefresh }: RandomTaskProps) {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "urgent":
-        return "bg-red-100 text-red-800 border-red-200"
+        return "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800"
       case "high":
-        return "bg-orange-100 text-orange-800 border-orange-200"
+        return "bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300 border-orange-200 dark:border-orange-800"
       case "medium":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200"
+        return "bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800"
       case "low":
-        return "bg-green-100 text-green-800 border-green-200"
+        return "bg-emerald-100 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200"
+        return "bg-muted text-muted-foreground border-border"
     }
   }
 
   return (
-    <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+    <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20 dark:from-primary/10 dark:to-primary/20">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Shuffle className="h-5 w-5 text-blue-600" />
+        <CardTitle className="flex items-center gap-2 text-card-foreground">
+          <Shuffle className="h-5 w-5 text-primary" />
           {t("randomTask")}
         </CardTitle>
-        <CardDescription>{t("randomTaskDescription")}</CardDescription>
+        <CardDescription className="text-muted-foreground">{t("randomTaskDescription")}</CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <RefreshCw className="h-6 w-6 animate-spin text-blue-600" />
+            <RefreshCw className="h-6 w-6 animate-spin text-primary" />
           </div>
         ) : randomTask ? (
           <div className="space-y-4">
             <div>
-              <h3 className="font-medium text-lg">{randomTask.title}</h3>
+              <h3 className="font-medium text-lg text-card-foreground">{randomTask.title}</h3>
               {randomTask.description && <p className="text-muted-foreground mt-1">{randomTask.description}</p>}
             </div>
 
@@ -89,7 +89,13 @@ export function RandomTask({ onRefresh }: RandomTaskProps) {
               <Badge className={getPriorityColor(randomTask.priority)}>{t(`priority.${randomTask.priority}`)}</Badge>
 
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={fetchRandomTask} disabled={isLoading}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={fetchRandomTask}
+                  disabled={isLoading}
+                  className="border-border hover:bg-accent"
+                >
                   <RefreshCw className="h-4 w-4 mr-2" />
                   {t("getAnother")}
                 </Button>
@@ -98,7 +104,7 @@ export function RandomTask({ onRefresh }: RandomTaskProps) {
                   size="sm"
                   onClick={handleCompleteTask}
                   disabled={isCompleting}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white"
                 >
                   {isCompleting ? (
                     <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
@@ -113,7 +119,12 @@ export function RandomTask({ onRefresh }: RandomTaskProps) {
         ) : (
           <div className="text-center py-8">
             <p className="text-muted-foreground">{t("noTasksAvailable")}</p>
-            <Button variant="outline" size="sm" onClick={fetchRandomTask} className="mt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchRandomTask}
+              className="mt-2 border-border hover:bg-accent"
+            >
               <RefreshCw className="h-4 w-4 mr-2" />
               {t("tryAgain")}
             </Button>

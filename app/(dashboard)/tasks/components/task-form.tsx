@@ -92,10 +92,12 @@ export function TaskForm({ open, onOpenChange, task, onSuccess }: TaskFormProps)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] bg-background border-border">
         <DialogHeader>
-          <DialogTitle>{task?.id ? t("editTask") : t("createTask")}</DialogTitle>
-          <DialogDescription>{task?.id ? t("editTaskDescription") : t("createTaskDescription")}</DialogDescription>
+          <DialogTitle className="text-foreground">{task?.id ? t("editTask") : t("createTask")}</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            {task?.id ? t("editTaskDescription") : t("createTaskDescription")}
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -105,9 +107,13 @@ export function TaskForm({ open, onOpenChange, task, onSuccess }: TaskFormProps)
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("taskTitle")}</FormLabel>
+                  <FormLabel className="text-foreground">{t("taskTitle")}</FormLabel>
                   <FormControl>
-                    <Input placeholder={t("taskTitlePlaceholder")} {...field} />
+                    <Input
+                      placeholder={t("taskTitlePlaceholder")}
+                      {...field}
+                      className="bg-background border-border text-foreground"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -119,9 +125,13 @@ export function TaskForm({ open, onOpenChange, task, onSuccess }: TaskFormProps)
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("description")}</FormLabel>
+                  <FormLabel className="text-foreground">{t("description")}</FormLabel>
                   <FormControl>
-                    <Textarea placeholder={t("descriptionPlaceholder")} className="resize-none" {...field} />
+                    <Textarea
+                      placeholder={t("descriptionPlaceholder")}
+                      className="resize-none bg-background border-border text-foreground"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -134,14 +144,14 @@ export function TaskForm({ open, onOpenChange, task, onSuccess }: TaskFormProps)
                 name="priority"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("priority")}</FormLabel>
+                    <FormLabel className="text-foreground">{t("priority")}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-background border-border text-foreground">
                           <SelectValue placeholder={t("selectPriority")} />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="bg-popover border-border">
                         <SelectItem value="low">{t("priority.low")}</SelectItem>
                         <SelectItem value="medium">{t("priority.medium")}</SelectItem>
                         <SelectItem value="high">{t("priority.high")}</SelectItem>
@@ -158,14 +168,14 @@ export function TaskForm({ open, onOpenChange, task, onSuccess }: TaskFormProps)
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("status")}</FormLabel>
+                    <FormLabel className="text-foreground">{t("status")}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-background border-border text-foreground">
                           <SelectValue placeholder={t("selectStatus")} />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="bg-popover border-border">
                         <SelectItem value="pending">{t("status.pending")}</SelectItem>
                         <SelectItem value="in_progress">{t("status.inProgress")}</SelectItem>
                         <SelectItem value="completed">{t("status.completed")}</SelectItem>
@@ -182,26 +192,30 @@ export function TaskForm({ open, onOpenChange, task, onSuccess }: TaskFormProps)
               name="due_date"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>{t("dueDate")}</FormLabel>
+                  <FormLabel className="text-foreground">{t("dueDate")}</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
                           variant={"outline"}
-                          className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                          className={cn(
+                            "w-full pl-3 text-left font-normal bg-background border-border text-foreground hover:bg-accent",
+                            !field.value && "text-muted-foreground",
+                          )}
                         >
                           {field.value ? format(field.value, "PPP") : <span>{t("pickDate")}</span>}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0 bg-popover border-border" align="start">
                       <Calendar
                         mode="single"
                         selected={field.value}
                         onSelect={field.onChange}
                         disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                         initialFocus
+                        className="bg-popover"
                       />
                     </PopoverContent>
                   </Popover>
@@ -211,10 +225,19 @@ export function TaskForm({ open, onOpenChange, task, onSuccess }: TaskFormProps)
             />
 
             <div className="flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className="border-border hover:bg-accent"
+              >
                 {t("cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {task?.id ? t("updateTask") : t("createTask")}
               </Button>

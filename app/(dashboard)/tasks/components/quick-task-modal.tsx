@@ -66,13 +66,13 @@ export function QuickTaskModal({ open, onOpenChange, onSuccess }: QuickTaskModal
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] bg-background border-border">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-yellow-500" />
+          <DialogTitle className="flex items-center gap-2 text-foreground">
+            <Zap className="h-5 w-5 text-amber-500" />
             {t("quickTask")}
           </DialogTitle>
-          <DialogDescription>{t("quickTaskDescription")}</DialogDescription>
+          <DialogDescription className="text-muted-foreground">{t("quickTaskDescription")}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -84,7 +84,7 @@ export function QuickTaskModal({ open, onOpenChange, onSuccess }: QuickTaskModal
               onKeyDown={handleKeyDown}
               placeholder={t("quickTaskPlaceholder")}
               disabled={isSubmitting}
-              className="pr-12"
+              className="pr-12 bg-background border-border text-foreground"
             />
             {isSubmitting && (
               <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -94,10 +94,20 @@ export function QuickTaskModal({ open, onOpenChange, onSuccess }: QuickTaskModal
           </div>
 
           <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+              className="border-border hover:bg-accent"
+            >
               {t("cancel")}
             </Button>
-            <Button type="submit" disabled={!title.trim() || isSubmitting}>
+            <Button
+              type="submit"
+              disabled={!title.trim() || isSubmitting}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
               {t("addTask")}
             </Button>
           </div>
