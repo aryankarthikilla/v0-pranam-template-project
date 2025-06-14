@@ -19,9 +19,14 @@
   "documentation": "Documentation",
   "features": "Features",
   "multiLanguage": "Multi-Language Support",
-  "multiLanguageDescription": "Built-in internationalization with English and Telugu support, easily extensible to more languages.",
+  "multiLanguageDescription": "Built-in internationalization with English and Telugu support. Switch languages instantly and enjoy a localized experience. Easily extensible to support more languages for global reach.",
   "themeCustomization": "Theme Customization",
   "themeCustomizationDescription": "Multiple color themes with dark mode support and user preference persistence.",
   "readyToDeploy": "Ready to Deploy",
-  "readyToDeployDescription": "Optimized for Vercel deployment with environment variable management and production-ready configuration."
+  "readyToDeployDescription": "Optimized for Vercel deployment with environment variable management and production-ready configuration.",
+  "languageNotice": "Experience Pranam in your preferred language",
+  "languageSwitch": "Switch Language",
+  "currentLanguage": "Current Language",
+  "availableLanguages": "Available Languages",
+  "moreLanguagesComing": "More languages coming soon!"
 }

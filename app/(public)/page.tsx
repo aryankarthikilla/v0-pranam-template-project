@@ -24,7 +24,11 @@ export default function HomePage() {
               <span className="text-xl font-bold text-gray-900">Pranam</span>
             </div>
             <div className="flex items-center space-x-4">
-              <LanguageSwitcher />
+              {/* Make language switcher more prominent */}
+              <div className="flex items-center space-x-2 px-3 py-1 bg-orange-50 rounded-lg border border-orange-200">
+                <Globe className="h-4 w-4 text-orange-600" />
+                <LanguageSwitcher />
+              </div>
               <Link href="/theme-builder">
                 <Button variant="ghost">
                   <Paintbrush className="mr-2 h-4 w-4" />
@@ -79,6 +83,29 @@ export default function HomePage() {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Language Notice Section */}
+        <section className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="bg-gradient-to-r from-orange-100 to-red-100 rounded-lg p-6 border border-orange-200">
+              <div className="flex items-center justify-center mb-3">
+                <Globe className="h-6 w-6 text-orange-600 mr-2" />
+                <h3 className="text-lg font-semibold text-gray-900">{t("multiLanguage")}</h3>
+              </div>
+              <p className="text-gray-700 mb-4">{t("multiLanguageDescription")}</p>
+              <div className="flex items-center justify-center space-x-4">
+                <div className="flex items-center space-x-2 px-4 py-2 bg-white rounded-lg border border-orange-200">
+                  <span className="text-lg">🇺🇸</span>
+                  <span className="text-sm font-medium">English</span>
+                </div>
+                <div className="flex items-center space-x-2 px-4 py-2 bg-white rounded-lg border border-orange-200">
+                  <span className="text-lg">🇮🇳</span>
+                  <span className="text-sm font-medium">తెలుగు (Telugu)</span>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -144,12 +171,65 @@ export default function HomePage() {
         {/* Footer */}
         <footer className="border-t bg-white">
           <div className="container mx-auto px-4 py-8">
-            <div className="flex flex-col md:flex-row items-center justify-between">
-              <div className="flex items-center space-x-2 mb-4 md:mb-0">
-                <Logo size="sm" showText={false} />
-                <span className="font-semibold text-gray-900">Pranam</span>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Brand Section */}
+              <div className="flex flex-col items-center md:items-start">
+                <div className="flex items-center space-x-2 mb-4">
+                  <Logo size="sm" showText={false} />
+                  <span className="font-semibold text-gray-900">Pranam</span>
+                </div>
+                <p className="text-gray-600 text-sm text-center md:text-left">{t("footerText")}</p>
               </div>
-              <p className="text-gray-600 text-sm">{t("footerText")}</p>
+
+              {/* Language Section */}
+              <div className="flex flex-col items-center">
+                <h4 className="font-semibold text-gray-900 mb-4 flex items-center">
+                  <Globe className="h-4 w-4 mr-2" />
+                  {t("availableLanguages")}
+                </h4>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <span className="text-lg">🇺🇸</span>
+                    <span>English</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <span className="text-lg">🇮🇳</span>
+                    <span>తెలుగు (Telugu)</span>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-3 text-center">{t("moreLanguagesComing")}</p>
+              </div>
+
+              {/* Quick Links */}
+              <div className="flex flex-col items-center md:items-end">
+                <h4 className="font-semibold text-gray-900 mb-4">{t("quickStart")}</h4>
+                <div className="space-y-2 text-center md:text-right">
+                  <div>
+                    <Link href="/setup" className="text-sm text-gray-600 hover:text-gray-900">
+                      {t("setupGuide")}
+                    </Link>
+                  </div>
+                  <div>
+                    <Link href="/theme-builder" className="text-sm text-gray-600 hover:text-gray-900">
+                      Theme Builder
+                    </Link>
+                  </div>
+                  <div>
+                    <Link href="/login" className="text-sm text-gray-600 hover:text-gray-900">
+                      {t("login")}
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Bar */}
+            <div className="border-t mt-8 pt-6 flex flex-col md:flex-row items-center justify-between">
+              <p className="text-gray-600 text-sm mb-4 md:mb-0">© 2024 Pranam. All rights reserved.</p>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-500">{t("languageSwitch")}:</span>
+                <LanguageSwitcher />
+              </div>
             </div>
           </div>
         </footer>
