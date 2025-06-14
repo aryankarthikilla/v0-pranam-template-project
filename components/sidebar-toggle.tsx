@@ -15,16 +15,19 @@ export function SidebarToggle() {
       variant="ghost"
       size="sm"
       className={cn(
-        "fixed top-14 z-20 rounded-full border bg-background shadow-md transition-all duration-200",
+        "fixed z-20 rounded-full border bg-background shadow-md transition-all duration-200",
         "flex items-center justify-center p-0",
         // Default size (half of original)
         "h-3 w-3",
         // Hover size (original size) with theme colors
         "hover:h-6 hover:w-6 hover:bg-muted hover:text-primary hover:border-primary/20",
-        // Position adjustments - move 2px up and 2px right from intersection
-        isCollapsed ? "left-6" : "left-62",
-        // Move up 2px from top-14 (56px) to top-[54px]
-        "top-[54px]",
+        // Position at intersection of sidebar right edge and header bottom
+        // Sidebar width is typically 256px (w-64), so position at that point
+        isCollapsed ? "left-[76px]" : "left-[252px]",
+        // Position at header height (typically 64px for header)
+        "top-[60px]",
+        // Transform to center the button exactly at the intersection
+        "-translate-x-1/2 -translate-y-1/2",
       )}
     >
       <ChevronRight
