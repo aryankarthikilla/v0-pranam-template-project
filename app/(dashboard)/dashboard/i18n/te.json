@@ -16,5 +16,11 @@
   "serverMaintenance": "సర్వర్ నిర్వహణ షెడ్యూల్ చేయబడింది",
   "minutesAgo": "నిమిషాల క్రితం",
   "hourAgo": "గంట క్రితం",
-  "hoursAgo": "గంటల క్రితం"
+  "hoursAgo": "గంటల క్రితం",
+  "viewAll": "అన్నీ చూడండి",
+  "notifications": "నోటిఫికేషన్‌లు",
+  "revenue": "ఆదాయం",
+  "growth": "వృద్ధి",
+  "users": "వినియోగదారులు",
+  "orders": "ఆర్డర్‌లు"
 }

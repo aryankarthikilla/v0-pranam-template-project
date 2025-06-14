@@ -9,9 +9,9 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Format a number as currency
+ * Format a number as currency (Indian Rupee)
  */
-export function formatCurrency(amount: number, currency = "USD", locale = "en-US"): string {
+export function formatCurrency(amount: number, currency = "INR", locale = "en-IN"): string {
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
@@ -19,10 +19,34 @@ export function formatCurrency(amount: number, currency = "USD", locale = "en-US
 }
 
 /**
- * Format a number with commas
+ * Format a number with commas (Indian numbering system)
  */
-export function formatNumber(num: number, locale = "en-US"): string {
+export function formatNumber(num: number, locale = "en-IN"): string {
   return new Intl.NumberFormat(locale).format(num)
+}
+
+/**
+ * Format currency for Telugu locale
+ */
+export function formatCurrencyTelugu(amount: number): string {
+  return new Intl.NumberFormat("te-IN", {
+    style: "currency",
+    currency: "INR",
+  }).format(amount)
+}
+
+/**
+ * Format large numbers in Indian format (Lakhs, Crores)
+ */
+export function formatIndianNumber(num: number): string {
+  if (num >= 10000000) {
+    return `₹${(num / 10000000).toFixed(1)} Cr`
+  } else if (num >= 100000) {
+    return `₹${(num / 100000).toFixed(1)} L`
+  } else if (num >= 1000) {
+    return `₹${(num / 1000).toFixed(1)} K`
+  }
+  return `₹${num.toLocaleString("en-IN")}`
 }
 
 /**

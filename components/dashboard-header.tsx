@@ -46,21 +46,21 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
             <Bell className="h-4 w-4" />
-            <span className="sr-only">Notifications</span>
+            <span className="sr-only">{t("notifications")}</span>
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="relative h-8 w-8 rounded-full hover:bg-accent hover:text-accent-foreground transition-colors"
+                className="relative h-8 w-8 rounded-full hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
-                <Avatar className="h-8 w-8 ring-2 ring-transparent hover:ring-primary/20 transition-all">
+                <Avatar className="h-8 w-8 ring-2 ring-primary/20 hover:ring-primary/40 transition-all duration-200">
                   <AvatarImage src="/placeholder.svg" alt={user.email || ""} />
-                  <AvatarFallback className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold text-xs">
+                  <AvatarFallback className="bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground font-semibold text-xs shadow-sm">
                     {userInitials}
                   </AvatarFallback>
                 </Avatar>
@@ -114,5 +114,4 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
   )
 }
 
-// Also export as default for compatibility
 export default DashboardHeader

@@ -12,9 +12,11 @@ import {
   SidebarMenuItem,
   SidebarHeader,
 } from "@/components/ui/sidebar"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 import { Logo } from "@/components/logo"
 import { useTranslations } from "@/lib/i18n/hooks"
+import { useSidebar } from "@/components/ui/sidebar"
 
 interface AppSidebarProps {
   user: SupabaseUser
@@ -22,6 +24,8 @@ interface AppSidebarProps {
 
 export function AppSidebar({ user }: AppSidebarProps) {
   const { t } = useTranslations("common")
+  const { state } = useSidebar()
+  const isCollapsed = state === "collapsed"
 
   const menuItems = [
     {
@@ -64,30 +68,48 @@ export function AppSidebar({ user }: AppSidebarProps) {
     },
   ]
 
+  const SidebarMenuItemWithTooltip = ({ item }: { item: (typeof menuItems)[0] }) => {
+    const menuButton = (
+      <SidebarMenuButton asChild className="text-foreground hover:bg-muted hover:text-primary transition-colors">
+        <a href={item.url} className="flex items-center gap-2">
+          <item.icon className="h-4 w-4 flex-shrink-0" />
+          {!isCollapsed && <span>{item.title}</span>}
+        </a>
+      </SidebarMenuButton>
+    )
+
+    if (isCollapsed) {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>{menuButton}</TooltipTrigger>
+            <TooltipContent side="right" className="bg-popover text-popover-foreground border border-border shadow-md">
+              <p>{item.title}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )
+    }
+
+    return menuButton
+  }
+
   return (
     <Sidebar className="border-r border-border bg-background/95 backdrop-blur-sm">
       <SidebarHeader className="border-b border-border/50">
         <div className="px-2 py-2">
-          <Logo size="sm" />
+          <Logo size={isCollapsed ? "xs" : "sm"} />
         </div>
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-muted-foreground">{t("mainMenu")}</SidebarGroupLabel>
+          {!isCollapsed && <SidebarGroupLabel className="text-muted-foreground">{t("mainMenu")}</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    className="text-foreground hover:bg-muted hover:text-primary transition-colors"
-                  >
-                    <a href={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
+                  <SidebarMenuItemWithTooltip item={item} />
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -95,20 +117,12 @@ export function AppSidebar({ user }: AppSidebarProps) {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-muted-foreground">{t("support")}</SidebarGroupLabel>
+          {!isCollapsed && <SidebarGroupLabel className="text-muted-foreground">{t("support")}</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu>
               {supportItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    className="text-foreground hover:bg-muted hover:text-primary transition-colors"
-                  >
-                    <a href={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
+                  <SidebarMenuItemWithTooltip item={item} />
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
