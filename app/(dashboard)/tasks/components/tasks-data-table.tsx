@@ -1,4 +1,3 @@
-import type React from "react"
 import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
@@ -31,12 +30,15 @@ const columns: ColumnDef<Task>[] = [
 ]
 
 interface TasksDataTableProps {
-  data: Task[]
+  tasks: Task[]
+  loading: boolean
+  onEdit: (task: Task) => void
+  onRefresh: () => void
 }
 
-const TasksDataTable: React.FC<TasksDataTableProps> = ({ data }) => {
+function TasksDataTable({ tasks, loading, onEdit, onRefresh }: TasksDataTableProps) {
   const table = useReactTable({
-    data,
+    data: tasks,
     columns,
     getCoreRowModel: getCoreRowModel(),
   })
@@ -75,4 +77,4 @@ const TasksDataTable: React.FC<TasksDataTableProps> = ({ data }) => {
   )
 }
 
-export default TasksDataTable
+export { TasksDataTable }
