@@ -21,7 +21,7 @@ export default function ManageTasksPage() {
   const [selectedTask, setSelectedTask] = useState<any>(null)
   const [taskToDelete, setTaskToDelete] = useState<any>(null)
 
-  const { tasks, loading, refreshTasks } = useTaskData()
+  const { tasks, loading, stats, refreshTasks } = useTaskData()
 
   // Keyboard shortcut for quick task (Alt+Q)
   useEffect(() => {
@@ -37,21 +37,6 @@ export default function ManageTasksPage() {
       document.removeEventListener("keydown", handleKeyDown)
     }
   }, [])
-
-  // Debug effect to log task data
-  useEffect(() => {
-    console.log("Tasks data:", { tasks, loading, stats: stats })
-  }, [tasks, loading])
-
-  // Calculate statistics
-  const stats = {
-    total: tasks.length,
-    completed: tasks.filter((task) => task.status === "completed").length,
-    pending: tasks.filter((task) => task.status === "pending").length,
-    overdue: tasks.filter(
-      (task) => task.due_date && new Date(task.due_date) < new Date() && task.status !== "completed",
-    ).length,
-  }
 
   const handleEditTask = (task: any) => {
     setSelectedTask(task)
@@ -78,20 +63,20 @@ export default function ManageTasksPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("manageTasksTitle")}</h1>
-          <p className="text-muted-foreground">{t("manageTasksDescription")}</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Manage Tasks</h1>
+          <p className="text-muted-foreground">Create, edit, and organize your tasks</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => setShowQuickTask(true)} className="border-border hover:bg-accent">
             <Zap className="mr-2 h-4 w-4" />
-            {t("quickTask")}
+            Quick Task
             <kbd className="ml-2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
               Alt+Q
             </kbd>
           </Button>
           <Button onClick={() => setShowTaskForm(true)} className="bg-primary hover:bg-primary/90">
             <Plus className="mr-2 h-4 w-4" />
-            {t("newTask")}
+            New Task
           </Button>
         </div>
       </div>
@@ -100,7 +85,7 @@ export default function ManageTasksPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-card-foreground">{t("totalTasks")}</CardTitle>
+            <CardTitle className="text-sm font-medium text-card-foreground">Total Tasks</CardTitle>
             <div className="h-4 w-4 text-muted-foreground">📋</div>
           </CardHeader>
           <CardContent>
@@ -110,7 +95,7 @@ export default function ManageTasksPage() {
 
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-card-foreground">{t("completed")}</CardTitle>
+            <CardTitle className="text-sm font-medium text-card-foreground">Completed</CardTitle>
             <div className="h-4 w-4 text-emerald-600">✅</div>
           </CardHeader>
           <CardContent>
@@ -120,7 +105,7 @@ export default function ManageTasksPage() {
 
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-card-foreground">{t("pending")}</CardTitle>
+            <CardTitle className="text-sm font-medium text-card-foreground">Pending</CardTitle>
             <div className="h-4 w-4 text-amber-600">⏳</div>
           </CardHeader>
           <CardContent>
@@ -130,7 +115,7 @@ export default function ManageTasksPage() {
 
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-card-foreground">{t("overdue")}</CardTitle>
+            <CardTitle className="text-sm font-medium text-card-foreground">Overdue</CardTitle>
             <div className="h-4 w-4 text-red-600">🚨</div>
           </CardHeader>
           <CardContent>
@@ -158,10 +143,10 @@ export default function ManageTasksPage() {
           ))
         ) : tasks.length === 0 ? (
           <div className="col-span-full text-center py-12">
-            <div className="text-muted-foreground text-lg">{t("noTasksFound")}</div>
+            <div className="text-muted-foreground text-lg">No tasks found</div>
             <Button onClick={() => setShowTaskForm(true)} className="mt-4 bg-primary hover:bg-primary/90">
               <Plus className="mr-2 h-4 w-4" />
-              {t("createFirstTask")}
+              Create your first task
             </Button>
           </div>
         ) : (
