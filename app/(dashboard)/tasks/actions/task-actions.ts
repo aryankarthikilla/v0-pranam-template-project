@@ -15,42 +15,41 @@ export async function getTasks() {
       throw new Error("User not authenticated")
     }
 
-    console.log("Calling stored procedure for user:", user.id)
+    console.log("=== CALLING STORED PROCEDURE ===")
+    console.log("User ID:", user.id)
 
-    // Call the stored procedure that handles all filtering logic
-    const { data, error } = await supabase.rpc("get_user_filtered_tasks", {
+    // Call the stored procedure
+    const { data, error } = await supabase.rpc("get_user_tasks_filtered", {
       p_user_id: user.id,
     })
 
     if (error) {
       console.error("Stored procedure error:", error)
-      throw new Error(`Error fetching filtered tasks: ${error.message}`)
+      throw new Error(`Error calling stored procedure: ${error.message}`)
     }
 
     console.log(`Stored procedure returned ${data?.length || 0} tasks`)
-    console.log("Tasks by status:", {
-      completed: data?.filter((t: any) => t.status === "completed").length || 0,
-      pending: data?.filter((t: any) => t.status === "pending").length || 0,
-      in_progress: data?.filter((t: any) => t.status === "in_progress").length || 0,
-    })
+
+    // Log task details for debugging
+    if (data && data.length > 0) {
+      console.log("Returned tasks:")
+      data.forEach((task: any, index: number) => {
+        console.log(`${index + 1}. ${task.title} - Status: ${task.status}, Completed: ${task.completed_at}`)
+      })
+    }
 
     return data || []
   } catch (error) {
     console.error("Error in getTasks:", error)
 
-    // Fallback: simple query without filtering
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) return []
-
+    // Fallback: return all tasks
     const { data } = await supabase
       .from("tasks")
       .select("*")
       .eq("is_deleted", false)
       .order("created_at", { ascending: false })
 
+    console.log("Using fallback, returned", data?.length || 0, "tasks")
     return data || []
   }
 }
@@ -102,8 +101,10 @@ export async function updateTask(taskId: string, taskData: any) {
   // Handle completed_at field
   if (taskData.status === "completed") {
     updateData.completed_at = new Date().toISOString()
+    console.log("Setting completed_at to:", updateData.completed_at)
   } else if (taskData.status && taskData.status !== "completed") {
     updateData.completed_at = null
+    console.log("Clearing completed_at")
   }
 
   const { data, error } = await supabase.from("tasks").update(updateData).eq("id", taskId).select().single()
@@ -127,7 +128,6 @@ export async function deleteTask(taskId: string) {
     throw new Error("User not authenticated")
   }
 
-  // Mark task as deleted
   const { data, error } = await supabase
     .from("tasks")
     .update({
@@ -168,7 +168,6 @@ export async function toggleTaskStatus(taskId: string) {
     throw new Error(`Error fetching task: ${fetchError.message}`)
   }
 
-  // Toggle status
   const newStatus = task.status === "completed" ? "pending" : "completed"
 
   const updateData: any = {
@@ -180,8 +179,10 @@ export async function toggleTaskStatus(taskId: string) {
   // Handle completed_at
   if (newStatus === "completed") {
     updateData.completed_at = new Date().toISOString()
+    console.log("Toggle: Setting completed_at to:", updateData.completed_at)
   } else {
     updateData.completed_at = null
+    console.log("Toggle: Clearing completed_at")
   }
 
   const { data, error } = await supabase.from("tasks").update(updateData).eq("id", taskId).select().single()
@@ -226,11 +227,14 @@ export async function markTaskComplete(taskId: string) {
     throw new Error("User not authenticated")
   }
 
+  const completedAt = new Date().toISOString()
+  console.log("Marking task complete with completed_at:", completedAt)
+
   const { data, error } = await supabase
     .from("tasks")
     .update({
       status: "completed",
-      completed_at: new Date().toISOString(),
+      completed_at: completedAt,
       updated_by: user.id,
       updated_at: new Date().toISOString(),
     })
