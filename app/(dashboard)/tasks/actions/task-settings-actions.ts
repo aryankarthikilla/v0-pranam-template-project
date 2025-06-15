@@ -92,7 +92,8 @@ export async function updateTaskSettings(showCompletedTasks: ShowCompletedTasksO
     throw new Error("User not authenticated")
   }
 
-  const { data, error } = await supabase
+  // First try to update existing settings
+  const { data: updateData, error: updateError } = await supabase
     .from("task_settings")
     .update({
       show_completed_tasks: showCompletedTasks,
@@ -102,12 +103,30 @@ export async function updateTaskSettings(showCompletedTasks: ShowCompletedTasksO
     .select()
     .single()
 
-  if (error) {
-    throw new Error(`Error updating task settings: ${error.message}`)
+  if (updateError) {
+    // If update fails (no existing record), create new settings
+    if (updateError.code === "PGRST116") {
+      const { data: insertData, error: insertError } = await supabase
+        .from("task_settings")
+        .insert({
+          user_id: user.id,
+          show_completed_tasks: showCompletedTasks,
+        })
+        .select()
+        .single()
+
+      if (insertError) {
+        throw new Error(`Error creating task settings: ${insertError.message}`)
+      }
+
+      revalidatePath("/dashboard/tasks")
+      return insertData
+    }
+    throw new Error(`Error updating task settings: ${updateError.message}`)
   }
 
   revalidatePath("/dashboard/tasks")
-  return data
+  return updateData
 }
 
 export async function getCompletedTasksFilterDate(option: ShowCompletedTasksOption): Promise<Date | null> {

@@ -16,17 +16,18 @@ export async function getTasks() {
 
     // Apply completed tasks filter based on settings
     if (settings?.show_completed_tasks === "no") {
-      console.log("Filtering out completed tasks")
+      console.log("Filtering out all completed tasks")
       query = query.neq("status", "completed")
     } else if (settings?.show_completed_tasks && settings.show_completed_tasks !== "all") {
       console.log("Applying time-based filter for completed tasks:", settings.show_completed_tasks)
       const filterDate = getCompletedTasksFilterDate(settings.show_completed_tasks)
       if (filterDate) {
         console.log("Filter date:", filterDate.toISOString())
+        // Show all non-completed tasks OR completed tasks that were completed after the filter date
         query = query.or(`status.neq.completed,and(status.eq.completed,updated_at.gte.${filterDate.toISOString()})`)
       }
     } else {
-      console.log("Showing all tasks including completed")
+      console.log("Showing all tasks including all completed tasks")
     }
 
     const { data, error } = await query
@@ -37,6 +38,12 @@ export async function getTasks() {
     }
 
     console.log("Final filtered tasks count:", data?.length || 0)
+    console.log("Tasks by status:", {
+      completed: data?.filter((t) => t.status === "completed").length || 0,
+      pending: data?.filter((t) => t.status === "pending").length || 0,
+      in_progress: data?.filter((t) => t.status === "in_progress").length || 0,
+    })
+
     return data || []
   } catch (error) {
     console.error("Error in getTasks:", error)
