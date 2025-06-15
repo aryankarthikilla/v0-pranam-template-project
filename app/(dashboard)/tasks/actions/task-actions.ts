@@ -8,26 +8,32 @@ export async function getTasks() {
   const supabase = await createClient()
 
   try {
+    console.log("=== TASK FILTERING DEBUG ===")
     console.log("Getting task settings...")
     const settings = await getTaskSettings()
-    console.log("Task settings:", settings)
+    console.log("Task settings:", JSON.stringify(settings, null, 2))
 
     let query = supabase.from("tasks").select("*").eq("is_deleted", false).order("created_at", { ascending: false })
 
     // Apply completed tasks filter based on settings using completed_at field
     if (settings?.show_completed_tasks === "no") {
-      console.log("Filtering out all completed tasks")
+      console.log("FILTER: Hiding all completed tasks")
       query = query.neq("status", "completed")
     } else if (settings?.show_completed_tasks && settings.show_completed_tasks !== "all") {
-      console.log("Applying time-based filter for completed tasks:", settings.show_completed_tasks)
+      console.log("FILTER: Applying time-based filter for completed tasks:", settings.show_completed_tasks)
       const filterDate = getCompletedTasksFilterDate(settings.show_completed_tasks)
+      console.log("Filter date calculated:", filterDate?.toISOString())
+      console.log("Current time:", new Date().toISOString())
+
       if (filterDate) {
-        console.log("Filter date:", filterDate.toISOString())
+        const filterDateISO = filterDate.toISOString()
+        console.log("SQL Filter: Show non-completed OR (completed AND completed_at >= '" + filterDateISO + "')")
+
         // Show all non-completed tasks OR completed tasks that were completed after the filter date
-        query = query.or(`status.neq.completed,and(status.eq.completed,completed_at.gte.${filterDate.toISOString()})`)
+        query = query.or(`status.neq.completed,and(status.eq.completed,completed_at.gte.${filterDateISO})`)
       }
     } else {
-      console.log("Showing all tasks including all completed tasks")
+      console.log("FILTER: Showing all tasks including all completed tasks")
     }
 
     const { data, error } = await query
@@ -37,13 +43,24 @@ export async function getTasks() {
       throw new Error(`Error fetching tasks: ${error.message}`)
     }
 
-    console.log("Final filtered tasks count:", data?.length || 0)
+    console.log("Raw query results count:", data?.length || 0)
     console.log("Tasks by status:", {
       completed: data?.filter((t) => t.status === "completed").length || 0,
       pending: data?.filter((t) => t.status === "pending").length || 0,
       in_progress: data?.filter((t) => t.status === "in_progress").length || 0,
     })
 
+    // Debug completed tasks
+    const completedTasks = data?.filter((t) => t.status === "completed") || []
+    console.log("Completed tasks details:")
+    completedTasks.forEach((task, index) => {
+      console.log(`${index + 1}. ${task.title}:`)
+      console.log(`   - completed_at: ${task.completed_at}`)
+      console.log(`   - created_at: ${task.created_at}`)
+      console.log(`   - updated_at: ${task.updated_at}`)
+    })
+
+    console.log("=== END DEBUG ===")
     return data || []
   } catch (error) {
     console.error("Error in getTasks:", error)
@@ -112,10 +129,12 @@ export async function updateTask(taskId: string, taskData: any) {
   // If status is being set to completed, set completed_at
   if (taskData.status === "completed") {
     updateData.completed_at = new Date().toISOString()
+    console.log("Setting completed_at to:", updateData.completed_at)
   }
   // If status is being changed from completed to something else, clear completed_at
   else if (taskData.status && taskData.status !== "completed") {
     updateData.completed_at = null
+    console.log("Clearing completed_at")
   }
 
   const { data, error } = await supabase.from("tasks").update(updateData).eq("id", taskId).select().single()
@@ -211,8 +230,10 @@ export async function toggleTaskStatus(taskId: string) {
   // Set or clear completed_at based on new status
   if (newStatus === "completed") {
     updateData.completed_at = new Date().toISOString()
+    console.log("Toggle: Setting completed_at to:", updateData.completed_at)
   } else {
     updateData.completed_at = null
+    console.log("Toggle: Clearing completed_at")
   }
 
   const { data, error } = await supabase.from("tasks").update(updateData).eq("id", taskId).select().single()
@@ -258,11 +279,14 @@ export async function markTaskComplete(taskId: string) {
     throw new Error("User not authenticated")
   }
 
+  const completedAt = new Date().toISOString()
+  console.log("Marking task complete with completed_at:", completedAt)
+
   const { data, error } = await supabase
     .from("tasks")
     .update({
       status: "completed",
-      completed_at: new Date().toISOString(),
+      completed_at: completedAt,
       updated_by: user.id,
       updated_at: new Date().toISOString(),
     })

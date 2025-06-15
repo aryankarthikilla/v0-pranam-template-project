@@ -32,21 +32,25 @@ export async function getTaskSettings(): Promise<TaskSettings | null> {
     } = await supabase.auth.getUser()
 
     if (!user) {
-      console.error("User not authenticated")
+      console.error("User not authenticated in getTaskSettings")
       return null
     }
 
+    console.log("Fetching task settings for user:", user.id)
     const { data, error } = await supabase.from("task_settings").select("*").eq("user_id", user.id).single()
 
     if (error) {
+      console.log("Task settings error:", error)
       // If no settings exist, create default settings
       if (error.code === "PGRST116") {
+        console.log("No settings found, creating default settings")
         return await createDefaultTaskSettings()
       }
       console.error("Error fetching task settings:", error)
       return null
     }
 
+    console.log("Found task settings:", data)
     return data
   } catch (error) {
     console.error("Error in getTaskSettings:", error)
@@ -65,6 +69,7 @@ export async function createDefaultTaskSettings(): Promise<TaskSettings> {
     throw new Error("User not authenticated")
   }
 
+  console.log("Creating default task settings for user:", user.id)
   const { data, error } = await supabase
     .from("task_settings")
     .insert({
@@ -78,6 +83,7 @@ export async function createDefaultTaskSettings(): Promise<TaskSettings> {
     throw new Error(`Error creating task settings: ${error.message}`)
   }
 
+  console.log("Created default task settings:", data)
   return data
 }
 
@@ -92,6 +98,8 @@ export async function updateTaskSettings(showCompletedTasks: ShowCompletedTasksO
     throw new Error("User not authenticated")
   }
 
+  console.log("Updating task settings for user:", user.id, "to:", showCompletedTasks)
+
   // First try to update existing settings
   const { data: updateData, error: updateError } = await supabase
     .from("task_settings")
@@ -104,8 +112,10 @@ export async function updateTaskSettings(showCompletedTasks: ShowCompletedTasksO
     .single()
 
   if (updateError) {
+    console.log("Update error:", updateError)
     // If update fails (no existing record), create new settings
     if (updateError.code === "PGRST116") {
+      console.log("No existing settings, creating new ones")
       const { data: insertData, error: insertError } = await supabase
         .from("task_settings")
         .insert({
@@ -119,54 +129,68 @@ export async function updateTaskSettings(showCompletedTasks: ShowCompletedTasksO
         throw new Error(`Error creating task settings: ${insertError.message}`)
       }
 
+      console.log("Created new task settings:", insertData)
       revalidatePath("/dashboard/tasks")
       return insertData
     }
     throw new Error(`Error updating task settings: ${updateError.message}`)
   }
 
+  console.log("Updated task settings:", updateData)
   revalidatePath("/dashboard/tasks")
   return updateData
 }
 
 export async function getCompletedTasksFilterDate(option: ShowCompletedTasksOption): Promise<Date | null> {
   const now = new Date()
+  console.log("Calculating filter date for option:", option, "current time:", now.toISOString())
+
+  let filterDate: Date | null = null
 
   switch (option) {
     case "no":
-      return null
+      filterDate = null
+      break
     case "last_10_min":
-      return new Date(now.getTime() - 10 * 60 * 1000)
+      filterDate = new Date(now.getTime() - 10 * 60 * 1000)
+      break
     case "last_30_min":
-      return new Date(now.getTime() - 30 * 60 * 1000)
+      filterDate = new Date(now.getTime() - 30 * 60 * 1000)
+      break
     case "last_1_hour":
-      return new Date(now.getTime() - 60 * 60 * 1000)
+      filterDate = new Date(now.getTime() - 60 * 60 * 1000)
+      break
     case "last_6_hours":
-      return new Date(now.getTime() - 6 * 60 * 60 * 1000)
+      filterDate = new Date(now.getTime() - 6 * 60 * 60 * 1000)
+      break
     case "today":
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      return today
+      filterDate = new Date()
+      filterDate.setHours(0, 0, 0, 0)
+      break
     case "yesterday":
-      const yesterday = new Date()
-      yesterday.setDate(yesterday.getDate() - 1)
-      yesterday.setHours(0, 0, 0, 0)
-      return yesterday
+      filterDate = new Date()
+      filterDate.setDate(filterDate.getDate() - 1)
+      filterDate.setHours(0, 0, 0, 0)
+      break
     case "this_week":
-      const thisWeek = new Date()
-      const dayOfWeek = thisWeek.getDay()
-      const diff = thisWeek.getDate() - dayOfWeek
-      thisWeek.setDate(diff)
-      thisWeek.setHours(0, 0, 0, 0)
-      return thisWeek
+      filterDate = new Date()
+      const dayOfWeek = filterDate.getDay()
+      const diff = filterDate.getDate() - dayOfWeek
+      filterDate.setDate(diff)
+      filterDate.setHours(0, 0, 0, 0)
+      break
     case "this_month":
-      const thisMonth = new Date()
-      thisMonth.setDate(1)
-      thisMonth.setHours(0, 0, 0, 0)
-      return thisMonth
+      filterDate = new Date()
+      filterDate.setDate(1)
+      filterDate.setHours(0, 0, 0, 0)
+      break
     case "all":
-      return new Date(0) // Beginning of time
+      filterDate = new Date(0) // Beginning of time
+      break
     default:
-      return null
+      filterDate = null
   }
+
+  console.log("Calculated filter date:", filterDate?.toISOString() || "null")
+  return filterDate
 }
