@@ -21,6 +21,8 @@ export default function ManageTasksPage() {
   const [selectedTask, setSelectedTask] = useState<any>(null)
   const [taskToDelete, setTaskToDelete] = useState<any>(null)
 
+  const { tasks, loading, refreshTasks } = useTaskData()
+
   // Keyboard shortcut for quick task (Alt+Q)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -36,7 +38,10 @@ export default function ManageTasksPage() {
     }
   }, [])
 
-  const { tasks, loading, refreshTasks } = useTaskData()
+  // Debug effect to log task data
+  useEffect(() => {
+    console.log("Tasks data:", { tasks, loading, stats: stats })
+  }, [tasks, loading])
 
   // Calculate statistics
   const stats = {

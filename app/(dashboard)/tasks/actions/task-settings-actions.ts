@@ -24,27 +24,34 @@ export interface TaskSettings {
 }
 
 export async function getTaskSettings(): Promise<TaskSettings | null> {
-  const supabase = await createClient()
+  try {
+    const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  if (!user) {
-    throw new Error("User not authenticated")
-  }
-
-  const { data, error } = await supabase.from("task_settings").select("*").eq("user_id", user.id).single()
-
-  if (error) {
-    // If no settings exist, create default settings
-    if (error.code === "PGRST116") {
-      return await createDefaultTaskSettings()
+    if (!user) {
+      console.error("User not authenticated")
+      return null
     }
-    throw new Error(`Error fetching task settings: ${error.message}`)
-  }
 
-  return data
+    const { data, error } = await supabase.from("task_settings").select("*").eq("user_id", user.id).single()
+
+    if (error) {
+      // If no settings exist, create default settings
+      if (error.code === "PGRST116") {
+        return await createDefaultTaskSettings()
+      }
+      console.error("Error fetching task settings:", error)
+      return null
+    }
+
+    return data
+  } catch (error) {
+    console.error("Error in getTaskSettings:", error)
+    return null
+  }
 }
 
 export async function createDefaultTaskSettings(): Promise<TaskSettings> {

@@ -6,28 +6,46 @@ import { getTaskSettings, getCompletedTasksFilterDate } from "./task-settings-ac
 
 export async function getTasks() {
   const supabase = await createClient()
-  const settings = await getTaskSettings()
 
-  let query = supabase.from("tasks").select("*").eq("is_deleted", false).order("created_at", { ascending: false })
+  try {
+    const settings = await getTaskSettings()
 
-  // Apply completed tasks filter based on settings
-  if (settings?.show_completed_tasks === "no") {
-    query = query.neq("status", "completed")
-  } else if (settings?.show_completed_tasks !== "all") {
-    const filterDate = getCompletedTasksFilterDate(settings?.show_completed_tasks || "no")
-    if (filterDate) {
-      query = query.or(`status.neq.completed,and(status.eq.completed,updated_at.gte.${filterDate.toISOString()})`)
+    let query = supabase.from("tasks").select("*").eq("is_deleted", false).order("created_at", { ascending: false })
+
+    // Apply completed tasks filter based on settings
+    if (settings?.show_completed_tasks === "no") {
+      query = query.neq("status", "completed")
+    } else if (settings?.show_completed_tasks && settings.show_completed_tasks !== "all") {
+      const filterDate = getCompletedTasksFilterDate(settings.show_completed_tasks)
+      if (filterDate) {
+        query = query.or(`status.neq.completed,and(status.eq.completed,updated_at.gte.${filterDate.toISOString()})`)
+      }
     }
+
+    const { data, error } = await query
+
+    if (error) {
+      console.error("Database error:", error)
+      throw new Error(`Error fetching tasks: ${error.message}`)
+    }
+
+    return data || []
+  } catch (error) {
+    console.error("Error in getTasks:", error)
+    // If there's an error with settings, just return all non-deleted tasks
+    const { data, error: fallbackError } = await supabase
+      .from("tasks")
+      .select("*")
+      .eq("is_deleted", false)
+      .order("created_at", { ascending: false })
+
+    if (fallbackError) {
+      console.error("Fallback query error:", fallbackError)
+      throw new Error(`Error fetching tasks: ${fallbackError.message}`)
+    }
+
+    return data || []
   }
-
-  const { data, error } = await query
-
-  if (error) {
-    console.error("Database error:", error)
-    throw new Error(`Error fetching tasks: ${error.message}`)
-  }
-
-  return data || []
 }
 
 export async function createTask(taskData: any) {

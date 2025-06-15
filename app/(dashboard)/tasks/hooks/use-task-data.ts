@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { getTasks } from "../actions/task-actions"
 
-export function useTaskData(showCompleted = false) {
+export function useTaskData() {
   const [tasks, setTasks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
@@ -16,7 +16,7 @@ export function useTaskData(showCompleted = false) {
   const fetchTasks = async () => {
     setLoading(true)
     try {
-      const data = await getTasks(showCompleted)
+      const data = await getTasks()
       setTasks(data)
 
       // Calculate stats
@@ -32,6 +32,13 @@ export function useTaskData(showCompleted = false) {
       setStats(statsData)
     } catch (error) {
       console.error("Error fetching tasks:", error)
+      setTasks([])
+      setStats({
+        total: 0,
+        completed: 0,
+        pending: 0,
+        overdue: 0,
+      })
     } finally {
       setLoading(false)
     }
@@ -39,7 +46,7 @@ export function useTaskData(showCompleted = false) {
 
   useEffect(() => {
     fetchTasks()
-  }, [showCompleted])
+  }, [])
 
   return {
     tasks,
