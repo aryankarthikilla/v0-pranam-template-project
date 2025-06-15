@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Plus, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,6 +23,21 @@ export default function TasksPage() {
   const [selectedTask, setSelectedTask] = useState<any>(null)
   const [taskToDelete, setTaskToDelete] = useState<any>(null)
   const [showCompleted, setShowCompleted] = useState(false)
+
+  // Keyboard shortcut for quick task (Alt+Q)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.altKey && event.key.toLowerCase() === "q") {
+        event.preventDefault()
+        setShowQuickTask(true)
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown)
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [])
 
   const { tasks, loading, refreshTasks } = useTaskData()
 
@@ -74,6 +89,9 @@ export default function TasksPage() {
           <Button variant="outline" onClick={() => setShowQuickTask(true)} className="border-border hover:bg-accent">
             <Zap className="mr-2 h-4 w-4" />
             {t("quickTask")}
+            <kbd className="ml-2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+              Alt+Q
+            </kbd>
           </Button>
           <Button onClick={() => setShowTaskForm(true)} className="bg-primary hover:bg-primary/90">
             <Plus className="mr-2 h-4 w-4" />
