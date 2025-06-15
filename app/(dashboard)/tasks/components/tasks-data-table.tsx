@@ -160,6 +160,7 @@ export function TasksDataTable({ tasks, loading, onEdit, onRefresh }: TasksDataT
                   <TableHead className="text-muted-foreground">Priority</TableHead>
                   <TableHead className="text-muted-foreground">Due Date</TableHead>
                   <TableHead className="text-muted-foreground">Created</TableHead>
+                  <TableHead className="text-muted-foreground">Completed</TableHead>
                   <TableHead className="w-12 text-muted-foreground"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -167,14 +168,14 @@ export function TasksDataTable({ tasks, loading, onEdit, onRefresh }: TasksDataT
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i} className="border-border">
-                      <TableCell colSpan={7} className="text-center py-8">
+                      <TableCell colSpan={8} className="text-center py-8">
                         <div className="animate-pulse text-muted-foreground">Loading...</div>
                       </TableCell>
                     </TableRow>
                   ))
                 ) : paginatedTasks.length === 0 ? (
                   <TableRow className="border-border">
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       No tasks found
                     </TableCell>
                   </TableRow>
@@ -228,6 +229,15 @@ export function TasksDataTable({ tasks, loading, onEdit, onRefresh }: TasksDataT
                       </TableCell>
                       <TableCell className="text-foreground">
                         {formatDistanceToNow(new Date(task.created_at), { addSuffix: true })}
+                      </TableCell>
+                      <TableCell className="text-foreground">
+                        {task.completed_at ? (
+                          <span className="text-emerald-600 dark:text-emerald-400">
+                            {formatDistanceToNow(new Date(task.completed_at), { addSuffix: true })}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
