@@ -2,18 +2,22 @@
 
 import { createClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
+import { getTaskSettings, getCompletedTasksFilterDate } from "./task-settings-actions"
 
-export async function getTasks(showCompleted = false) {
+export async function getTasks() {
   const supabase = await createClient()
+  const settings = await getTaskSettings()
 
-  let query = supabase
-    .from("tasks")
-    .select("*")
-    .eq("is_deleted", false) // Always filter out deleted tasks
-    .order("created_at", { ascending: false })
+  let query = supabase.from("tasks").select("*").eq("is_deleted", false).order("created_at", { ascending: false })
 
-  if (!showCompleted) {
+  // Apply completed tasks filter based on settings
+  if (settings?.show_completed_tasks === "no") {
     query = query.neq("status", "completed")
+  } else if (settings?.show_completed_tasks !== "all") {
+    const filterDate = getCompletedTasksFilterDate(settings?.show_completed_tasks || "no")
+    if (filterDate) {
+      query = query.or(`status.neq.completed,and(status.eq.completed,updated_at.gte.${filterDate.toISOString()})`)
+    }
   }
 
   const { data, error } = await query

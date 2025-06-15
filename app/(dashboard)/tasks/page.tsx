@@ -4,8 +4,6 @@ import { useState, useEffect } from "react"
 import { Plus, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
 import { useTranslations } from "@/lib/i18n/hooks"
 import { TaskCard } from "./components/task-card"
 import { TaskForm } from "./components/task-form"
@@ -13,6 +11,7 @@ import { QuickTaskModal } from "./components/quick-task-modal"
 import { DeleteTaskModal } from "./components/delete-task-modal"
 import { RandomTask } from "./components/random-task"
 import { TasksDataTable } from "./components/tasks-data-table"
+import { TaskSettings } from "./components/task-settings"
 import { useTaskData } from "./hooks/use-task-data"
 
 export default function TasksPage() {
@@ -22,7 +21,6 @@ export default function TasksPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [selectedTask, setSelectedTask] = useState<any>(null)
   const [taskToDelete, setTaskToDelete] = useState<any>(null)
-  const [showCompleted, setShowCompleted] = useState(false)
 
   // Keyboard shortcut for quick task (Alt+Q)
   useEffect(() => {
@@ -40,12 +38,6 @@ export default function TasksPage() {
   }, [])
 
   const { tasks, loading, refreshTasks } = useTaskData()
-
-  // Filter tasks based on completion status
-  const filteredTasks = tasks.filter((task) => {
-    if (showCompleted) return true
-    return task.status !== "completed"
-  })
 
   // Calculate statistics
   const stats = {
@@ -77,6 +69,10 @@ export default function TasksPage() {
     setTaskToDelete(null)
   }
 
+  const handleSettingsChange = () => {
+    refreshTasks()
+  }
+
   return (
     <div className="flex-1 space-y-6 p-6 bg-background">
       {/* Header */}
@@ -99,6 +95,9 @@ export default function TasksPage() {
           </Button>
         </div>
       </div>
+
+      {/* Task Settings */}
+      <TaskSettings onSettingsChange={handleSettingsChange} />
 
       {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -146,19 +145,6 @@ export default function TasksPage() {
       {/* Random Task Section */}
       <RandomTask onRefresh={refreshTasks} />
 
-      {/* Show Completed Tasks Toggle */}
-      <div className="flex items-center space-x-2">
-        <Switch
-          id="show-completed"
-          checked={showCompleted}
-          onCheckedChange={setShowCompleted}
-          className="data-[state=checked]:bg-primary"
-        />
-        <Label htmlFor="show-completed" className="text-foreground">
-          {t("showCompletedTasks")}
-        </Label>
-      </div>
-
       {/* Tasks Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {loading ? (
@@ -173,7 +159,7 @@ export default function TasksPage() {
               </CardContent>
             </Card>
           ))
-        ) : filteredTasks.length === 0 ? (
+        ) : tasks.length === 0 ? (
           <div className="col-span-full text-center py-12">
             <div className="text-muted-foreground text-lg">{t("noTasksFound")}</div>
             <Button onClick={() => setShowTaskForm(true)} className="mt-4 bg-primary hover:bg-primary/90">
@@ -182,7 +168,7 @@ export default function TasksPage() {
             </Button>
           </div>
         ) : (
-          filteredTasks.map((task) => (
+          tasks.map((task) => (
             <TaskCard
               key={task.id}
               task={task}
@@ -195,7 +181,7 @@ export default function TasksPage() {
       </div>
 
       {/* Data Table */}
-      <TasksDataTable tasks={filteredTasks} loading={loading} onEdit={handleEditTask} onRefresh={refreshTasks} />
+      <TasksDataTable tasks={tasks} loading={loading} onEdit={handleEditTask} onRefresh={refreshTasks} />
 
       {/* Modals */}
       <TaskForm open={showTaskForm} onOpenChange={setShowTaskForm} task={selectedTask} onSuccess={handleTaskSuccess} />
