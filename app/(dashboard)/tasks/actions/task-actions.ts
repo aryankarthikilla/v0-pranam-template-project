@@ -8,18 +8,25 @@ export async function getTasks() {
   const supabase = await createClient()
 
   try {
+    console.log("Getting task settings...")
     const settings = await getTaskSettings()
+    console.log("Task settings:", settings)
 
     let query = supabase.from("tasks").select("*").eq("is_deleted", false).order("created_at", { ascending: false })
 
     // Apply completed tasks filter based on settings
     if (settings?.show_completed_tasks === "no") {
+      console.log("Filtering out completed tasks")
       query = query.neq("status", "completed")
     } else if (settings?.show_completed_tasks && settings.show_completed_tasks !== "all") {
+      console.log("Applying time-based filter for completed tasks:", settings.show_completed_tasks)
       const filterDate = getCompletedTasksFilterDate(settings.show_completed_tasks)
       if (filterDate) {
+        console.log("Filter date:", filterDate.toISOString())
         query = query.or(`status.neq.completed,and(status.eq.completed,updated_at.gte.${filterDate.toISOString()})`)
       }
+    } else {
+      console.log("Showing all tasks including completed")
     }
 
     const { data, error } = await query
@@ -29,6 +36,7 @@ export async function getTasks() {
       throw new Error(`Error fetching tasks: ${error.message}`)
     }
 
+    console.log("Final filtered tasks count:", data?.length || 0)
     return data || []
   } catch (error) {
     console.error("Error in getTasks:", error)
@@ -44,6 +52,7 @@ export async function getTasks() {
       throw new Error(`Error fetching tasks: ${fallbackError.message}`)
     }
 
+    console.log("Using fallback query, tasks count:", data?.length || 0)
     return data || []
   }
 }

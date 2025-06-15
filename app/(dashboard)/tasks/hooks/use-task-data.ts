@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { getTasks } from "../actions/task-actions"
 
 export function useTaskData() {
@@ -13,10 +13,12 @@ export function useTaskData() {
     overdue: 0,
   })
 
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     setLoading(true)
     try {
+      console.log("Fetching tasks...")
       const data = await getTasks()
+      console.log("Fetched tasks:", data.length)
       setTasks(data)
 
       // Calculate stats
@@ -42,11 +44,11 @@ export function useTaskData() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchTasks()
-  }, [])
+  }, [fetchTasks])
 
   return {
     tasks,
