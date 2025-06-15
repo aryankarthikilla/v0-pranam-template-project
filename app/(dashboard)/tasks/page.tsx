@@ -1,199 +1,211 @@
 "use client"
-
-import { useState, useEffect } from "react"
-import { Plus, Zap } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { useTranslations } from "@/lib/i18n/hooks"
-import { TaskCard } from "./components/task-card"
-import { TaskForm } from "./components/task-form"
-import { QuickTaskModal } from "./components/quick-task-modal"
-import { DeleteTaskModal } from "./components/delete-task-modal"
-import { RandomTask } from "./components/random-task"
-import { TasksDataTable } from "./components/tasks-data-table"
-import { TaskSettings } from "./components/task-settings"
+import { BarChart3, CheckSquare, Clock, AlertTriangle, TrendingUp, Calendar } from "lucide-react"
+import Link from "next/link"
 import { useTaskData } from "./hooks/use-task-data"
 
-export default function TasksPage() {
+export default function TasksDashboard() {
   const { t } = useTranslations("tasks")
-  const [showTaskForm, setShowTaskForm] = useState(false)
-  const [showQuickTask, setShowQuickTask] = useState(false)
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [selectedTask, setSelectedTask] = useState<any>(null)
-  const [taskToDelete, setTaskToDelete] = useState<any>(null)
+  const { tasks, loading, stats } = useTaskData()
 
-  // Keyboard shortcut for quick task (Alt+Q)
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.altKey && event.key.toLowerCase() === "q") {
-        event.preventDefault()
-        setShowQuickTask(true)
-      }
-    }
+  // Calculate additional dashboard stats
+  const todayTasks = tasks.filter((task) => {
+    const today = new Date()
+    const taskDate = new Date(task.created_at)
+    return taskDate.toDateString() === today.toDateString()
+  })
 
-    document.addEventListener("keydown", handleKeyDown)
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [])
+  const thisWeekTasks = tasks.filter((task) => {
+    const weekAgo = new Date()
+    weekAgo.setDate(weekAgo.getDate() - 7)
+    const taskDate = new Date(task.created_at)
+    return taskDate >= weekAgo
+  })
 
-  const { tasks, loading, refreshTasks } = useTaskData()
-
-  // Calculate statistics
-  const stats = {
-    total: tasks.length,
-    completed: tasks.filter((task) => task.status === "completed").length,
-    pending: tasks.filter((task) => task.status === "pending").length,
-    overdue: tasks.filter(
-      (task) => task.due_date && new Date(task.due_date) < new Date() && task.status !== "completed",
-    ).length,
-  }
-
-  const handleEditTask = (task: any) => {
-    setSelectedTask(task)
-    setShowTaskForm(true)
-  }
-
-  const handleDeleteTask = (task: any) => {
-    setTaskToDelete(task)
-    setShowDeleteModal(true)
-  }
-
-  const handleTaskSuccess = () => {
-    refreshTasks()
-    setSelectedTask(null)
-  }
-
-  const handleDeleteSuccess = () => {
-    refreshTasks()
-    setTaskToDelete(null)
-  }
-
-  const handleSettingsChange = () => {
-    refreshTasks()
-  }
+  const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0
 
   return (
     <div className="flex-1 space-y-6 p-6 bg-background">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("taskManagement")}</h1>
-          <p className="text-muted-foreground">{t("taskManagementDescription")}</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("tasksDashboard")}</h1>
+          <p className="text-muted-foreground">{t("tasksDashboardDescription")}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setShowQuickTask(true)} className="border-border hover:bg-accent">
-            <Zap className="mr-2 h-4 w-4" />
-            {t("quickTask")}
-            <kbd className="ml-2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-              Alt+Q
-            </kbd>
+          <Button asChild variant="outline">
+            <Link href="/tasks/manage">
+              <CheckSquare className="mr-2 h-4 w-4" />
+              {t("manage")}
+            </Link>
           </Button>
-          <Button onClick={() => setShowTaskForm(true)} className="bg-primary hover:bg-primary/90">
-            <Plus className="mr-2 h-4 w-4" />
-            {t("newTask")}
+          <Button asChild variant="outline">
+            <Link href="/tasks/settings">
+              <BarChart3 className="mr-2 h-4 w-4" />
+              {t("settings")}
+            </Link>
           </Button>
         </div>
       </div>
 
-      {/* Task Settings */}
-      <TaskSettings onSettingsChange={handleSettingsChange} />
-
-      {/* Statistics Cards */}
+      {/* Overview Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-card-foreground">{t("totalTasks")}</CardTitle>
-            <div className="h-4 w-4 text-muted-foreground">📋</div>
+            <CheckSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-card-foreground">{stats.total}</div>
+            <p className="text-xs text-muted-foreground">
+              {todayTasks.length} {t("createdToday")}
+            </p>
           </CardContent>
         </Card>
 
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-card-foreground">{t("completed")}</CardTitle>
-            <div className="h-4 w-4 text-emerald-600">✅</div>
+            <TrendingUp className="h-4 w-4 text-emerald-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.completed}</div>
+            <p className="text-xs text-muted-foreground">
+              {completionRate}% {t("completionRate")}
+            </p>
           </CardContent>
         </Card>
 
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-card-foreground">{t("pending")}</CardTitle>
-            <div className="h-4 w-4 text-amber-600">⏳</div>
+            <Clock className="h-4 w-4 text-amber-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.pending}</div>
+            <p className="text-xs text-muted-foreground">
+              {thisWeekTasks.length} {t("thisWeek")}
+            </p>
           </CardContent>
         </Card>
 
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-card-foreground">{t("overdue")}</CardTitle>
-            <div className="h-4 w-4 text-red-600">🚨</div>
+            <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.overdue}</div>
+            <p className="text-xs text-muted-foreground">{t("needsAttention")}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Random Task Section */}
-      <RandomTask onRefresh={refreshTasks} />
-
-      {/* Tasks Grid */}
+      {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {loading ? (
-          Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i} className="border-border bg-card">
-              <CardContent className="p-6">
-                <div className="animate-pulse space-y-4">
-                  <div className="h-4 bg-muted rounded w-3/4"></div>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
-                  <div className="h-8 bg-muted rounded w-full"></div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        ) : tasks.length === 0 ? (
-          <div className="col-span-full text-center py-12">
-            <div className="text-muted-foreground text-lg">{t("noTasksFound")}</div>
-            <Button onClick={() => setShowTaskForm(true)} className="mt-4 bg-primary hover:bg-primary/90">
-              <Plus className="mr-2 h-4 w-4" />
-              {t("createFirstTask")}
-            </Button>
-          </div>
-        ) : (
-          tasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onEdit={() => handleEditTask(task)}
-              onDelete={() => handleDeleteTask(task)}
-              onRefresh={refreshTasks}
-            />
-          ))
-        )}
+        <Card className="border-border bg-card hover:bg-accent/50 transition-colors cursor-pointer">
+          <Link href="/tasks/manage">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-card-foreground">
+                <CheckSquare className="h-5 w-5" />
+                {t("manageTasksTitle")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">{t("manageTasksDescription")}</p>
+            </CardContent>
+          </Link>
+        </Card>
+
+        <Card className="border-border bg-card hover:bg-accent/50 transition-colors cursor-pointer">
+          <Link href="/tasks/settings">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-card-foreground">
+                <BarChart3 className="h-5 w-5" />
+                {t("taskSettingsTitle")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">{t("taskSettingsDescription")}</p>
+            </CardContent>
+          </Link>
+        </Card>
+
+        <Card className="border-border bg-card hover:bg-accent/50 transition-colors cursor-pointer">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-card-foreground">
+              <Calendar className="h-5 w-5" />
+              {t("upcomingDeadlines")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">{t("upcomingDeadlinesDescription")}</p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Data Table */}
-      <TasksDataTable tasks={tasks} loading={loading} onEdit={handleEditTask} onRefresh={refreshTasks} />
-
-      {/* Modals */}
-      <TaskForm open={showTaskForm} onOpenChange={setShowTaskForm} task={selectedTask} onSuccess={handleTaskSuccess} />
-
-      <QuickTaskModal open={showQuickTask} onOpenChange={setShowQuickTask} onSuccess={handleTaskSuccess} />
-
-      <DeleteTaskModal
-        open={showDeleteModal}
-        onOpenChange={setShowDeleteModal}
-        task={taskToDelete}
-        onSuccess={handleDeleteSuccess}
-      />
+      {/* Recent Activity */}
+      <Card className="border-border bg-card">
+        <CardHeader>
+          <CardTitle className="text-card-foreground">{t("recentActivity")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="animate-pulse flex items-center space-x-4">
+                  <div className="rounded-full bg-muted h-8 w-8"></div>
+                  <div className="flex-1 space-y-1">
+                    <div className="h-4 bg-muted rounded w-3/4"></div>
+                    <div className="h-3 bg-muted rounded w-1/2"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : tasks.length === 0 ? (
+            <p className="text-muted-foreground text-center py-4">{t("noRecentActivity")}</p>
+          ) : (
+            <div className="space-y-3">
+              {tasks.slice(0, 5).map((task) => (
+                <div key={task.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted/50">
+                  <div
+                    className={`w-2 h-2 rounded-full ${
+                      task.status === "completed"
+                        ? "bg-emerald-500"
+                        : task.status === "inProgress"
+                          ? "bg-blue-500"
+                          : "bg-amber-500"
+                    }`}
+                  />
+                  <div className="flex-1">
+                    <p
+                      className={`text-sm font-medium ${task.status === "completed" ? "line-through text-muted-foreground" : "text-foreground"}`}
+                    >
+                      {task.title}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{new Date(task.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <div
+                    className={`px-2 py-1 rounded-full text-xs ${
+                      task.priority === "urgent"
+                        ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                        : task.priority === "high"
+                          ? "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+                          : task.priority === "medium"
+                            ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                            : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                    }`}
+                  >
+                    {t(`priority.${task.priority}`)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

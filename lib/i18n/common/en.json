@@ -6,6 +6,7 @@
   "users": "Users",
   "documents": "Documents",
   "tasks": "Tasks",
+  "tasksDashboard": "Dashboard",
   "settings": "Settings",
   "profile": "Profile",
   "mainMenu": "Main Menu",
@@ -18,6 +19,7 @@
   "login": "Login",
   "logout": "Logout",
   "signUp": "Sign Up",
+  "signup": "Sign Up",
   "loading": "Loading...",
   "error": "Error",
   "success": "Success",
@@ -31,5 +33,6 @@
   "filter": "Filter",
   "sort": "Sort",
   "actions": "Actions",
-  "backToHome": "Back to Home"
+  "backToHome": "Back to Home",
+  "manage": "Manage"
 }

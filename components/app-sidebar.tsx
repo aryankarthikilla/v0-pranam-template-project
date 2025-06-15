@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, Settings, Users, BarChart3, FileText, HelpCircle, User, CheckSquare } from "lucide-react"
+import { Home, Settings, Users, BarChart3, FileText, HelpCircle, User, CheckSquare, List, Cog } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -10,14 +10,20 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 import { Logo } from "@/components/logo"
 import { useTranslations } from "@/lib/i18n/hooks"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { ChevronRight } from "lucide-react"
 
 interface AppSidebarProps {
   user: SupabaseUser
@@ -27,6 +33,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
   const { t } = useTranslations("common")
   const { state } = useSidebar()
   const isCollapsed = state === "collapsed"
+  const pathname = usePathname()
 
   const menuItems = [
     {
@@ -43,6 +50,23 @@ export function AppSidebar({ user }: AppSidebarProps) {
       title: t("tasks"),
       url: "/tasks",
       icon: CheckSquare,
+      subItems: [
+        {
+          title: t("tasksDashboard"),
+          url: "/tasks",
+          icon: CheckSquare,
+        },
+        {
+          title: t("manage"),
+          url: "/tasks/manage",
+          icon: List,
+        },
+        {
+          title: t("settings"),
+          url: "/tasks/settings",
+          icon: Cog,
+        },
+      ],
     },
     {
       title: t("users"),
@@ -75,8 +99,43 @@ export function AppSidebar({ user }: AppSidebarProps) {
   ]
 
   const SidebarMenuItemWithTooltip = ({ item }: { item: (typeof menuItems)[0] }) => {
+    const hasSubItems = item.subItems && item.subItems.length > 0
+    const isActive = pathname.startsWith(item.url)
+
+    if (hasSubItems && !isCollapsed) {
+      return (
+        <Collapsible defaultOpen={isActive}>
+          <CollapsibleTrigger asChild>
+            <SidebarMenuButton className="text-foreground hover:bg-muted hover:text-primary transition-colors w-full">
+              <item.icon className="h-4 w-4 flex-shrink-0" />
+              <span className="truncate">{item.title}</span>
+              <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]:rotate-90" />
+            </SidebarMenuButton>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <SidebarMenuSub>
+              {item.subItems.map((subItem) => (
+                <SidebarMenuSubItem key={subItem.title}>
+                  <SidebarMenuSubButton asChild isActive={pathname === subItem.url}>
+                    <Link href={subItem.url} className="flex items-center gap-2">
+                      <subItem.icon className="h-3 w-3" />
+                      <span>{subItem.title}</span>
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              ))}
+            </SidebarMenuSub>
+          </CollapsibleContent>
+        </Collapsible>
+      )
+    }
+
     const menuButton = (
-      <SidebarMenuButton asChild className="text-foreground hover:bg-muted hover:text-primary transition-colors w-full">
+      <SidebarMenuButton
+        asChild
+        className="text-foreground hover:bg-muted hover:text-primary transition-colors w-full"
+        isActive={pathname === item.url}
+      >
         <Link href={item.url} className="flex items-center gap-3 px-3 py-2">
           <item.icon className="h-4 w-4 flex-shrink-0" />
           {!isCollapsed && <span className="truncate">{item.title}</span>}
@@ -97,6 +156,15 @@ export function AppSidebar({ user }: AppSidebarProps) {
               sideOffset={12}
             >
               <p className="text-sm font-medium">{item.title}</p>
+              {hasSubItems && (
+                <div className="mt-1 space-y-1">
+                  {item.subItems.map((subItem) => (
+                    <p key={subItem.title} className="text-xs text-muted-foreground">
+                      {subItem.title}
+                    </p>
+                  ))}
+                </div>
+              )}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
