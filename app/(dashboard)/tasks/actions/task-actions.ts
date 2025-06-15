@@ -28,19 +28,22 @@ export async function getTasks() {
       throw new Error(`Error calling stored procedure: ${error.message}`)
     }
 
-    console.log(`Stored procedure returned ${data?.length || 0} tasks`)
+    console.log(`✅ Stored procedure returned ${data?.length || 0} tasks`)
 
     // Log task details for debugging
     if (data && data.length > 0) {
-      console.log("Returned tasks:")
+      console.log("📋 Returned tasks:")
       data.forEach((task: any, index: number) => {
-        console.log(`${index + 1}. ${task.title} - Status: ${task.status}, Completed: ${task.completed_at}`)
+        const completedInfo = task.status === "completed" ? ` (completed: ${task.completed_at})` : ""
+        console.log(`${index + 1}. ${task.title} - ${task.status}${completedInfo}`)
       })
+    } else {
+      console.log("📋 No tasks returned")
     }
 
     return data || []
   } catch (error) {
-    console.error("Error in getTasks:", error)
+    console.error("❌ Error in getTasks:", error)
 
     // Fallback: return all tasks
     const { data } = await supabase
@@ -49,7 +52,7 @@ export async function getTasks() {
       .eq("is_deleted", false)
       .order("created_at", { ascending: false })
 
-    console.log("Using fallback, returned", data?.length || 0, "tasks")
+    console.log("🔄 Using fallback, returned", data?.length || 0, "tasks")
     return data || []
   }
 }
@@ -101,10 +104,10 @@ export async function updateTask(taskId: string, taskData: any) {
   // Handle completed_at field
   if (taskData.status === "completed") {
     updateData.completed_at = new Date().toISOString()
-    console.log("Setting completed_at to:", updateData.completed_at)
+    console.log("✅ Setting completed_at to:", updateData.completed_at)
   } else if (taskData.status && taskData.status !== "completed") {
     updateData.completed_at = null
-    console.log("Clearing completed_at")
+    console.log("🔄 Clearing completed_at")
   }
 
   const { data, error } = await supabase.from("tasks").update(updateData).eq("id", taskId).select().single()
@@ -179,10 +182,10 @@ export async function toggleTaskStatus(taskId: string) {
   // Handle completed_at
   if (newStatus === "completed") {
     updateData.completed_at = new Date().toISOString()
-    console.log("Toggle: Setting completed_at to:", updateData.completed_at)
+    console.log("✅ Toggle: Setting completed_at to:", updateData.completed_at)
   } else {
     updateData.completed_at = null
-    console.log("Toggle: Clearing completed_at")
+    console.log("🔄 Toggle: Clearing completed_at")
   }
 
   const { data, error } = await supabase.from("tasks").update(updateData).eq("id", taskId).select().single()
@@ -228,7 +231,7 @@ export async function markTaskComplete(taskId: string) {
   }
 
   const completedAt = new Date().toISOString()
-  console.log("Marking task complete with completed_at:", completedAt)
+  console.log("✅ Marking task complete with completed_at:", completedAt)
 
   const { data, error } = await supabase
     .from("tasks")
