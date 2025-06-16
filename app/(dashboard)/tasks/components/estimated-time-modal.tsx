@@ -1,43 +1,46 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Clock, Edit } from "lucide-react"
+import { Clock } from "lucide-react"
 import { updateTaskEstimatedTime } from "../actions/enhanced-task-actions"
 import { toast } from "sonner"
 
 interface EstimatedTimeModalProps {
-  taskId: string
-  currentEstimate: number
-  onUpdate?: () => void
-  trigger?: React.ReactNode
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  task: any
+  onSuccess: () => void
 }
 
-export function EstimatedTimeModal({ taskId, currentEstimate, onUpdate, trigger }: EstimatedTimeModalProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [estimatedMinutes, setEstimatedMinutes] = useState(currentEstimate)
+export function EstimatedTimeModal({ open, onOpenChange, task, onSuccess }: EstimatedTimeModalProps) {
+  const [estimatedMinutes, setEstimatedMinutes] = useState(task?.estimated_minutes || 30)
   const [isLoading, setIsLoading] = useState(false)
 
-  const formatTime = (minutes: number) => {
-    if (minutes < 60) return `${minutes} min`
-    const hours = Math.floor(minutes / 60)
-    const mins = minutes % 60
-    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`
-  }
+  const quickTimeOptions = [
+    { minutes: 10, label: "10 min", icon: "⚡" },
+    { minutes: 15, label: "15 min", icon: "🔥" },
+    { minutes: 30, label: "30 min", icon: "⏰" },
+    { minutes: 45, label: "45 min", icon: "🕐" },
+    { minutes: 60, label: "1 hour", icon: "⏳" },
+    { minutes: 90, label: "1.5 hours", icon: "📅" },
+    { minutes: 120, label: "2 hours", icon: "🗓️" },
+  ]
 
   const handleSave = async () => {
+    if (!task?.id) return
+
     setIsLoading(true)
     try {
-      const result = await updateTaskEstimatedTime(taskId, estimatedMinutes)
+      const result = await updateTaskEstimatedTime(task.id, estimatedMinutes)
+
       if (result.success) {
-        toast.success("Estimated time updated")
-        setIsOpen(false)
-        onUpdate?.()
+        toast.success("Estimated time updated!")
+        onSuccess()
+        onOpenChange(false)
       } else {
         toast.error(result.error || "Failed to update estimated time")
       }
@@ -48,62 +51,54 @@ export function EstimatedTimeModal({ taskId, currentEstimate, onUpdate, trigger 
     }
   }
 
-  const quickTimes = [5, 10, 15, 30, 45, 60, 90, 120, 180, 240]
-
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button variant="ghost" size="sm" className="h-auto p-1 text-xs">
-            <Clock className="h-3 w-3 mr-1" />
-            {formatTime(currentEstimate)}
-            <Edit className="h-3 w-3 ml-1" />
-          </Button>
-        )}
-      </DialogTrigger>
-
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
-            Estimated Time
+            Update Estimated Time
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="estimated-minutes">Minutes</Label>
-            <Input
-              id="estimated-minutes"
-              type="number"
-              min="1"
-              max="1440"
-              value={estimatedMinutes}
-              onChange={(e) => setEstimatedMinutes(Number.parseInt(e.target.value) || 1)}
-              placeholder="Enter minutes"
-            />
-            <p className="text-xs text-muted-foreground">Current estimate: {formatTime(estimatedMinutes)}</p>
-          </div>
+          <div>
+            <p className="text-sm text-muted-foreground mb-3">How long do you think "{task?.title}" will take?</p>
 
-          <div className="space-y-2">
-            <Label>Quick Select</Label>
-            <div className="grid grid-cols-5 gap-2">
-              {quickTimes.map((minutes) => (
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              {quickTimeOptions.map((option) => (
                 <Button
-                  key={minutes}
-                  variant={estimatedMinutes === minutes ? "default" : "outline"}
+                  key={option.minutes}
+                  variant={estimatedMinutes === option.minutes ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setEstimatedMinutes(minutes)}
-                  className="text-xs"
+                  onClick={() => setEstimatedMinutes(option.minutes)}
+                  className="flex flex-col h-auto py-2"
                 >
-                  {formatTime(minutes)}
+                  <span className="text-lg">{option.icon}</span>
+                  <span className="text-xs">{option.label}</span>
                 </Button>
               ))}
             </div>
           </div>
 
+          <div>
+            <Label htmlFor="custom-time">Custom Time (minutes)</Label>
+            <Input
+              id="custom-time"
+              type="number"
+              value={estimatedMinutes}
+              onChange={(e) => setEstimatedMinutes(Number.parseInt(e.target.value) || 0)}
+              min="1"
+              max="480"
+              className="mt-1"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Current estimate: {Math.floor(estimatedMinutes / 60)}h {estimatedMinutes % 60}m
+            </p>
+          </div>
+
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setIsOpen(false)}>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={isLoading}>
