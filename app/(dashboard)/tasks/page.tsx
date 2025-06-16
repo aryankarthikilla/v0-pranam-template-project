@@ -5,6 +5,9 @@ import { useTranslations } from "@/lib/i18n/hooks"
 import { BarChart3, CheckSquare, Clock, AlertTriangle, TrendingUp, Calendar } from "lucide-react"
 import Link from "next/link"
 import { useTaskData } from "./hooks/use-task-data"
+import { AINextTaskWidget } from "./components/ai-next-task-widget"
+import { MultiTaskWidget } from "./components/multi-task-widget"
+import { OpportunisticTaskSuggestions } from "./components/opportunistic-task-suggestions"
 
 export default function TasksDashboard() {
   const { t } = useTranslations("tasks")
@@ -105,26 +108,14 @@ export default function TasksDashboard() {
         </Card>
       </div>
 
-      {/* Temporary Enhanced Features Notice */}
-      <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
-        <CardHeader>
-          <CardTitle className="text-blue-800 dark:text-blue-200 flex items-center gap-2">
-            🚀 Enhanced Features Coming Soon
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-blue-700 dark:text-blue-300 mb-4">
-            The enhanced task management system with AI features is being set up. Please run the database setup scripts
-            first.
-          </p>
-          <div className="space-y-2 text-sm text-blue-600 dark:text-blue-400">
-            <p>✅ AI Task Recommendations</p>
-            <p>✅ Multi-Task Management</p>
-            <p>✅ Smart Time Tracking</p>
-            <p>✅ Context-Aware Suggestions</p>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Multi-Task Control Widget */}
+      <MultiTaskWidget />
+
+      {/* AI Recommendation Widget */}
+      <AINextTaskWidget tasks={tasks} />
+
+      {/* Opportunistic Task Suggestions */}
+      <OpportunisticTaskSuggestions availableTime={30} activeTasks={tasks.filter((t) => t.status === "in_progress")} />
 
       {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
