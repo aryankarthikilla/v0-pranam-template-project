@@ -32,11 +32,37 @@ export async function updateTaskSettings(showCompletedTasks: string) {
 
   if (!user) throw new Error("Not authenticated")
 
-  await supabase.from("task_settings").upsert({
-    user_id: user.id,
-    show_completed_tasks: showCompletedTasks,
-  })
+  // First, check if a record exists for this user
+  const { data: existingRecord } = await supabase.from("task_settings").select("id").eq("user_id", user.id).single()
 
-  revalidatePath("/dashboard/tasks")
-  return { show_completed_tasks: showCompletedTasks }
+  if (existingRecord) {
+    // Record exists - UPDATE
+    const { data } = await supabase
+      .from("task_settings")
+      .update({
+        show_completed_tasks: showCompletedTasks,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", user.id)
+      .select()
+      .single()
+
+    revalidatePath("/dashboard/tasks")
+    return data
+  } else {
+    // No record exists - CREATE
+    const { data } = await supabase
+      .from("task_settings")
+      .insert({
+        user_id: user.id,
+        show_completed_tasks: showCompletedTasks,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single()
+
+    revalidatePath("/dashboard/tasks")
+    return data
+  }
 }
