@@ -9,7 +9,7 @@ import {
 export interface TaskSettings {
   id?: string
   user_id: string
-  show_completed_tasks: string
+  show_completed: boolean
   created_at?: string
   updated_at?: string
 }
@@ -33,10 +33,10 @@ export function useTaskSettings() {
     }
   }
 
-  const updateTaskSettings = async (showCompletedTasks: string) => {
+  const updateTaskSettings = async (newSettings: Partial<TaskSettings>) => {
     try {
       setError(null)
-      const result = await updateSettings(showCompletedTasks)
+      const result = await updateSettings(newSettings)
       setSettings(result)
       return result
     } catch (err) {

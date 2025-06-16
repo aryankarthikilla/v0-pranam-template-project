@@ -1,18 +1,6 @@
 "use client"
 
-import {
-  Home,
-  Settings,
-  Users,
-  BarChart3,
-  FileText,
-  HelpCircle,
-  User,
-  CheckSquare,
-  List,
-  Cog,
-  Brain,
-} from "lucide-react"
+import { Home, Settings, Users, BarChart3, FileText, HelpCircle, User, CheckSquare, List, Cog } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -79,11 +67,6 @@ export function AppSidebar({ user }: AppSidebarProps) {
           icon: Cog,
         },
       ],
-    },
-    {
-      title: "AI Logs",
-      url: "/ai-logs",
-      icon: Brain,
     },
     {
       title: t("users"),
