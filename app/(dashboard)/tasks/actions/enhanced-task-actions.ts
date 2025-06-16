@@ -210,9 +210,9 @@ export async function completeTask(taskId: string, completionNotes?: string, com
   }
 }
 
-// Skip task (reschedule to future)
+// Skip task (reschedule to future) - FIXED VERSION
 export async function skipTask(taskId: string, skipDuration: string, reason?: string) {
-  console.log("skipTask called with:", { taskId, skipDuration, reason })
+  console.log("🚀 skipTask called with:", { taskId, skipDuration, reason })
   const supabase = await createClient()
 
   try {
@@ -220,6 +220,60 @@ export async function skipTask(taskId: string, skipDuration: string, reason?: st
       data: { user },
     } = await supabase.auth.getUser()
     if (!user) throw new Error("Not authenticated")
+
+    // Check if there's already an active schedule for this task to prevent duplicates
+    const { data: existingSchedule } = await supabase
+      .from("task_schedules")
+      .select("id")
+      .eq("task_id", taskId)
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .single()
+
+    if (existingSchedule) {
+      console.log("⚠️ Task already has an active schedule, updating existing one")
+      // Update the existing schedule instead of creating a new one
+      const now = new Date()
+      const scheduledFor = new Date(now)
+
+      switch (skipDuration) {
+        case "1hour":
+          scheduledFor.setHours(now.getHours() + 1)
+          break
+        case "4hours":
+          scheduledFor.setHours(now.getHours() + 4)
+          break
+        case "tomorrow":
+          scheduledFor.setDate(now.getDate() + 1)
+          scheduledFor.setHours(9, 0, 0, 0)
+          break
+        case "3days":
+          scheduledFor.setDate(now.getDate() + 3)
+          scheduledFor.setHours(9, 0, 0, 0)
+          break
+        case "1week":
+          scheduledFor.setDate(now.getDate() + 7)
+          scheduledFor.setHours(9, 0, 0, 0)
+          break
+        default:
+          scheduledFor.setHours(now.getHours() + 1)
+      }
+
+      const { error: updateError } = await supabase
+        .from("task_schedules")
+        .update({
+          scheduled_for: scheduledFor.toISOString(),
+          reason: reason || "Task skipped",
+          created_at: new Date().toISOString(), // Update timestamp
+        })
+        .eq("id", existingSchedule.id)
+
+      if (updateError) throw updateError
+
+      console.log("✅ Updated existing schedule")
+      revalidatePath("/dashboard/tasks")
+      return { success: true, scheduledFor: scheduledFor.toISOString() }
+    }
 
     // Calculate future date based on skip duration
     const now = new Date()
@@ -248,9 +302,9 @@ export async function skipTask(taskId: string, skipDuration: string, reason?: st
         scheduledFor.setHours(now.getHours() + 1)
     }
 
-    console.log("Calculated scheduled time:", scheduledFor.toISOString())
+    console.log("📅 Calculated scheduled time:", scheduledFor.toISOString())
 
-    // Deactivate any existing schedules for this task
+    // First, deactivate any existing schedules for this task (belt and suspenders approach)
     const { error: deactivateError } = await supabase
       .from("task_schedules")
       .update({ is_active: false })
@@ -259,8 +313,10 @@ export async function skipTask(taskId: string, skipDuration: string, reason?: st
       .eq("is_active", true)
 
     if (deactivateError) {
-      console.error("Failed to deactivate existing schedules:", deactivateError)
-      // Continue anyway
+      console.error("⚠️ Failed to deactivate existing schedules:", deactivateError)
+      // Continue anyway, but log the error
+    } else {
+      console.log("✅ Deactivated existing schedules")
     }
 
     // Create new schedule entry
@@ -278,13 +334,13 @@ export async function skipTask(taskId: string, skipDuration: string, reason?: st
       .single()
 
     if (scheduleError) {
-      console.error("Schedule creation error:", scheduleError)
+      console.error("❌ Schedule creation error:", scheduleError)
       throw scheduleError
     }
 
-    console.log("Schedule created:", schedule)
+    console.log("✅ Schedule created:", schedule.id)
 
-    // Update task status
+    // Update task status to scheduled
     const { error: taskError } = await supabase
       .from("tasks")
       .update({
@@ -295,13 +351,13 @@ export async function skipTask(taskId: string, skipDuration: string, reason?: st
       .eq("created_by", user.id)
 
     if (taskError) {
-      console.error("Task update error:", taskError)
+      console.error("❌ Task update error:", taskError)
       throw taskError
     }
 
-    console.log("Task status updated to scheduled")
+    console.log("✅ Task status updated to scheduled")
 
-    // Add note
+    // Add note to task_notes
     const noteText = `Task skipped for ${skipDuration}${reason ? `: ${reason}` : ""}`
     const { error: noteError } = await supabase.from("task_notes").insert({
       task_id: taskId,
@@ -311,17 +367,17 @@ export async function skipTask(taskId: string, skipDuration: string, reason?: st
     })
 
     if (noteError) {
-      console.error("Failed to add skip note:", noteError)
+      console.error("⚠️ Failed to add skip note:", noteError)
       // Don't fail the whole operation for note error
     } else {
-      console.log("Skip note added successfully")
+      console.log("✅ Skip note added successfully")
     }
 
     revalidatePath("/dashboard/tasks")
-    console.log("skipTask completed successfully")
+    console.log("🎉 skipTask completed successfully")
     return { success: true, scheduledFor: scheduledFor.toISOString() }
   } catch (error) {
-    console.error("Skip task error:", error)
+    console.error("❌ Skip task error:", error)
     return { success: false, error: error instanceof Error ? error.message : "Failed to skip task" }
   }
 }
