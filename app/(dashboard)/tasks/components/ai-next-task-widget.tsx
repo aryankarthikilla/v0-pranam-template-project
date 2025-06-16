@@ -129,8 +129,19 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
       const result = await startTaskSession(recommendation.task_details.id, undefined, "web")
       if (result.success) {
         toast.success("Task started successfully!")
+
+        // Immediately update local state - don't wait for re-analysis
         setTaskState("in_progress")
         setCurrentSessionId(result.session.id)
+
+        // Update the recommendation reasoning to reflect the new state
+        setRecommendation((prev) => ({
+          ...prev,
+          reason:
+            "This task is now active and in progress. You can pause it if you need a break or complete it when finished.",
+        }))
+
+        setLastUpdated(new Date())
       } else {
         toast.error(result.error || "Failed to start task")
       }
@@ -180,24 +191,28 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
       if (result.success) {
         console.log("Pause successful, updating state")
         toast.success("Task paused successfully! Use Skip to reschedule when you want to work on it again.")
+
+        // Immediately update local state
         setTaskState("pending")
         setCurrentSessionId(null)
         setPauseReason("")
         setShowPauseModal(false)
 
-        // Small delay before refreshing to ensure state is updated
-        setTimeout(() => {
-          getRecommendation()
-        }, 500)
+        // Update reasoning to reflect paused state
+        setRecommendation((prev) => ({
+          ...prev,
+          reason:
+            "This task was paused and is ready to be resumed. You can start it again or skip it to schedule for later.",
+        }))
+
+        setLastUpdated(new Date())
       } else {
         console.error("Pause failed:", result.error)
         toast.error(result.error || "Failed to pause task")
-        // Keep modal open on error so user can retry
       }
     } catch (error) {
       console.error("Pause task error:", error)
       toast.error("Failed to pause task")
-      // Keep modal open on error so user can retry
     } finally {
       console.log("Setting loading to false")
       setIsLoading(false)
@@ -221,7 +236,11 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
         setCurrentSessionId(null)
         setCompletionNotes("")
         setShowCompleteModal(false)
-        getRecommendation() // Refresh to get next recommendation
+
+        // Get next recommendation after completing
+        setTimeout(() => {
+          getRecommendation()
+        }, 1000)
       } else {
         toast.error(result.error || "Failed to complete task")
       }
@@ -242,7 +261,11 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
         toast.success(`Task skipped and rescheduled!`)
         setSkipReason("")
         setShowSkipModal(false)
-        getRecommendation() // Refresh to get next recommendation
+
+        // Get next recommendation after skipping
+        setTimeout(() => {
+          getRecommendation()
+        }, 1000)
       } else {
         toast.error(result.error || "Failed to skip task")
       }
