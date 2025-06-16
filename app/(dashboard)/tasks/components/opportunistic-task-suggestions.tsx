@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Lightbulb, Clock, MapPin, Zap, Plus, Save, Play } from "lucide-react"
+import { Lightbulb, Clock, MapPin, Zap, Plus, Save, Play, AlertTriangle } from "lucide-react"
 import { generateOpportunisticTasks } from "../actions/ai-task-actions-enhanced"
 import { createTaskFromSuggestion, createAndStartTaskFromSuggestion } from "../actions/smart-task-actions"
 import { toast } from "sonner"
@@ -15,12 +15,14 @@ interface OpportunisticTaskSuggestionsProps {
   currentLocation?: string
   availableTime?: number
   activeTasks: any[]
+  hasActiveTask?: boolean
 }
 
 export function OpportunisticTaskSuggestions({
   currentLocation,
   availableTime = 30,
   activeTasks,
+  hasActiveTask = false,
 }: OpportunisticTaskSuggestionsProps) {
   const [suggestions, setSuggestions] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -78,6 +80,11 @@ export function OpportunisticTaskSuggestions({
   }
 
   const handleStartTask = async (suggestion: any, index: number) => {
+    if (hasActiveTask) {
+      toast.error("Please pause or complete your current task before starting a new one")
+      return
+    }
+
     setLoadingStates((prev) => ({ ...prev, [index]: "start" }))
 
     try {
@@ -172,6 +179,12 @@ export function OpportunisticTaskSuggestions({
           <div className="flex items-center gap-2">
             <Lightbulb className="h-5 w-5" />
             Smart Suggestions
+            {hasActiveTask && (
+              <Badge variant="outline" className="text-xs bg-orange-100 text-orange-700 border-orange-300">
+                <AlertTriangle className="h-3 w-3 mr-1" />
+                Task Active
+              </Badge>
+            )}
           </div>
           <Dialog open={isContextOpen} onOpenChange={setIsContextOpen}>
             <DialogTrigger asChild>
@@ -212,6 +225,18 @@ export function OpportunisticTaskSuggestions({
       </CardHeader>
 
       <CardContent className="space-y-3">
+        {hasActiveTask && (
+          <div className="p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800 mb-4">
+            <div className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
+              <AlertTriangle className="h-4 w-4" />
+              <span className="text-sm font-medium">You have an active task running</span>
+            </div>
+            <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+              You can save suggestions for later, but pause your current task before starting a new one.
+            </p>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="flex items-center justify-center py-4">
             <div className="flex items-center gap-2 text-yellow-600">
@@ -265,7 +290,7 @@ export function OpportunisticTaskSuggestions({
                       variant="outline"
                       onClick={() => handleSaveTask(suggestion, index)}
                       disabled={loadingStates[index] !== null}
-                      className="text-yellow-700 border-yellow-300 hover:bg-yellow-50"
+                      className="text-yellow-700 border-yellow-300 hover:bg-yellow-50 hover:border-yellow-400 hover:text-yellow-800"
                     >
                       {loadingStates[index] === "save" ? (
                         <Zap className="h-3 w-3 mr-1 animate-spin" />
@@ -278,8 +303,13 @@ export function OpportunisticTaskSuggestions({
                     <Button
                       size="sm"
                       onClick={() => handleStartTask(suggestion, index)}
-                      disabled={loadingStates[index] !== null}
-                      className="bg-yellow-600 hover:bg-yellow-700"
+                      disabled={loadingStates[index] !== null || hasActiveTask}
+                      className={`${
+                        hasActiveTask
+                          ? "bg-gray-400 hover:bg-gray-400 cursor-not-allowed opacity-60"
+                          : "bg-yellow-600 hover:bg-yellow-700 shadow-md hover:shadow-lg"
+                      } transition-all duration-200`}
+                      title={hasActiveTask ? "Pause your current task first" : "Start this task now"}
                     >
                       {loadingStates[index] === "start" ? (
                         <Zap className="h-3 w-3 mr-1 animate-spin" />
