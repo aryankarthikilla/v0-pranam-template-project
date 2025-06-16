@@ -133,13 +133,18 @@ export async function pauseTaskSession(sessionId: string, reason?: string) {
     // Add note if reason provided
     if (reason) {
       console.log("Adding pause note")
-      await supabase.from("task_notes").insert({
+      const { error: noteError } = await supabase.from("task_notes").insert({
         task_id: session.task_id,
         user_id: user.id,
         note_text: `Task paused: ${reason}`,
         note_type: "pause_reason",
         session_id: sessionId,
       })
+
+      if (noteError) {
+        console.error("Failed to add pause note:", noteError)
+        // Don't fail the whole operation for note error
+      }
     }
 
     revalidatePath("/dashboard/tasks")
@@ -207,6 +212,7 @@ export async function completeTask(taskId: string, completionNotes?: string, com
 
 // Skip task (reschedule to future)
 export async function skipTask(taskId: string, skipDuration: string, reason?: string) {
+  console.log("skipTask called with:", { taskId, skipDuration, reason })
   const supabase = await createClient()
 
   try {
@@ -228,27 +234,55 @@ export async function skipTask(taskId: string, skipDuration: string, reason?: st
         break
       case "tomorrow":
         scheduledFor.setDate(now.getDate() + 1)
+        scheduledFor.setHours(9, 0, 0, 0) // 9 AM tomorrow
         break
       case "3days":
         scheduledFor.setDate(now.getDate() + 3)
+        scheduledFor.setHours(9, 0, 0, 0)
         break
       case "1week":
         scheduledFor.setDate(now.getDate() + 7)
+        scheduledFor.setHours(9, 0, 0, 0)
         break
       default:
         scheduledFor.setHours(now.getHours() + 1)
     }
 
-    // Create schedule entry
-    const { error: scheduleError } = await supabase.from("task_schedules").insert({
-      task_id: taskId,
-      user_id: user.id,
-      scheduled_for: scheduledFor.toISOString(),
-      schedule_type: "skip",
-      reason: reason || "Task skipped",
-    })
+    console.log("Calculated scheduled time:", scheduledFor.toISOString())
 
-    if (scheduleError) throw scheduleError
+    // Deactivate any existing schedules for this task
+    const { error: deactivateError } = await supabase
+      .from("task_schedules")
+      .update({ is_active: false })
+      .eq("task_id", taskId)
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+
+    if (deactivateError) {
+      console.error("Failed to deactivate existing schedules:", deactivateError)
+      // Continue anyway
+    }
+
+    // Create new schedule entry
+    const { data: schedule, error: scheduleError } = await supabase
+      .from("task_schedules")
+      .insert({
+        task_id: taskId,
+        user_id: user.id,
+        scheduled_for: scheduledFor.toISOString(),
+        schedule_type: "skip",
+        reason: reason || "Task skipped",
+        is_active: true,
+      })
+      .select()
+      .single()
+
+    if (scheduleError) {
+      console.error("Schedule creation error:", scheduleError)
+      throw scheduleError
+    }
+
+    console.log("Schedule created:", schedule)
 
     // Update task status
     const { error: taskError } = await supabase
@@ -258,18 +292,33 @@ export async function skipTask(taskId: string, skipDuration: string, reason?: st
         updated_at: new Date().toISOString(),
       })
       .eq("id", taskId)
+      .eq("created_by", user.id)
 
-    if (taskError) throw taskError
+    if (taskError) {
+      console.error("Task update error:", taskError)
+      throw taskError
+    }
+
+    console.log("Task status updated to scheduled")
 
     // Add note
-    await supabase.from("task_notes").insert({
+    const noteText = `Task skipped for ${skipDuration}${reason ? `: ${reason}` : ""}`
+    const { error: noteError } = await supabase.from("task_notes").insert({
       task_id: taskId,
       user_id: user.id,
-      note_text: `Task skipped for ${skipDuration}: ${reason || "No reason provided"}`,
+      note_text: noteText,
       note_type: "skip_reason",
     })
 
+    if (noteError) {
+      console.error("Failed to add skip note:", noteError)
+      // Don't fail the whole operation for note error
+    } else {
+      console.log("Skip note added successfully")
+    }
+
     revalidatePath("/dashboard/tasks")
+    console.log("skipTask completed successfully")
     return { success: true, scheduledFor: scheduledFor.toISOString() }
   } catch (error) {
     console.error("Skip task error:", error)
