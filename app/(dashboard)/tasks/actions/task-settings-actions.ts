@@ -30,6 +30,8 @@ export async function getTaskSettings(): Promise<TaskSettings | null> {
       throw new Error("User not authenticated")
     }
 
+    console.log("🔍 Getting task settings for user:", user.id)
+
     const { data, error } = await supabase.from("task_settings").select("*").eq("user_id", user.id).single()
 
     if (error && error.code !== "PGRST116") {
@@ -38,6 +40,7 @@ export async function getTaskSettings(): Promise<TaskSettings | null> {
       throw new Error(`Error fetching task settings: ${error.message}`)
     }
 
+    console.log("📋 Current task settings:", data)
     return data || null
   } catch (error) {
     console.error("Error in getTaskSettings:", error)
@@ -62,6 +65,10 @@ export async function getCompletedFilters(): Promise<CompletedFilter[]> {
     // Add the "no" option at the beginning
     const filters: CompletedFilter[] = [{ filter_key: "no", interval_value: null }, ...(data || [])]
 
+    console.log(
+      "📋 Available filters:",
+      filters.map((f) => f.filter_key),
+    )
     return filters
   } catch (error) {
     console.error("Error in getCompletedFilters:", error)
@@ -92,7 +99,7 @@ export async function updateTaskSettings(showCompletedTasks: ShowCompletedTasksO
       throw new Error("User not authenticated")
     }
 
-    console.log("Updating task settings for user:", user.id, "to:", showCompletedTasks)
+    console.log("🔄 Updating task settings for user:", user.id, "to:", showCompletedTasks)
 
     // Upsert the settings
     const { data, error } = await supabase
@@ -115,10 +122,11 @@ export async function updateTaskSettings(showCompletedTasks: ShowCompletedTasksO
       throw new Error(`Error updating task settings: ${error.message}`)
     }
 
-    console.log("✅ Task settings updated successfully")
+    console.log("✅ Task settings updated successfully:", data)
 
     // Revalidate the tasks page to refresh the task list
     revalidatePath("/dashboard/tasks")
+    revalidatePath("/dashboard/tasks/manage")
 
     return data
   } catch (error) {
