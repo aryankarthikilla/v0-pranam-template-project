@@ -115,8 +115,8 @@ export default function TasksDashboard() {
       {/* Multi-Task Control Widget */}
       <MultiTaskWidget />
 
-      {/* AI Recommendation Widget */}
-      <AINextTaskWidget tasks={tasks} />
+      {/* AI Recommendation Widget - Pass loading state */}
+      <AINextTaskWidget tasks={tasks} loading={loading} />
 
       {/* Opportunistic Task Suggestions */}
       <OpportunisticTaskSuggestions availableTime={30} activeTasks={activeTasks} hasActiveTask={hasActiveTask} />

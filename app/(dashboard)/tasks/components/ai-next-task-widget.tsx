@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Zap,
   Clock,
@@ -38,9 +39,10 @@ interface Task {
 
 interface AINextTaskWidgetProps {
   tasks: Task[]
+  loading: boolean
 }
 
-export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
+export function AINextTaskWidget({ tasks, loading }: AINextTaskWidgetProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [aiRecommendation, setAiRecommendation] = useState<any>(null)
   const [showPauseModal, setShowPauseModal] = useState(false)
@@ -58,6 +60,29 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
   const pendingTasks = tasks.filter((task) => task.status === "pending" || task.status === "todo")
   const completedTasks = tasks.filter((task) => task.status === "completed")
   const totalTasks = tasks.length
+
+  // Auto-load AI recommendation on mount if there are pending tasks and no active tasks
+  useEffect(() => {
+    if (!loading && pendingTasks.length > 0 && activeTasks.length === 0 && !aiRecommendation) {
+      getAIRecommendation()
+    }
+  }, [loading, pendingTasks.length, activeTasks.length])
+
+  // Show loading skeleton while data is being fetched
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <Card className="border-purple-200 dark:border-purple-800">
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-20 w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   const getPriorityColor = (priority: string) => {
     switch (priority?.toLowerCase()) {
@@ -129,13 +154,6 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
       setIsLoading(false)
     }
   }
-
-  // Auto-load AI recommendation on mount if there are pending tasks and no active tasks
-  useEffect(() => {
-    if (pendingTasks.length > 0 && activeTasks.length === 0 && !aiRecommendation) {
-      getAIRecommendation()
-    }
-  }, [pendingTasks.length, activeTasks.length])
 
   const handleStartRecommendedTask = async () => {
     if (!aiRecommendation?.task_details?.id) return
@@ -288,7 +306,7 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
               <div className="flex items-center gap-2">
                 <Brain className="h-5 w-5" />
                 AI Recommended Next Task
-                {activeTasks.length > 0 && (
+                {pendingTasks.length > 0 && (
                   <Badge variant="secondary" className="text-xs">
                     {pendingTasks.length} pending
                   </Badge>
