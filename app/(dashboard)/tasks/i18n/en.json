@@ -2,11 +2,11 @@
   "taskManagement": "Task Management",
   "taskManagementDescription": "Organize and track your tasks efficiently with our comprehensive task management system",
   "tasksDashboard": "Tasks Dashboard",
-  "tasksDashboardDescription": "Overview of your task management system",
+  "tasksDashboardDescription": "Manage and track your tasks with AI-powered insights",
   "manageTasksTitle": "Manage Tasks",
-  "manageTasksDescription": "Create, edit, and organize your tasks efficiently",
+  "manageTasksDescription": "Create, edit, and organize your tasks",
   "taskSettingsTitle": "Task Settings",
-  "taskSettingsDescription": "Configure your task management preferences",
+  "taskSettingsDescription": "Configure task preferences and filters",
   "title": "Task Management",
   "description": "Organize and track your tasks efficiently",
   "newTask": "New Task",
@@ -43,8 +43,17 @@
   "previous": "Previous",
   "next": "Next",
   "task": "Task",
-  "status": "Status",
-  "priority": "Priority",
+  "status": {
+    "pending": "Pending",
+    "inProgress": "In Progress",
+    "completed": "Completed"
+  },
+  "priority": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "urgent": "Urgent"
+  },
   "dueDate": "Due Date",
   "created": "Created",
   "edit": "Edit",
@@ -103,16 +112,5 @@
       "thisMonth": "This month",
       "all": "All"
     }
-  },
-  "status": {
-    "pending": "Pending",
-    "inProgress": "In Progress",
-    "completed": "Completed"
-  },
-  "priority": {
-    "low": "Low",
-    "medium": "Medium",
-    "high": "High",
-    "urgent": "Urgent"
   }
 }

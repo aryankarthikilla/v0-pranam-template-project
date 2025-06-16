@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
-import { Timer, Pause, Square, AlertTriangle, Clock } from "lucide-react"
+import { Timer, Pause, Square, AlertTriangle, Clock, Play } from "lucide-react"
 import { getActiveSessions, getStaleSessionsCheck, resolveStaleSession } from "../actions/enhanced-task-actions"
 import { toast } from "sonner"
 
@@ -37,6 +37,8 @@ export function MultiTaskWidget() {
   const [selectedStaleSession, setSelectedStaleSession] = useState<StaleSession | null>(null)
   const [staleResolution, setStaleResolution] = useState<"continue" | "pause" | "complete">("continue")
   const [staleReason, setStaleReason] = useState("")
+  const [isRunning, setIsRunning] = useState(false)
+  const [activeSession, setActiveSession] = useState<string | null>(null)
 
   const loadSessions = async () => {
     setIsLoading(true)
@@ -79,6 +81,20 @@ export function MultiTaskWidget() {
     }
   }
 
+  const handleStart = () => {
+    setIsRunning(true)
+    setActiveSession("Focus Session")
+  }
+
+  const handlePause = () => {
+    setIsRunning(false)
+  }
+
+  const handleStop = () => {
+    setIsRunning(false)
+    setActiveSession(null)
+  }
+
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60)
     const mins = minutes % 60
@@ -105,7 +121,7 @@ export function MultiTaskWidget() {
     return () => clearInterval(interval)
   }, [])
 
-  if (activeSessions.length === 0 && staleSessions.length === 0) {
+  if (activeSessions.length === 0 && staleSessions.length === 0 && !activeSession) {
     return (
       <Card className="border-dashed border-2 border-muted">
         <CardContent className="flex flex-col items-center justify-center py-6">
@@ -194,6 +210,42 @@ export function MultiTaskWidget() {
           )}
         </CardContent>
       </Card>
+
+      {activeSession ? (
+        <Card className="border-border bg-card mt-4">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-card-foreground">Multi-Task Control</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-2">Active Session</p>
+              <p className="font-medium text-foreground">{activeSession}</p>
+              <div className="flex gap-2 mt-4">
+                <Button
+                  variant={isRunning ? "secondary" : "default"}
+                  onClick={isRunning ? handlePause : handleStart}
+                  className="flex-1"
+                >
+                  {isRunning ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
+                  {isRunning ? "Pause" : "Resume"}
+                </Button>
+                <Button variant="outline" onClick={handleStop}>
+                  <Square className="h-4 w-4 mr-2" />
+                  Stop
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="text-center mt-4">
+          <p className="text-muted-foreground mb-4">No active session</p>
+          <Button onClick={handleStart} className="w-full">
+            <Play className="h-4 w-4 mr-2" />
+            Start Focus Session
+          </Button>
+        </div>
+      )}
 
       {/* Stale Session Resolution Modal */}
       <Dialog open={showStaleModal} onOpenChange={setShowStaleModal}>

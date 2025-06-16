@@ -4,10 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { Brain, Clock, RefreshCw, Sparkles, Play, Pause, CheckCircle, SkipForward, Calendar } from "lucide-react"
+import { Brain, RefreshCw, Sparkles } from "lucide-react"
 import { prioritizeMyTasks } from "../actions/ai-task-actions-enhanced"
 import {
   startTaskSession,
@@ -18,12 +15,21 @@ import {
 } from "../actions/enhanced-task-actions"
 import { toast } from "sonner"
 
+interface Task {
+  id: string
+  title: string
+  description?: string
+  status: string
+  priority: string
+  created_at: string
+}
+
 interface AINextTaskWidgetProps {
-  tasks: any[]
+  tasks: Task[]
 }
 
 export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
-  const [recommendation, setRecommendation] = useState<any>(null)
+  const [recommendation, setRecommendation] = useState<Task | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [taskState, setTaskState] = useState<"pending" | "in_progress" | "completed">("pending")
@@ -122,11 +128,11 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
   }
 
   const handleStartTask = async () => {
-    if (!recommendation?.task_details?.id) return
+    if (!recommendation?.id) return
 
     setIsLoading(true)
     try {
-      const result = await startTaskSession(recommendation.task_details.id, undefined, "web")
+      const result = await startTaskSession(recommendation.id, undefined, "web")
       if (result.success) {
         toast.success("Task started successfully!")
 
@@ -153,16 +159,16 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
   }
 
   const handlePauseTask = async () => {
-    console.log("handlePauseTask called", { currentSessionId, pauseReason, taskId: recommendation?.task_details?.id })
+    console.log("handlePauseTask called", { currentSessionId, pauseReason, taskId: recommendation?.id })
 
     // If no session ID, try to find it
     let sessionIdToUse = currentSessionId
 
-    if (!sessionIdToUse && recommendation?.task_details?.id) {
+    if (!sessionIdToUse && recommendation?.id) {
       console.log("No session ID, trying to find active session for task")
       try {
         const activeSessions = await getActiveSessions()
-        const taskSession = activeSessions.find((s) => s.task_id === recommendation.task_details.id)
+        const taskSession = activeSessions.find((s) => s.task_id === recommendation.id)
         if (taskSession) {
           sessionIdToUse = taskSession.id
           setCurrentSessionId(taskSession.id)
@@ -225,11 +231,11 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
   }
 
   const handleCompleteTask = async () => {
-    if (!recommendation?.task_details?.id) return
+    if (!recommendation?.id) return
 
     setIsLoading(true)
     try {
-      const result = await completeTask(recommendation.task_details.id, completionNotes, 100)
+      const result = await completeTask(recommendation.id, completionNotes, 100)
       if (result.success) {
         toast.success("Task completed successfully!")
         setTaskState("completed")
@@ -252,11 +258,11 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
   }
 
   const handleSkipTask = async () => {
-    if (!recommendation?.task_details?.id) return
+    if (!recommendation?.id) return
 
     setIsLoading(true)
     try {
-      const result = await skipTask(recommendation.task_details.id, skipDuration, skipReason)
+      const result = await skipTask(recommendation.id, skipDuration, skipReason)
       if (result.success) {
         toast.success(`Task skipped and rescheduled!`)
         setSkipReason("")
@@ -283,26 +289,24 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
     }
   }, [tasks.length])
 
-  if (tasks.length === 0) {
+  const pendingTasks = tasks.filter((task) => task.status === "pending")
+  const recommendedTask = pendingTasks[0] // Simple recommendation logic
+
+  if (!recommendedTask) {
     return (
       <Card className="border-dashed border-2 border-muted">
-        <CardContent className="flex flex-col items-center justify-center py-8">
-          <Brain className="h-12 w-12 text-muted-foreground mb-4" />
-          <p className="text-muted-foreground text-center">
-            Create some tasks first, then I'll suggest which one to work on next!
-          </p>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-card-foreground">
+            <Brain className="h-5 w-5 text-purple-600" />
+            AI Task Recommendation
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">No pending tasks to recommend.</p>
         </CardContent>
       </Card>
     )
   }
-
-  const skipDurationOptions = [
-    { value: "1hour", label: "1 Hour", icon: "⏰" },
-    { value: "4hours", label: "4 Hours", icon: "🕐" },
-    { value: "tomorrow", label: "Tomorrow", icon: "📅" },
-    { value: "3days", label: "3 Days", icon: "📆" },
-    { value: "1week", label: "1 Week", icon: "🗓️" },
-  ]
 
   return (
     <Card className="border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
@@ -327,279 +331,17 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
         </CardTitle>
       </CardHeader>
 
-      <CardContent>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="flex items-center gap-2 text-purple-600">
-              <Sparkles className="h-5 w-5 animate-pulse" />
-              <span>AI is analyzing your tasks...</span>
-            </div>
-          </div>
-        ) : recommendation ? (
-          <div className="space-y-4">
-            {/* Recommended Task */}
-            <div className="p-4 bg-white/60 dark:bg-gray-900/60 rounded-lg border border-purple-200 dark:border-purple-800">
-              <div className="flex items-start justify-between mb-2">
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex-1">
-                  {recommendation.task_details?.title || "Task"}
-                </h4>
-                {recommendation.task_details?.priority && (
-                  <Badge className={getPriorityColor(recommendation.task_details.priority)}>
-                    {recommendation.task_details.priority}
-                  </Badge>
-                )}
-              </div>
-
-              {recommendation.task_details?.description && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                  {recommendation.task_details.description}
-                </p>
-              )}
-
-              <div className="flex items-center gap-2 text-xs text-purple-600 dark:text-purple-400 mb-3">
-                <Brain className="h-3 w-3" />
-                <span className="font-medium">AI Reasoning:</span>
-              </div>
-              <p className="text-sm text-gray-700 dark:text-gray-300 bg-purple-50 dark:bg-purple-950/30 p-3 rounded border-l-4 border-purple-400">
-                {recommendation.reason}
-              </p>
-
-              <div className="flex items-center justify-between mt-4">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Clock className="h-3 w-3" />
-                  {lastUpdated && <span>Updated {lastUpdated.toLocaleTimeString()}</span>}
-                </div>
-
-                <div className="flex gap-2">
-                  {/* Task State: PENDING - Show Start, Skip, Complete */}
-                  {taskState === "pending" && (
-                    <>
-                      <Button
-                        size="sm"
-                        onClick={handleStartTask}
-                        disabled={isLoading}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <Play className="h-3 w-3 mr-1" />
-                        Start
-                      </Button>
-
-                      <Dialog open={showSkipModal} onOpenChange={setShowSkipModal}>
-                        <DialogTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-orange-300 text-orange-700 hover:bg-orange-50"
-                          >
-                            <SkipForward className="h-3 w-3 mr-1" />
-                            Skip
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Skip Task - Reschedule</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label>When should this task be rescheduled?</Label>
-                              <div className="grid grid-cols-2 gap-2 mt-2">
-                                {skipDurationOptions.map((option) => (
-                                  <Button
-                                    key={option.value}
-                                    variant={skipDuration === option.value ? "default" : "outline"}
-                                    onClick={() => setSkipDuration(option.value)}
-                                    className="justify-start"
-                                  >
-                                    <span className="mr-2">{option.icon}</span>
-                                    {option.label}
-                                  </Button>
-                                ))}
-                              </div>
-                            </div>
-                            <div>
-                              <Label htmlFor="skip-reason">Reason (optional)</Label>
-                              <Textarea
-                                id="skip-reason"
-                                value={skipReason}
-                                onChange={(e) => setSkipReason(e.target.value)}
-                                placeholder="Why are you skipping this task?"
-                                className="mt-1"
-                              />
-                            </div>
-                            <div className="flex justify-end gap-2">
-                              <Button variant="outline" onClick={() => setShowSkipModal(false)}>
-                                Cancel
-                              </Button>
-                              <Button onClick={handleSkipTask} disabled={isLoading}>
-                                Skip Task
-                              </Button>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-
-                      <Dialog open={showCompleteModal} onOpenChange={setShowCompleteModal}>
-                        <DialogTrigger asChild>
-                          <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Complete
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Complete Task</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label htmlFor="completion-notes">Completion Notes (optional)</Label>
-                              <Textarea
-                                id="completion-notes"
-                                value={completionNotes}
-                                onChange={(e) => setCompletionNotes(e.target.value)}
-                                placeholder="Any notes about completing this task?"
-                                className="mt-1"
-                              />
-                            </div>
-                            <div className="flex justify-end gap-2">
-                              <Button variant="outline" onClick={() => setShowCompleteModal(false)}>
-                                Cancel
-                              </Button>
-                              <Button onClick={handleCompleteTask} disabled={isLoading}>
-                                Complete Task
-                              </Button>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    </>
-                  )}
-
-                  {/* Task State: IN_PROGRESS - Show Pause, Complete (NO Skip) */}
-                  {taskState === "in_progress" && (
-                    <>
-                      <Dialog open={showPauseModal} onOpenChange={setShowPauseModal}>
-                        <DialogTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
-                          >
-                            <Pause className="h-3 w-3 mr-1" />
-                            Pause
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Pause Task</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label htmlFor="pause-reason">Reason for pausing (optional)</Label>
-                              <Textarea
-                                id="pause-reason"
-                                value={pauseReason}
-                                onChange={(e) => setPauseReason(e.target.value)}
-                                placeholder="Why are you pausing this task?"
-                                className="mt-1"
-                              />
-                            </div>
-                            <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
-                              <p className="text-sm text-blue-700 dark:text-blue-300">
-                                💡 <strong>Tip:</strong> After pausing, you can use the "Skip" button to schedule when
-                                you want to work on this task again!
-                              </p>
-                            </div>
-                            <div className="flex justify-end gap-2">
-                              <Button variant="outline" onClick={handleCancelPause}>
-                                Cancel
-                              </Button>
-                              <Button onClick={handlePauseTask} disabled={isLoading}>
-                                Pause Task
-                              </Button>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-
-                      <Dialog open={showCompleteModal} onOpenChange={setShowCompleteModal}>
-                        <DialogTrigger asChild>
-                          <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Complete
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Complete Task</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label htmlFor="completion-notes">Completion Notes (optional)</Label>
-                              <Textarea
-                                id="completion-notes"
-                                value={completionNotes}
-                                onChange={(e) => setCompletionNotes(e.target.value)}
-                                placeholder="Any notes about completing this task?"
-                                className="mt-1"
-                              />
-                            </div>
-                            <div className="flex justify-end gap-2">
-                              <Button variant="outline" onClick={() => setShowCompleteModal(false)}>
-                                Cancel
-                              </Button>
-                              <Button onClick={handleCompleteTask} disabled={isLoading}>
-                                Complete Task
-                              </Button>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : noTasksReason ? (
-          <div className="text-center py-8">
-            <div className="flex flex-col items-center gap-4">
-              {noTasksReason.includes("scheduled for later") ? (
-                <>
-                  <Calendar className="h-12 w-12 text-green-500" />
-                  <div className="space-y-2">
-                    <h3 className="font-semibold text-green-700 dark:text-green-300">All Tasks Scheduled!</h3>
-                    <p className="text-sm text-muted-foreground max-w-md">
-                      Great job! All your tasks are scheduled for later. The AI will recommend them when it's time to
-                      work on them.
-                    </p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <Brain className="h-12 w-12 text-muted-foreground" />
-                  <div className="space-y-2">
-                    <h3 className="font-semibold text-muted-foreground">No Recommendations</h3>
-                    <p className="text-sm text-muted-foreground">{noTasksReason}</p>
-                  </div>
-                </>
-              )}
-              <Button onClick={getRecommendation} variant="outline" className="mt-2">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-6">
-            <Button
-              onClick={getRecommendation}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-            >
-              <Brain className="h-4 w-4 mr-2" />
-              Get AI Recommendation
-            </Button>
-          </div>
-        )}
+      <CardContent className="space-y-4">
+        <div>
+          <h3 className="font-medium text-foreground">{recommendedTask.title}</h3>
+          {recommendedTask.description && (
+            <p className="text-sm text-muted-foreground mt-1">{recommendedTask.description}</p>
+          )}
+        </div>
+        <Button className="w-full" onClick={handleStartTask}>
+          <Sparkles className="h-4 w-4 mr-2" />
+          Start This Task
+        </Button>
       </CardContent>
     </Card>
   )

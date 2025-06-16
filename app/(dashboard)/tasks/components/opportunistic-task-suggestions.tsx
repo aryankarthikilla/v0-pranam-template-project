@@ -4,29 +4,45 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Lightbulb, Clock, Plus, Brain, Sparkles } from "lucide-react"
+import { Lightbulb, Clock, Plus, Brain, Sparkles, Zap } from "lucide-react"
 import { generateOpportunisticTasks } from "../actions/ai-task-actions-enhanced"
 import { createTaskFromSuggestion } from "../actions/smart-task-actions"
 import { startTaskSession } from "../actions/enhanced-task-actions"
 import { toast } from "sonner"
 
+interface Task {
+  id: string
+  title: string
+  description?: string
+  status: string
+  priority: string
+}
+
 interface OpportunisticTaskSuggestionsProps {
-  availableTime?: number
+  availableTime: number
   context?: string
-  activeTasks?: any[]
-  hasActiveTask?: boolean
+  activeTasks: Task[]
+  hasActiveTask: boolean
 }
 
 export function OpportunisticTaskSuggestions({
-  availableTime = 30,
+  availableTime,
   context = "general",
-  activeTasks = [],
-  hasActiveTask = false,
+  activeTasks,
+  hasActiveTask,
 }: OpportunisticTaskSuggestionsProps) {
   const [suggestions, setSuggestions] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [hasAutoLoaded, setHasAutoLoaded] = useState(false)
+
+  const quickTasks = [
+    { title: "Review emails", time: 10 },
+    { title: "Update project status", time: 15 },
+    { title: "Quick team check-in", time: 20 },
+  ]
+
+  const suitableTasks = quickTasks.filter((task) => task.time <= availableTime)
 
   const generateSuggestions = async () => {
     setIsLoading(true)
@@ -107,6 +123,25 @@ export function OpportunisticTaskSuggestions({
     }
   }
 
+  if (hasActiveTask) {
+    return (
+      <Card className="border-border bg-card">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-card-foreground">
+            <Zap className="h-5 w-5 text-orange-600" />
+            Active Task in Progress
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            You have {activeTasks.length} active task{activeTasks.length !== 1 ? "s" : ""}. Focus on completing them
+            first.
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card className="border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20">
       <CardHeader className="pb-3">
@@ -138,65 +173,54 @@ export function OpportunisticTaskSuggestions({
       {isExpanded && (
         <CardContent>
           {/* Show different content based on active task status */}
-          {hasActiveTask && suggestions.length === 0 && !isLoading ? (
-            <div className="text-center py-6">
-              <div className="flex flex-col items-center gap-4">
-                <Brain className="h-12 w-12 text-amber-500" />
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-amber-700 dark:text-amber-300">Focus Mode Active</h3>
-                  <p className="text-sm text-muted-foreground max-w-md">
-                    You're working on a task! I won't distract you with automatic suggestions. Click below if you want
-                    quick task ideas for breaks.
-                  </p>
+          {!hasActiveTask && suggestions.length === 0 && !isLoading ? (
+            <div className="space-y-3">
+              {suitableTasks.length > 0 ? (
+                suitableTasks.map((task, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-4 bg-white/60 dark:bg-gray-900/60 rounded-lg border border-amber-200 dark:border-amber-800 hover:shadow-md transition-shadow"
+                  >
+                    <div>
+                      <p className="font-medium text-foreground">{task.title}</p>
+                      <p className="text-xs text-muted-foreground">{task.time} minutes</p>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => console.log("Start task")}>
+                      Start
+                    </Button>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-6">
+                  <div className="flex flex-col items-center gap-4">
+                    <Lightbulb className="h-12 w-12 text-amber-500" />
+                    <div className="space-y-2">
+                      <h3 className="font-semibold text-amber-700 dark:text-amber-300">Ready for Productive Tasks</h3>
+                      <p className="text-sm text-muted-foreground max-w-md">
+                        Start your main task first, then I'll suggest quick tasks you can do during natural breaks!
+                      </p>
+                    </div>
+                    <Button
+                      onClick={generateSuggestions}
+                      disabled={isLoading}
+                      variant="outline"
+                      className="border-amber-300 text-amber-700 hover:bg-amber-50"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Sparkles className="h-4 w-4 mr-2 animate-pulse" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Brain className="h-4 w-4 mr-2" />
+                          Get Suggestions Anyway
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
-                <Button
-                  onClick={generateSuggestions}
-                  disabled={isLoading}
-                  className="bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-700 hover:to-yellow-700"
-                >
-                  {isLoading ? (
-                    <>
-                      <Sparkles className="h-4 w-4 mr-2 animate-pulse" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Brain className="h-4 w-4 mr-2" />
-                      Get Smart Suggestions
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          ) : !hasActiveTask && suggestions.length === 0 && !isLoading ? (
-            <div className="text-center py-6">
-              <div className="flex flex-col items-center gap-4">
-                <Lightbulb className="h-12 w-12 text-amber-500" />
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-amber-700 dark:text-amber-300">Ready for Productive Tasks</h3>
-                  <p className="text-sm text-muted-foreground max-w-md">
-                    Start your main task first, then I'll suggest quick tasks you can do during natural breaks!
-                  </p>
-                </div>
-                <Button
-                  onClick={generateSuggestions}
-                  disabled={isLoading}
-                  variant="outline"
-                  className="border-amber-300 text-amber-700 hover:bg-amber-50"
-                >
-                  {isLoading ? (
-                    <>
-                      <Sparkles className="h-4 w-4 mr-2 animate-pulse" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Brain className="h-4 w-4 mr-2" />
-                      Get Suggestions Anyway
-                    </>
-                  )}
-                </Button>
-              </div>
+              )}
             </div>
           ) : isLoading ? (
             <div className="flex items-center justify-center py-8">
