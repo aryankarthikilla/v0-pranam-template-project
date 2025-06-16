@@ -10,6 +10,7 @@ import { DeleteTaskModal } from "./delete-task-modal"
 import { useTranslations } from "@/lib/i18n/hooks"
 import { toggleTaskStatus } from "../actions/task-actions"
 import { formatDistanceToNow } from "date-fns"
+import { AnimatedCheckbox } from "@/components/ui/animated-checkbox"
 
 interface TaskCardProps {
   task: any
@@ -24,7 +25,7 @@ export function TaskCard({ task, level = 0, onEdit, onDelete, onRefresh }: TaskC
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [isToggling, setIsToggling] = useState(false)
 
-  const handleToggleStatus = async () => {
+  const handleToggleStatus = async (checked: boolean) => {
     setIsToggling(true)
     try {
       await toggleTaskStatus(task.id)
@@ -78,15 +79,12 @@ export function TaskCard({ task, level = 0, onEdit, onDelete, onRefresh }: TaskC
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleToggleStatus}
-                disabled={isToggling}
-                className="p-1 h-auto hover:bg-accent"
-              >
-                {getStatusIcon(task.status)}
-              </Button>
+              <AnimatedCheckbox
+                checked={task.status === "completed" || task.status === "done"}
+                onChange={handleToggleStatus}
+                loading={isToggling}
+                className="mr-2"
+              />
               <div>
                 <h3 className={`font-medium text-card-foreground ${task.status === "completed" ? "line-through" : ""}`}>
                   {task.title}
