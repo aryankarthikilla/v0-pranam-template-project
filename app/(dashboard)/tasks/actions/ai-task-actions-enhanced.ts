@@ -104,25 +104,6 @@ export async function prioritizeMyTasks() {
   }
 }
 
-export async function suggestTaskPriorityEnhanced(taskTitle: string, taskDescription?: string, dueDate?: string) {
-  try {
-    const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      throw new Error("Not authenticated")
-    }
-
-    const priorityData = await suggestPriority(taskTitle, taskDescription, dueDate, user.id)
-    return { success: true, ...priorityData }
-  } catch (error) {
-    console.error("Priority suggestion error:", error)
-    return { success: false, error: "Failed to suggest priority" }
-  }
-}
-
 export async function getAILogs(page = 1, limit = 50) {
   try {
     const supabase = await createClient()
@@ -192,5 +173,24 @@ export async function deleteOldAILogs() {
       success: false,
       error: error instanceof Error ? error.message : "Failed to delete old logs",
     }
+  }
+}
+
+export async function suggestTaskPriority(taskTitle: string, taskDescription?: string, dueDate?: string) {
+  try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      throw new Error("Not authenticated")
+    }
+
+    const priorityData = await suggestPriority(taskTitle, taskDescription, dueDate, user.id)
+    return { success: true, ...priorityData }
+  } catch (error) {
+    console.error("Priority suggestion error:", error)
+    return { success: false, error: "Failed to suggest priority" }
   }
 }

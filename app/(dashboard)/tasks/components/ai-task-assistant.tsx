@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Sparkles, Loader2, Split, Target, Lightbulb } from "lucide-react"
+import { Sparkles, Loader2, Target, Lightbulb, TrendingUp } from "lucide-react"
 import { createTasksFromAI, suggestTaskPriority } from "../actions/ai-task-actions"
+import { prioritizeMyTasks } from "../actions/ai-task-actions-enhanced"
 import { toast } from "sonner"
 
 interface AITaskAssistantProps {
@@ -19,6 +20,7 @@ export function AITaskAssistant({ open, onOpenChange }: AITaskAssistantProps) {
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("generate")
+  const [prioritizationResult, setPrioritizationResult] = useState<any>(null)
 
   const handleGenerate = async () => {
     console.log("🔥 Button clicked! Input:", input)
@@ -55,6 +57,27 @@ export function AITaskAssistant({ open, onOpenChange }: AITaskAssistantProps) {
     }
   }
 
+  const handlePrioritizeMyTasks = async () => {
+    console.log("🎯 Prioritize My Tasks clicked!")
+    setIsLoading(true)
+
+    try {
+      const result = await prioritizeMyTasks()
+
+      if (result.success) {
+        setPrioritizationResult(result.prioritization)
+        toast.success(`Updated ${result.updated_count} tasks with AI priorities!`)
+      } else {
+        toast.error(result.error || "Failed to prioritize tasks")
+      }
+    } catch (error) {
+      console.error("Prioritization error:", error)
+      toast.error("Something went wrong")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handlePrioritySuggestion = async () => {
     console.log("🎯 Priority button clicked! Input:", input)
 
@@ -80,12 +103,6 @@ export function AITaskAssistant({ open, onOpenChange }: AITaskAssistantProps) {
     }
   }
 
-  // Test function to verify the component is working
-  const handleTest = () => {
-    console.log("🧪 Test button clicked!")
-    toast.success("Component is working!")
-  }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -102,13 +119,13 @@ export function AITaskAssistant({ open, onOpenChange }: AITaskAssistantProps) {
               <Lightbulb className="h-4 w-4" />
               Generate
             </TabsTrigger>
-            <TabsTrigger value="breakdown" className="flex items-center gap-2">
-              <Split className="h-4 w-4" />
-              Breakdown
+            <TabsTrigger value="prioritize" className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Prioritize
             </TabsTrigger>
             <TabsTrigger value="priority" className="flex items-center gap-2">
               <Target className="h-4 w-4" />
-              Priority
+              Suggest
             </TabsTrigger>
           </TabsList>
 
@@ -126,18 +143,10 @@ Examples:
 • Build a mobile app
 • Start a fitness routine"
                   value={input}
-                  onChange={(e) => {
-                    console.log("📝 Input changed:", e.target.value)
-                    setInput(e.target.value)
-                  }}
+                  onChange={(e) => setInput(e.target.value)}
                   className="min-h-[120px]"
                   disabled={isLoading}
                 />
-
-                {/* Test button for debugging */}
-                <Button onClick={handleTest} variant="outline" className="w-full mb-2">
-                  🧪 Test Component (Check Console)
-                </Button>
 
                 <Button
                   onClick={handleGenerate}
@@ -156,35 +165,64 @@ Examples:
                     </>
                   )}
                 </Button>
-
-                {/* Debug info */}
-                <div className="text-xs text-muted-foreground p-2 bg-gray-50 dark:bg-gray-900 rounded">
-                  <div>Input length: {input.length}</div>
-                  <div>Loading: {isLoading.toString()}</div>
-                  <div>Button disabled: {(isLoading || !input.trim()).toString()}</div>
-                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="breakdown" className="space-y-4">
+          <TabsContent value="prioritize" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Break Down Complex Tasks</CardTitle>
+                <CardTitle className="text-lg">Prioritize My Existing Tasks</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  To break down a task, go to your task list and click the breakdown button on any task card.
+                  Let AI analyze your existing tasks and suggest which ones to work on next, plus assign AI priority
+                  values (1-100).
                 </p>
-                <div className="p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
-                  <h4 className="font-medium mb-2">How it works:</h4>
-                  <ul className="text-sm space-y-1 text-muted-foreground">
-                    <li>• AI analyzes your task title and description</li>
-                    <li>• Creates 3-10 actionable subtasks</li>
-                    <li>• Orders them logically</li>
-                    <li>• Assigns appropriate priorities</li>
-                  </ul>
-                </div>
+
+                <Button
+                  onClick={handlePrioritizeMyTasks}
+                  disabled={isLoading}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Analyzing Tasks...
+                    </>
+                  ) : (
+                    <>
+                      <TrendingUp className="h-4 w-4 mr-2" />
+                      Prioritize My Tasks
+                    </>
+                  )}
+                </Button>
+
+                {prioritizationResult && (
+                  <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                    <h4 className="font-medium mb-2">🎯 AI Recommendations:</h4>
+
+                    {prioritizationResult.recommended_next_task && (
+                      <div className="mb-3">
+                        <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Next Task to Work On:</p>
+                        <p className="text-sm text-muted-foreground">
+                          {prioritizationResult.recommended_next_task.reason}
+                        </p>
+                      </div>
+                    )}
+
+                    {prioritizationResult.insights && prioritizationResult.insights.length > 0 && (
+                      <div>
+                        <p className="text-sm font-medium text-blue-700 dark:text-blue-300 mb-1">Insights:</p>
+                        <ul className="text-sm text-muted-foreground space-y-1">
+                          {prioritizationResult.insights.map((insight: string, index: number) => (
+                            <li key={index}>• {insight}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -206,7 +244,7 @@ Example: 'Fix critical bug in production system'"
                 <Button
                   onClick={handlePrioritySuggestion}
                   disabled={isLoading || !input.trim()}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
                 >
                   {isLoading ? (
                     <>
