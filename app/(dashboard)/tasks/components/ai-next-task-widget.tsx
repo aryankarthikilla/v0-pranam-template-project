@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -18,6 +18,7 @@ import {
   Play,
   SkipForward,
   Sparkles,
+  Plus,
 } from "lucide-react"
 import { pauseTaskSession, completeTask, startTaskSession, skipTask } from "../actions/enhanced-task-actions"
 import { prioritizeMyTasks } from "../actions/ai-task-actions-enhanced"
@@ -52,11 +53,11 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
   const [skipReason, setSkipReason] = useState("")
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
-  // Filter active and non-active tasks
+  // Filter tasks by status
   const activeTasks = tasks.filter((task) => task.status === "in_progress" || task.status === "active")
-  const nonActiveTasks = tasks.filter(
-    (task) => task.status !== "in_progress" && task.status !== "active" && task.status !== "completed",
-  )
+  const pendingTasks = tasks.filter((task) => task.status === "pending" || task.status === "todo")
+  const completedTasks = tasks.filter((task) => task.status === "completed")
+  const totalTasks = tasks.length
 
   const getPriorityColor = (priority: string) => {
     switch (priority?.toLowerCase()) {
@@ -87,7 +88,7 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
   }
 
   const getAIRecommendation = async () => {
-    if (nonActiveTasks.length === 0) {
+    if (pendingTasks.length === 0) {
       toast.info("No pending tasks available for AI recommendation")
       return
     }
@@ -97,9 +98,8 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
       const result = await prioritizeMyTasks()
 
       if (result.success && result.prioritization?.recommended_next_task) {
-        // Find the actual task details from non-active tasks
         const taskId = result.prioritization.recommended_next_task.task_id
-        const taskDetails = nonActiveTasks.find((t) => t.id === taskId)
+        const taskDetails = pendingTasks.find((t) => t.id === taskId)
 
         if (taskDetails) {
           setAiRecommendation({
@@ -108,8 +108,8 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
           })
           setLastUpdated(new Date())
         } else {
-          // If recommended task is not in non-active tasks, get the first pending task
-          const firstPendingTask = nonActiveTasks[0]
+          // Fallback to first pending task
+          const firstPendingTask = pendingTasks[0]
           if (firstPendingTask) {
             setAiRecommendation({
               task_id: firstPendingTask.id,
@@ -130,6 +130,13 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
     }
   }
 
+  // Auto-load AI recommendation on mount if there are pending tasks and no active tasks
+  useEffect(() => {
+    if (pendingTasks.length > 0 && activeTasks.length === 0 && !aiRecommendation) {
+      getAIRecommendation()
+    }
+  }, [pendingTasks.length, activeTasks.length])
+
   const handleStartRecommendedTask = async () => {
     if (!aiRecommendation?.task_details?.id) return
 
@@ -139,7 +146,6 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
       if (result.success) {
         toast.success("Task started successfully!")
         setAiRecommendation(null)
-        // Refresh the page to update the task list
         window.location.reload()
       } else {
         toast.error(result.error || "Failed to start task")
@@ -161,7 +167,6 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
         toast.success(`Task skipped and rescheduled!`)
         setSkipReason("")
         setShowSkipModal(false)
-        // Get next recommendation after skipping
         setTimeout(() => {
           getAIRecommendation()
         }, 1000)
@@ -232,16 +237,62 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
     { value: "1week", label: "1 Week", icon: "🗓️" },
   ]
 
+  // SCENARIO 1: No tasks at all in the system
+  if (totalTasks === 0) {
+    return (
+      <Card className="border-dashed border-2 border-muted">
+        <CardContent className="flex flex-col items-center justify-center py-8">
+          <Plus className="h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="font-semibold text-lg mb-2">No Tasks Yet</h3>
+          <p className="text-muted-foreground text-center mb-4">
+            Create your first task to get started with AI-powered task management!
+          </p>
+          <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+            <Plus className="h-4 w-4 mr-2" />
+            Create Your First Task
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // SCENARIO 2: All tasks are completed
+  if (completedTasks.length === totalTasks) {
+    return (
+      <Card className="border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20">
+        <CardContent className="flex flex-col items-center justify-center py-8">
+          <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
+          <h3 className="font-semibold text-lg mb-2 text-green-700 dark:text-green-300">All Tasks Completed!</h3>
+          <p className="text-green-600 dark:text-green-400 text-center mb-4">
+            Great job! You've completed all {totalTasks} tasks. Time to create new ones or take a break!
+          </p>
+          <Button
+            variant="outline"
+            className="border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-300"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create New Tasks
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <div className="space-y-4">
-      {/* AI Recommendation Card - Always show if there are non-active tasks */}
-      {nonActiveTasks.length > 0 && (
+      {/* AI Recommendation Card - Show when there are pending tasks */}
+      {pendingTasks.length > 0 && (
         <Card className="border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center justify-between text-purple-700 dark:text-purple-300">
               <div className="flex items-center gap-2">
                 <Brain className="h-5 w-5" />
                 AI Recommended Next Task
+                {activeTasks.length > 0 && (
+                  <Badge variant="secondary" className="text-xs">
+                    {pendingTasks.length} pending
+                  </Badge>
+                )}
               </div>
               <Button
                 variant="ghost"
@@ -258,7 +309,6 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
           <CardContent>
             {aiRecommendation ? (
               <div className="space-y-4">
-                {/* Recommended Task */}
                 <div className="p-4 bg-white/60 dark:bg-gray-900/60 rounded-lg border border-purple-200 dark:border-purple-800">
                   <div className="flex items-start justify-between mb-2">
                     <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex-1">
@@ -371,7 +421,7 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
                   ) : (
                     <Sparkles className="h-4 w-4 mr-2" />
                   )}
-                  Need More Tasks? Get AI Recommendation
+                  {activeTasks.length > 0 ? "Need More Tasks? Get AI Recommendation" : "Get AI Task Recommendation"}
                 </Button>
               </div>
             )}
@@ -379,7 +429,7 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
         </Card>
       )}
 
-      {/* Active Tasks Card - Show if there are active tasks */}
+      {/* Active Tasks Card - Show when there are active tasks */}
       {activeTasks.length > 0 && (
         <Card className="border-orange-200 bg-orange-50/50 dark:border-orange-800 dark:bg-orange-950/20">
           <CardHeader>
@@ -516,16 +566,6 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
                 </div>
               </div>
             ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Show message when no tasks at all */}
-      {activeTasks.length === 0 && nonActiveTasks.length === 0 && (
-        <Card className="border-dashed border-2 border-muted">
-          <CardContent className="flex flex-col items-center justify-center py-8">
-            <Brain className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground text-center">No tasks available. Create some tasks to get started!</p>
           </CardContent>
         </Card>
       )}
