@@ -12,52 +12,63 @@ export interface TaskSettings {
 }
 
 export async function getTaskSettings(): Promise<TaskSettings | null> {
-  const supabase = await createClient()
-
   try {
+    const supabase = await createClient()
+
     const {
       data: { user },
+      error: authError,
     } = await supabase.auth.getUser()
 
-    if (!user) {
-      throw new Error("User not authenticated")
+    if (authError || !user) {
+      console.error("Auth error:", authError)
+      return null
     }
 
-    const { data, error } = await supabase.from("task_settings").select("*").eq("user_id", user.id).single()
+    const { data, error } = await supabase.from("task_settings").select("*").eq("user_id", user.id).maybeSingle()
 
-    if (error && error.code !== "PGRST116") {
-      console.error("Error fetching task settings:", error)
-      throw new Error(`Error fetching task settings: ${error.message}`)
-    }
-
-    // Return default settings if none exist
-    if (!data) {
+    if (error) {
+      console.error("Database error:", error)
+      // Return default settings if there's an error
       return {
         user_id: user.id,
         show_completed_tasks: "no",
       }
     }
 
-    return data
+    // Return data or default settings
+    return (
+      data || {
+        user_id: user.id,
+        show_completed_tasks: "no",
+      }
+    )
   } catch (error) {
-    console.error("Error in getTaskSettings:", error)
+    console.error("Unexpected error in getTaskSettings:", error)
     return null
   }
 }
 
-export async function updateTaskSettings(showCompletedTasks: string): Promise<TaskSettings> {
-  const supabase = await createClient()
-
+export async function updateTaskSettings(showCompletedTasks: string): Promise<TaskSettings | null> {
   try {
+    const supabase = await createClient()
+
     const {
       data: { user },
+      error: authError,
     } = await supabase.auth.getUser()
 
-    if (!user) {
+    if (authError || !user) {
+      console.error("Auth error:", authError)
       throw new Error("User not authenticated")
     }
 
-    // Upsert the settings
+    // Validate the input
+    const validOptions = ["no", "5 min", "10 min", "30 min", "1 hour", "6 hours", "Today", "1 week", "1 month"]
+    if (!validOptions.includes(showCompletedTasks)) {
+      throw new Error("Invalid filter option")
+    }
+
     const { data, error } = await supabase
       .from("task_settings")
       .upsert(
@@ -74,13 +85,14 @@ export async function updateTaskSettings(showCompletedTasks: string): Promise<Ta
       .single()
 
     if (error) {
-      console.error("Error updating task settings:", error)
-      throw new Error(`Error updating task settings: ${error.message}`)
+      console.error("Database error:", error)
+      throw new Error(`Failed to update settings: ${error.message}`)
     }
 
-    // Revalidate the tasks page
+    // Revalidate pages
     revalidatePath("/dashboard/tasks")
     revalidatePath("/dashboard/tasks/manage")
+    revalidatePath("/dashboard/tasks/settings")
 
     return data
   } catch (error) {
