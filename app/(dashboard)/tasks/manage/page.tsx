@@ -1,27 +1,61 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Plus, Zap } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useTranslations } from "@/lib/i18n/hooks"
-import { TaskCard } from "../components/task-card"
 import { TaskForm } from "../components/task-form"
+import { TaskCard } from "../components/task-card"
 import { QuickTaskModal } from "../components/quick-task-modal"
-import { DeleteTaskModal } from "../components/delete-task-modal"
 import { RandomTask } from "../components/random-task"
-import { TasksDataTable } from "../components/tasks-data-table"
-import { useTaskData } from "../hooks/use-task-data"
+import { TaskSettings } from "../components/task-settings"
+import { getTasks } from "../actions/task-actions"
+import { PageTitle } from "@/components/page-title"
 
-export default function ManageTasksPage() {
+interface Task {
+  id: string
+  title: string
+  description?: string
+  status: string
+  priority: string
+  due_date?: string
+  created_at: string
+  updated_at: string
+  completed_at?: string
+  is_deleted: boolean
+  subtasks?: Task[]
+}
+
+export default function TasksManagePage() {
   const { t } = useTranslations("tasks")
-  const [showTaskForm, setShowTaskForm] = useState(false)
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [showQuickTask, setShowQuickTask] = useState(false)
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [selectedTask, setSelectedTask] = useState<any>(null)
-  const [taskToDelete, setTaskToDelete] = useState<any>(null)
+  const [showTaskForm, setShowTaskForm] = useState(false)
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
 
-  const { tasks, loading, stats, refreshTasks } = useTaskData()
+  const loadTasks = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      console.log("🔄 Loading tasks...")
+      const tasksData = await getTasks()
+      console.log("✅ Loaded", tasksData.length, "tasks")
+      setTasks(tasksData)
+    } catch (err) {
+      console.error("❌ Error loading tasks:", err)
+      setError(err instanceof Error ? err.message : "Failed to load tasks")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadTasks()
+  }, [])
 
   // Keyboard shortcut for quick task (Alt+Q)
   useEffect(() => {
@@ -32,150 +66,156 @@ export default function ManageTasksPage() {
       }
     }
 
-    document.addEventListener("keydown", handleKeyDown)
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown)
-    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
   }, [])
 
-  const handleEditTask = (task: any) => {
-    setSelectedTask(task)
+  const handleTaskUpdate = () => {
+    loadTasks()
+    setEditingTask(null)
+    setShowTaskForm(false)
+  }
+
+  const handleSettingsChange = () => {
+    console.log("🔄 Settings changed, reloading tasks...")
+    loadTasks()
+  }
+
+  const handleEditTask = (task: Task | { parent_id?: string }) => {
+    setEditingTask(task as Task)
     setShowTaskForm(true)
   }
 
-  const handleDeleteTask = (task: any) => {
-    setTaskToDelete(task)
-    setShowDeleteModal(true)
+  // Separate tasks by status
+  const pendingTasks = tasks.filter((task) => task.status === "pending" || task.status === "in_progress")
+  const completedTasks = tasks.filter((task) => task.status === "completed" || task.status === "done")
+
+  if (loading) {
+    return (
+      <div className="container mx-auto p-6">
+        <PageTitle title={t("manageTasksTitle")} />
+        <div className="animate-pulse space-y-6">
+          <div className="flex gap-4">
+            <div className="h-10 bg-muted rounded w-32"></div>
+            <div className="h-10 bg-muted rounded w-40"></div>
+          </div>
+          <div className="h-48 bg-muted rounded"></div>
+          <div className="h-16 bg-muted rounded"></div>
+          <div className="h-32 bg-muted rounded"></div>
+        </div>
+      </div>
+    )
   }
 
-  const handleTaskSuccess = () => {
-    refreshTasks()
-    setSelectedTask(null)
-  }
-
-  const handleDeleteSuccess = () => {
-    refreshTasks()
-    setTaskToDelete(null)
+  if (error) {
+    return (
+      <div className="container mx-auto p-6">
+        <PageTitle title={t("manageTasksTitle")} />
+        <Card className="border-destructive">
+          <CardContent className="p-6">
+            <p className="text-destructive">Error: {error}</p>
+            <Button onClick={loadTasks} className="mt-4">
+              {t("tryAgain")}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
-    <div className="flex-1 space-y-6 p-6 bg-background">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Manage Tasks</h1>
-          <p className="text-muted-foreground">Create, edit, and organize your tasks</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setShowQuickTask(true)} className="border-border hover:bg-accent">
-            <Zap className="mr-2 h-4 w-4" />
-            Quick Task
-            <kbd className="ml-2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-              Alt+Q
-            </kbd>
-          </Button>
-          <Button onClick={() => setShowTaskForm(true)} className="bg-primary hover:bg-primary/90">
-            <Plus className="mr-2 h-4 w-4" />
-            New Task
-          </Button>
-        </div>
-      </div>
+    <div className="container mx-auto p-6 space-y-6">
+      <PageTitle title={t("manageTasksTitle")} />
 
-      {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-border bg-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-card-foreground">Total Tasks</CardTitle>
-            <div className="h-4 w-4 text-muted-foreground">📋</div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-card-foreground">{stats.total}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-card-foreground">Completed</CardTitle>
-            <div className="h-4 w-4 text-emerald-600">✅</div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.completed}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-card-foreground">Pending</CardTitle>
-            <div className="h-4 w-4 text-amber-600">⏳</div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.pending}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border bg-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-card-foreground">Overdue</CardTitle>
-            <div className="h-4 w-4 text-red-600">🚨</div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.overdue}</div>
-          </CardContent>
-        </Card>
+      {/* Action Buttons */}
+      <div className="flex flex-wrap gap-4">
+        <Button onClick={() => setShowTaskForm(true)} className="flex items-center gap-2 bg-pink-600 hover:bg-pink-700">
+          <Plus className="h-4 w-4" />
+          {t("addTask")}
+        </Button>
+        <Button variant="outline" onClick={() => setShowQuickTask(true)} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
+          {t("quickTask")} <span className="text-xs opacity-60">(Alt+Q)</span>
+        </Button>
       </div>
 
       {/* Random Task Section */}
-      <RandomTask onRefresh={refreshTasks} />
+      <RandomTask onRefresh={loadTasks} />
 
-      {/* Tasks Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {loading ? (
-          Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i} className="border-border bg-card">
-              <CardContent className="p-6">
-                <div className="animate-pulse space-y-4">
-                  <div className="h-4 bg-muted rounded w-3/4"></div>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
-                  <div className="h-8 bg-muted rounded w-full"></div>
-                </div>
+      {/* Task Settings */}
+      <TaskSettings onSettingsChange={handleSettingsChange} />
+
+      {/* Tasks Display with Tabs */}
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="all">
+            {t("allTasks")} ({tasks.length})
+          </TabsTrigger>
+          <TabsTrigger value="pending">
+            {t("pendingTasks")} ({pendingTasks.length})
+          </TabsTrigger>
+          <TabsTrigger value="completed">
+            {t("completedTasks")} ({completedTasks.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="all" className="space-y-4 mt-6">
+          {tasks.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <p className="text-muted-foreground">{t("noTasksFound")}</p>
+                <Button onClick={() => setShowTaskForm(true)} className="mt-4">
+                  {t("createFirstTask")}
+                </Button>
               </CardContent>
             </Card>
-          ))
-        ) : tasks.length === 0 ? (
-          <div className="col-span-full text-center py-12">
-            <div className="text-muted-foreground text-lg">No tasks found</div>
-            <Button onClick={() => setShowTaskForm(true)} className="mt-4 bg-primary hover:bg-primary/90">
-              <Plus className="mr-2 h-4 w-4" />
-              Create your first task
-            </Button>
-          </div>
-        ) : (
-          tasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onEdit={() => handleEditTask(task)}
-              onDelete={() => handleDeleteTask(task)}
-              onRefresh={refreshTasks}
-            />
-          ))
-        )}
-      </div>
+          ) : (
+            <div className="space-y-4">
+              {tasks.map((task) => (
+                <TaskCard key={task.id} task={task} onEdit={handleEditTask} onRefresh={loadTasks} />
+              ))}
+            </div>
+          )}
+        </TabsContent>
 
-      {/* Data Table */}
-      <TasksDataTable tasks={tasks} loading={loading} onEdit={handleEditTask} onRefresh={refreshTasks} />
+        <TabsContent value="pending" className="space-y-4 mt-6">
+          {pendingTasks.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <p className="text-muted-foreground">{t("noPendingTasks")}</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {pendingTasks.map((task) => (
+                <TaskCard key={task.id} task={task} onEdit={handleEditTask} onRefresh={loadTasks} />
+              ))}
+            </div>
+          )}
+        </TabsContent>
 
-      {/* Modals */}
-      <TaskForm open={showTaskForm} onOpenChange={setShowTaskForm} task={selectedTask} onSuccess={handleTaskSuccess} />
+        <TabsContent value="completed" className="space-y-4 mt-6">
+          {completedTasks.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <p className="text-muted-foreground">{t("noCompletedTasks")}</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {completedTasks.map((task) => (
+                <TaskCard key={task.id} task={task} onEdit={handleEditTask} onRefresh={loadTasks} />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
-      <QuickTaskModal open={showQuickTask} onOpenChange={setShowQuickTask} onSuccess={handleTaskSuccess} />
+      {/* Task Form Modal */}
+      <TaskForm open={showTaskForm} onOpenChange={setShowTaskForm} task={editingTask} onSuccess={handleTaskUpdate} />
 
-      <DeleteTaskModal
-        open={showDeleteModal}
-        onOpenChange={setShowDeleteModal}
-        task={taskToDelete}
-        onSuccess={handleDeleteSuccess}
-      />
+      {/* Quick Task Modal */}
+      <QuickTaskModal open={showQuickTask} onOpenChange={setShowQuickTask} onSuccess={handleTaskUpdate} />
     </div>
   )
 }
