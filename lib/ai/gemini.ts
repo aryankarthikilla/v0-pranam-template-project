@@ -1,8 +1,21 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || "")
+const apiKey = process.env.GOOGLE_AI_API_KEY
+
+if (!apiKey) {
+  console.error("GOOGLE_AI_API_KEY is not set in environment variables")
+}
+
+const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null
 
 export async function generateTasksFromText(input: string) {
+  console.log("🤖 AI: Starting task generation for:", input)
+
+  if (!genAI) {
+    console.error("❌ AI: Google AI not initialized - check API key")
+    throw new Error("AI service not available. Please check API key configuration.")
+  }
+
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-pro" })
 
@@ -11,7 +24,7 @@ export async function generateTasksFromText(input: string) {
     [
       {
         "title": "Task title",
-        "description": "Detailed description",
+        "description": "Detailed description", 
         "priority": "high|medium|low",
         "estimated_duration": "30 minutes"
       }
@@ -28,24 +41,39 @@ export async function generateTasksFromText(input: string) {
     - Return only valid JSON, no other text
     `
 
+    console.log("🤖 AI: Sending request to Gemini...")
     const result = await model.generateContent(prompt)
     const response = await result.response
     const text = response.text()
 
+    console.log("🤖 AI: Raw response:", text)
+
     // Clean the response to extract JSON
     const jsonMatch = text.match(/\[[\s\S]*\]/)
     if (jsonMatch) {
-      return JSON.parse(jsonMatch[0])
+      const tasks = JSON.parse(jsonMatch[0])
+      console.log("✅ AI: Successfully parsed tasks:", tasks)
+      return tasks
     }
 
-    throw new Error("Invalid response format")
+    console.error("❌ AI: No valid JSON found in response")
+    throw new Error("Invalid response format from AI")
   } catch (error) {
-    console.error("AI task generation error:", error)
+    console.error("❌ AI: Task generation error:", error)
+    if (error instanceof Error) {
+      throw new Error(`AI Error: ${error.message}`)
+    }
     throw new Error("Failed to generate tasks")
   }
 }
 
 export async function breakdownTask(taskTitle: string, taskDescription?: string) {
+  console.log("🤖 AI: Starting task breakdown for:", taskTitle)
+
+  if (!genAI) {
+    throw new Error("AI service not available. Please check API key configuration.")
+  }
+
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-pro" })
 
@@ -55,7 +83,7 @@ export async function breakdownTask(taskTitle: string, taskDescription?: string)
       {
         "title": "Subtask title",
         "description": "What needs to be done",
-        "priority": "high|medium|low",
+        "priority": "high|medium|low", 
         "estimated_duration": "15 minutes"
       }
     ]
@@ -80,14 +108,21 @@ export async function breakdownTask(taskTitle: string, taskDescription?: string)
       return JSON.parse(jsonMatch[0])
     }
 
-    throw new Error("Invalid response format")
+    throw new Error("Invalid response format from AI")
   } catch (error) {
-    console.error("AI task breakdown error:", error)
+    console.error("❌ AI: Task breakdown error:", error)
+    if (error instanceof Error) {
+      throw new Error(`AI Error: ${error.message}`)
+    }
     throw new Error("Failed to breakdown task")
   }
 }
 
 export async function suggestPriority(taskTitle: string, taskDescription?: string, dueDate?: string) {
+  if (!genAI) {
+    return "medium" // Fallback if AI not available
+  }
+
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-pro" })
 
@@ -111,7 +146,7 @@ export async function suggestPriority(taskTitle: string, taskDescription?: strin
 
     return "medium" // Default fallback
   } catch (error) {
-    console.error("AI priority suggestion error:", error)
+    console.error("❌ AI: Priority suggestion error:", error)
     return "medium" // Default fallback
   }
 }

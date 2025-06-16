@@ -5,6 +5,8 @@ import { generateTasksFromText, breakdownTask, suggestPriority } from "@/lib/ai/
 import { revalidatePath } from "next/cache"
 
 export async function createTasksFromAI(input: string) {
+  console.log("🚀 Server Action: Creating tasks from AI input:", input)
+
   try {
     const supabase = await createClient()
     const {
@@ -12,11 +14,16 @@ export async function createTasksFromAI(input: string) {
     } = await supabase.auth.getUser()
 
     if (!user) {
+      console.error("❌ Server Action: User not authenticated")
       throw new Error("Not authenticated")
     }
 
+    console.log("✅ Server Action: User authenticated:", user.id)
+
     // Generate tasks using AI
+    console.log("🤖 Server Action: Calling AI service...")
     const aiTasks = await generateTasksFromText(input)
+    console.log("✅ Server Action: AI returned tasks:", aiTasks)
 
     // Insert tasks into database
     const tasksToInsert = aiTasks.map((task: any) => ({
@@ -30,15 +37,26 @@ export async function createTasksFromAI(input: string) {
       level: 1,
     }))
 
+    console.log("💾 Server Action: Inserting tasks into database:", tasksToInsert)
+
     const { data, error } = await supabase.from("tasks").insert(tasksToInsert).select()
 
-    if (error) throw error
+    if (error) {
+      console.error("❌ Server Action: Database error:", error)
+      throw error
+    }
+
+    console.log("✅ Server Action: Tasks inserted successfully:", data)
 
     revalidatePath("/dashboard/tasks")
     return { success: true, tasks: data }
   } catch (error) {
-    console.error("Create AI tasks error:", error)
-    return { success: false, error: error instanceof Error ? error.message : "Failed to create tasks" }
+    console.error("❌ Server Action: Create AI tasks error:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to create tasks",
+      details: error instanceof Error ? error.stack : undefined,
+    }
   }
 }
 
