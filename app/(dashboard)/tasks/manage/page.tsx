@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Zap } from "lucide-react"
+import { Plus, Zap, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useTranslations } from "@/lib/i18n/hooks"
@@ -13,12 +13,15 @@ import { RandomTask } from "../components/random-task"
 import { TasksDataTable } from "../components/tasks-data-table"
 import { useTaskData } from "../hooks/use-task-data"
 import { TaskSettingsModal } from "../components/task-settings-modal"
+import { SmartTaskInput } from "../components/smart-task-input"
+import { AITaskAssistant } from "../components/ai-task-assistant"
 
 export default function ManageTasksPage() {
   const { t } = useTranslations("tasks")
   const [showTaskForm, setShowTaskForm] = useState(false)
   const [showQuickTask, setShowQuickTask] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showAIAssistant, setShowAIAssistant] = useState(false)
   const [selectedTask, setSelectedTask] = useState<any>(null)
   const [taskToDelete, setTaskToDelete] = useState<any>(null)
 
@@ -30,6 +33,11 @@ export default function ManageTasksPage() {
       if (event.altKey && event.key.toLowerCase() === "q") {
         event.preventDefault()
         setShowQuickTask(true)
+      }
+      // AI Assistant shortcut (Alt+A)
+      if (event.altKey && event.key.toLowerCase() === "a") {
+        event.preventDefault()
+        setShowAIAssistant(true)
       }
     }
 
@@ -66,11 +74,22 @@ export default function ManageTasksPage() {
         <div className="flex items-center gap-3">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Manage Tasks</h1>
-            <p className="text-muted-foreground">Create, edit, and organize your tasks</p>
+            <p className="text-muted-foreground">Create, edit, and organize your tasks with AI assistance</p>
           </div>
           <TaskSettingsModal onSettingsChange={refreshTasks} />
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowAIAssistant(true)}
+            className="border-border hover:bg-accent bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-purple-200 dark:border-purple-800"
+          >
+            <Sparkles className="mr-2 h-4 w-4 text-purple-600 dark:text-purple-400" />
+            AI Assistant
+            <kbd className="ml-2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+              Alt+A
+            </kbd>
+          </Button>
           <Button variant="outline" onClick={() => setShowQuickTask(true)} className="border-border hover:bg-accent">
             <Zap className="mr-2 h-4 w-4" />
             Quick Task
@@ -84,6 +103,9 @@ export default function ManageTasksPage() {
           </Button>
         </div>
       </div>
+
+      {/* Smart Task Input */}
+      <SmartTaskInput onTaskCreated={handleTaskSuccess} />
 
       {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -148,10 +170,20 @@ export default function ManageTasksPage() {
         ) : tasks.length === 0 ? (
           <div className="col-span-full text-center py-12">
             <div className="text-muted-foreground text-lg">No tasks found</div>
-            <Button onClick={() => setShowTaskForm(true)} className="mt-4 bg-primary hover:bg-primary/90">
-              <Plus className="mr-2 h-4 w-4" />
-              Create your first task
-            </Button>
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <Button onClick={() => setShowTaskForm(true)} className="bg-primary hover:bg-primary/90">
+                <Plus className="mr-2 h-4 w-4" />
+                Create your first task
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowAIAssistant(true)}
+                className="border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-950/20"
+              >
+                <Sparkles className="mr-2 h-4 w-4 text-purple-600 dark:text-purple-400" />
+                Use AI Assistant
+              </Button>
+            </div>
           </div>
         ) : (
           tasks.map((task) => (
@@ -173,6 +205,8 @@ export default function ManageTasksPage() {
       <TaskForm open={showTaskForm} onOpenChange={setShowTaskForm} task={selectedTask} onSuccess={handleTaskSuccess} />
 
       <QuickTaskModal open={showQuickTask} onOpenChange={setShowQuickTask} onSuccess={handleTaskSuccess} />
+
+      <AITaskAssistant open={showAIAssistant} onOpenChange={setShowAIAssistant} onTasksCreated={handleTaskSuccess} />
 
       <DeleteTaskModal
         open={showDeleteModal}
