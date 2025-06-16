@@ -28,5 +28,8 @@ export function useTranslations(section: Section) {
   return { t, loading: false }
 }
 
+// Add the missing useTranslation export (singular) as an alias
+export const useTranslation = useTranslations
+
 // Export the useI18n hook as well for direct access
 export { useI18n } from "./context"
