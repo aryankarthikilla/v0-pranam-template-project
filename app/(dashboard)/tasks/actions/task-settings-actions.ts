@@ -3,17 +3,7 @@
 import { createClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
 
-export type ShowCompletedTasksOption =
-  | "no"
-  | "last_10_min"
-  | "last_30_min"
-  | "last_1_hour"
-  | "last_6_hours"
-  | "today"
-  | "yesterday"
-  | "this_week"
-  | "this_month"
-  | "all"
+export type ShowCompletedTasksOption = string // Now it's dynamic based on completed_filters table
 
 export interface TaskSettings {
   id: string
@@ -23,174 +13,148 @@ export interface TaskSettings {
   updated_at: string
 }
 
-export async function getTaskSettings(): Promise<TaskSettings | null> {
-  try {
-    const supabase = await createClient()
+export interface CompletedFilter {
+  filter_key: string
+  interval_value: string | null
+}
 
+export async function getTaskSettings(): Promise<TaskSettings | null> {
+  const supabase = await createClient()
+
+  try {
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
     if (!user) {
-      console.error("User not authenticated in getTaskSettings")
-      return null
+      throw new Error("User not authenticated")
     }
 
-    console.log("Fetching task settings for user:", user.id)
     const { data, error } = await supabase.from("task_settings").select("*").eq("user_id", user.id).single()
 
-    if (error) {
-      console.log("Task settings error:", error)
-      // If no settings exist, create default settings
-      if (error.code === "PGRST116") {
-        console.log("No settings found, creating default settings")
-        return await createDefaultTaskSettings()
-      }
+    if (error && error.code !== "PGRST116") {
+      // PGRST116 is "not found" error, which is expected for new users
       console.error("Error fetching task settings:", error)
-      return null
+      throw new Error(`Error fetching task settings: ${error.message}`)
     }
 
-    console.log("Found task settings:", data)
-    return data
+    return data || null
   } catch (error) {
     console.error("Error in getTaskSettings:", error)
     return null
   }
 }
 
-export async function createDefaultTaskSettings(): Promise<TaskSettings> {
+export async function getCompletedFilters(): Promise<CompletedFilter[]> {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    const { data, error } = await supabase
+      .from("completed_filters")
+      .select("filter_key, interval_value")
+      .order("interval_value")
 
-  if (!user) {
-    throw new Error("User not authenticated")
+    if (error) {
+      console.error("Error fetching completed filters:", error)
+      throw new Error(`Error fetching completed filters: ${error.message}`)
+    }
+
+    // Add the "no" option at the beginning
+    const filters: CompletedFilter[] = [{ filter_key: "no", interval_value: null }, ...(data || [])]
+
+    return filters
+  } catch (error) {
+    console.error("Error in getCompletedFilters:", error)
+    // Return default filters if database query fails
+    return [
+      { filter_key: "no", interval_value: null },
+      { filter_key: "5 min", interval_value: "00:05:00" },
+      { filter_key: "10 min", interval_value: "00:10:00" },
+      { filter_key: "30 min", interval_value: "00:30:00" },
+      { filter_key: "1 hour", interval_value: "01:00:00" },
+      { filter_key: "6 hours", interval_value: "06:00:00" },
+      { filter_key: "Today", interval_value: "1 day" },
+      { filter_key: "1 week", interval_value: "7 days" },
+      { filter_key: "1 month", interval_value: "30 days" },
+    ]
   }
-
-  console.log("Creating default task settings for user:", user.id)
-  const { data, error } = await supabase
-    .from("task_settings")
-    .insert({
-      user_id: user.id,
-      show_completed_tasks: "no",
-    })
-    .select()
-    .single()
-
-  if (error) {
-    throw new Error(`Error creating task settings: ${error.message}`)
-  }
-
-  console.log("Created default task settings:", data)
-  return data
 }
 
 export async function updateTaskSettings(showCompletedTasks: ShowCompletedTasksOption): Promise<TaskSettings> {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  if (!user) {
-    throw new Error("User not authenticated")
-  }
+    if (!user) {
+      throw new Error("User not authenticated")
+    }
 
-  console.log("Updating task settings for user:", user.id, "to:", showCompletedTasks)
+    console.log("Updating task settings for user:", user.id, "to:", showCompletedTasks)
 
-  // First try to update existing settings
-  const { data: updateData, error: updateError } = await supabase
-    .from("task_settings")
-    .update({
-      show_completed_tasks: showCompletedTasks,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("user_id", user.id)
-    .select()
-    .single()
-
-  if (updateError) {
-    console.log("Update error:", updateError)
-    // If update fails (no existing record), create new settings
-    if (updateError.code === "PGRST116") {
-      console.log("No existing settings, creating new ones")
-      const { data: insertData, error: insertError } = await supabase
-        .from("task_settings")
-        .insert({
+    // Upsert the settings
+    const { data, error } = await supabase
+      .from("task_settings")
+      .upsert(
+        {
           user_id: user.id,
           show_completed_tasks: showCompletedTasks,
-        })
-        .select()
-        .single()
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "user_id",
+        },
+      )
+      .select()
+      .single()
 
-      if (insertError) {
-        throw new Error(`Error creating task settings: ${insertError.message}`)
-      }
-
-      console.log("Created new task settings:", insertData)
-      revalidatePath("/dashboard/tasks")
-      return insertData
+    if (error) {
+      console.error("Error updating task settings:", error)
+      throw new Error(`Error updating task settings: ${error.message}`)
     }
-    throw new Error(`Error updating task settings: ${updateError.message}`)
-  }
 
-  console.log("Updated task settings:", updateData)
-  revalidatePath("/dashboard/tasks")
-  return updateData
+    console.log("✅ Task settings updated successfully")
+
+    // Revalidate the tasks page to refresh the task list
+    revalidatePath("/dashboard/tasks")
+
+    return data
+  } catch (error) {
+    console.error("Error in updateTaskSettings:", error)
+    throw error
+  }
 }
 
-export async function getCompletedTasksFilterDate(option: ShowCompletedTasksOption): Promise<Date | null> {
-  const now = new Date()
-  console.log("Calculating filter date for option:", option, "current time:", now.toISOString())
+export async function createDefaultTaskSettings(): Promise<TaskSettings> {
+  const supabase = await createClient()
 
-  let filterDate: Date | null = null
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  switch (option) {
-    case "no":
-      filterDate = null
-      break
-    case "last_10_min":
-      filterDate = new Date(now.getTime() - 10 * 60 * 1000)
-      break
-    case "last_30_min":
-      filterDate = new Date(now.getTime() - 30 * 60 * 1000)
-      break
-    case "last_1_hour":
-      filterDate = new Date(now.getTime() - 60 * 60 * 1000)
-      break
-    case "last_6_hours":
-      filterDate = new Date(now.getTime() - 6 * 60 * 60 * 1000)
-      break
-    case "today":
-      filterDate = new Date()
-      filterDate.setHours(0, 0, 0, 0)
-      break
-    case "yesterday":
-      filterDate = new Date()
-      filterDate.setDate(filterDate.getDate() - 1)
-      filterDate.setHours(0, 0, 0, 0)
-      break
-    case "this_week":
-      filterDate = new Date()
-      const dayOfWeek = filterDate.getDay()
-      const diff = filterDate.getDate() - dayOfWeek
-      filterDate.setDate(diff)
-      filterDate.setHours(0, 0, 0, 0)
-      break
-    case "this_month":
-      filterDate = new Date()
-      filterDate.setDate(1)
-      filterDate.setHours(0, 0, 0, 0)
-      break
-    case "all":
-      filterDate = new Date(0) // Beginning of time
-      break
-    default:
-      filterDate = null
+    if (!user) {
+      throw new Error("User not authenticated")
+    }
+
+    const { data, error } = await supabase
+      .from("task_settings")
+      .insert({
+        user_id: user.id,
+        show_completed_tasks: "no", // Default to hiding completed tasks
+      })
+      .select()
+      .single()
+
+    if (error) {
+      throw new Error(`Error creating default task settings: ${error.message}`)
+    }
+
+    return data
+  } catch (error) {
+    console.error("Error in createDefaultTaskSettings:", error)
+    throw error
   }
-
-  console.log("Calculated filter date:", filterDate?.toISOString() || "null")
-  return filterDate
 }

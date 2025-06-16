@@ -6,7 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { useTranslations } from "@/lib/i18n/hooks"
-import { getTaskSettings, updateTaskSettings, type ShowCompletedTasksOption } from "../actions/task-settings-actions"
+import {
+  getTaskSettings,
+  updateTaskSettings,
+  getCompletedFilters,
+  type ShowCompletedTasksOption,
+  type CompletedFilter,
+} from "../actions/task-settings-actions"
 
 interface TaskSettingsProps {
   onSettingsChange: () => void
@@ -15,21 +21,30 @@ interface TaskSettingsProps {
 export function TaskSettings({ onSettingsChange }: TaskSettingsProps) {
   const { t } = useTranslations("tasks")
   const [showCompletedTasks, setShowCompletedTasks] = useState<ShowCompletedTasksOption>("no")
+  const [availableFilters, setAvailableFilters] = useState<CompletedFilter[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    loadSettings()
+    loadSettingsAndFilters()
   }, [])
 
-  const loadSettings = async () => {
+  const loadSettingsAndFilters = async () => {
     try {
-      const settings = await getTaskSettings()
+      // Load both settings and available filters
+      const [settings, filters] = await Promise.all([getTaskSettings(), getCompletedFilters()])
+
       if (settings) {
         setShowCompletedTasks(settings.show_completed_tasks)
       }
+
+      setAvailableFilters(filters)
+      console.log(
+        "📋 Available filters:",
+        filters.map((f) => f.filter_key),
+      )
     } catch (error) {
-      console.error("Error loading task settings:", error)
+      console.error("Error loading settings and filters:", error)
     } finally {
       setLoading(false)
     }
@@ -51,18 +66,12 @@ export function TaskSettings({ onSettingsChange }: TaskSettingsProps) {
     }
   }
 
-  const completedTasksOptions = [
-    { value: "no", label: t("settings.showCompleted.no") },
-    { value: "last_10_min", label: t("settings.showCompleted.last10Min") },
-    { value: "last_30_min", label: t("settings.showCompleted.last30Min") },
-    { value: "last_1_hour", label: t("settings.showCompleted.last1Hour") },
-    { value: "last_6_hours", label: t("settings.showCompleted.last6Hours") },
-    { value: "today", label: t("settings.showCompleted.today") },
-    { value: "yesterday", label: t("settings.showCompleted.yesterday") },
-    { value: "this_week", label: t("settings.showCompleted.thisWeek") },
-    { value: "this_month", label: t("settings.showCompleted.thisMonth") },
-    { value: "all", label: t("settings.showCompleted.all") },
-  ]
+  const formatFilterLabel = (filter: CompletedFilter): string => {
+    if (filter.filter_key === "no") {
+      return "Don't show completed tasks"
+    }
+    return `Show completed tasks from last ${filter.filter_key}`
+  }
 
   if (loading) {
     return (
@@ -102,14 +111,22 @@ export function TaskSettings({ onSettingsChange }: TaskSettingsProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-popover border-border">
-                {completedTasksOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                {availableFilters.map((filter) => (
+                  <SelectItem key={filter.filter_key} value={filter.filter_key}>
+                    {formatFilterLabel(filter)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             {saving && <p className="text-sm text-muted-foreground">Updating settings...</p>}
+
+            {/* Show current setting info */}
+            <div className="text-xs text-muted-foreground mt-2">
+              Current setting: <span className="font-medium">{showCompletedTasks}</span>
+              {showCompletedTasks !== "no" && (
+                <span className="block mt-1">Completed tasks from the last {showCompletedTasks} will be visible</span>
+              )}
+            </div>
           </div>
         </div>
       </CardContent>
