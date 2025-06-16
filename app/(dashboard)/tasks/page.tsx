@@ -1,6 +1,7 @@
 "use client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useTranslations } from "@/lib/i18n/hooks"
 import { BarChart3, CheckSquare, Clock, AlertTriangle, TrendingUp, Calendar } from "lucide-react"
 import Link from "next/link"
@@ -65,10 +66,19 @@ export default function TasksDashboard() {
             <CheckSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl md:text-2xl font-bold text-card-foreground">{stats.total}</div>
-            <p className="text-xs text-muted-foreground">
-              {todayTasks.length} {t("createdToday")}
-            </p>
+            {loading ? (
+              <>
+                <Skeleton className="h-8 w-16 mb-2" />
+                <Skeleton className="h-3 w-20" />
+              </>
+            ) : (
+              <>
+                <div className="text-xl md:text-2xl font-bold text-card-foreground">{stats.total}</div>
+                <p className="text-xs text-muted-foreground">
+                  {todayTasks.length} {t("createdToday")}
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -78,12 +88,21 @@ export default function TasksDashboard() {
             <TrendingUp className="h-4 w-4 text-emerald-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl md:text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-              {stats.completed}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {completionRate}% {t("completionRate")}
-            </p>
+            {loading ? (
+              <>
+                <Skeleton className="h-8 w-16 mb-2" />
+                <Skeleton className="h-3 w-24" />
+              </>
+            ) : (
+              <>
+                <div className="text-xl md:text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                  {stats.completed}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {completionRate}% {t("completionRate")}
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -93,10 +112,19 @@ export default function TasksDashboard() {
             <Clock className="h-4 w-4 text-amber-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl md:text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.pending}</div>
-            <p className="text-xs text-muted-foreground">
-              {thisWeekTasks.length} {t("thisWeek")}
-            </p>
+            {loading ? (
+              <>
+                <Skeleton className="h-8 w-16 mb-2" />
+                <Skeleton className="h-3 w-20" />
+              </>
+            ) : (
+              <>
+                <div className="text-xl md:text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.pending}</div>
+                <p className="text-xs text-muted-foreground">
+                  {thisWeekTasks.length} {t("thisWeek")}
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -106,20 +134,66 @@ export default function TasksDashboard() {
             <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl md:text-2xl font-bold text-red-600 dark:text-red-400">{stats.overdue}</div>
-            <p className="text-xs text-muted-foreground">{t("needsAttention")}</p>
+            {loading ? (
+              <>
+                <Skeleton className="h-8 w-16 mb-2" />
+                <Skeleton className="h-3 w-24" />
+              </>
+            ) : (
+              <>
+                <div className="text-xl md:text-2xl font-bold text-red-600 dark:text-red-400">{stats.overdue}</div>
+                <p className="text-xs text-muted-foreground">{t("needsAttention")}</p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
 
       {/* Multi-Task Control Widget */}
-      <MultiTaskWidget />
+      {loading ? (
+        <Card className="border-border bg-card">
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-20 w-full" />
+          </CardContent>
+        </Card>
+      ) : (
+        <MultiTaskWidget />
+      )}
 
       {/* AI Recommendation Widget */}
-      <AINextTaskWidget tasks={tasks} loading={loading} />
+      {loading ? (
+        <Card className="border-border bg-card">
+          <CardHeader>
+            <Skeleton className="h-6 w-40" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-10 w-32" />
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <AINextTaskWidget tasks={tasks} loading={loading} />
+      )}
 
       {/* Opportunistic Task Suggestions */}
-      <OpportunisticTaskSuggestions availableTime={30} activeTasks={activeTasks} hasActiveTask={hasActiveTask} />
+      {loading ? (
+        <Card className="border-border bg-card">
+          <CardHeader>
+            <Skeleton className="h-6 w-56" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-16 w-full" />
+          </CardContent>
+        </Card>
+      ) : (
+        <OpportunisticTaskSuggestions availableTime={30} activeTasks={activeTasks} hasActiveTask={hasActiveTask} />
+      )}
 
       {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -173,19 +247,31 @@ export default function TasksDashboard() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="space-y-2">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="animate-pulse flex items-center space-x-4">
-                  <div className="rounded-full bg-muted h-8 w-8"></div>
-                  <div className="flex-1 space-y-1">
-                    <div className="h-4 bg-muted rounded w-3/4"></div>
-                    <div className="h-3 bg-muted rounded w-1/2"></div>
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center space-x-3 p-2">
+                  <Skeleton className="w-2 h-2 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
                   </div>
+                  <Skeleton className="h-6 w-16 rounded-full" />
                 </div>
               ))}
             </div>
           ) : tasks.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">{t("noRecentActivity")}</p>
+            <div className="text-center py-8">
+              <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
+                <CheckSquare className="h-12 w-12 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">No Tasks Yet</h3>
+              <p className="text-muted-foreground mb-4">
+                Create your first task to get started with AI-powered task management!
+              </p>
+              <Button asChild>
+                <Link href="/tasks/manage">Create Your First Task</Link>
+              </Button>
+            </div>
           ) : (
             <div className="space-y-3">
               {tasks.slice(0, 5).map((task) => (
