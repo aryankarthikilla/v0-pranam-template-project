@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Lightbulb, Clock, MapPin, Zap, Plus, Save, Play, AlertTriangle } from "lucide-react"
+import { Lightbulb, Clock, MapPin, Zap, Plus, Save, Play, CheckCircle } from "lucide-react"
 import { generateOpportunisticTasks } from "../actions/ai-task-actions-enhanced"
 import { createTaskFromSuggestion, createAndStartTaskFromSuggestion } from "../actions/smart-task-actions"
 import { toast } from "sonner"
@@ -80,8 +80,9 @@ export function OpportunisticTaskSuggestions({
   }
 
   const handleStartTask = async (suggestion: any, index: number) => {
-    if (hasActiveTask) {
-      toast.error("Please pause or complete your current task before starting a new one")
+    // Only allow starting smart suggestions when there's an active main task
+    if (!hasActiveTask) {
+      toast.error("Start your main task first, then you can work on quick suggestions during breaks")
       return
     }
 
@@ -101,7 +102,7 @@ export function OpportunisticTaskSuggestions({
       )
 
       if (result.success) {
-        toast.success(`Task "${suggestion.title}" created and started!`)
+        toast.success(`Quick task "${suggestion.title}" started! You can work on this during breaks.`)
         // Remove this suggestion from the list
         setSuggestions((prev) => prev.filter((_, i) => i !== index))
       } else {
@@ -130,43 +131,47 @@ export function OpportunisticTaskSuggestions({
       <Card className="border-dashed border-2 border-muted">
         <CardContent className="flex flex-col items-center justify-center py-6">
           <Lightbulb className="h-8 w-8 text-muted-foreground mb-2" />
-          <p className="text-muted-foreground text-center text-sm mb-3">No smart suggestions available right now</p>
-          <Dialog open={isContextOpen} onOpenChange={setIsContextOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Get Suggestions
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Get Smart Task Suggestions</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium">Current Situation</label>
-                  <Input
-                    placeholder="e.g., waiting at hospital, commuting, have 30 minutes free"
-                    value={contextInput}
-                    onChange={(e) => setContextInput(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Available Time (minutes)</label>
-                  <Input
-                    type="number"
-                    value={timeInput}
-                    onChange={(e) => setTimeInput(e.target.value)}
-                    min="5"
-                    max="240"
-                  />
-                </div>
-                <Button onClick={handleContextSubmit} className="w-full">
+          <p className="text-muted-foreground text-center text-sm mb-3">
+            {hasActiveTask ? "No smart suggestions available right now" : "Start a main task to get smart suggestions"}
+          </p>
+          {hasActiveTask && (
+            <Dialog open={isContextOpen} onOpenChange={setIsContextOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
                   Get Suggestions
                 </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Get Smart Task Suggestions</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">Current Situation</label>
+                    <Input
+                      placeholder="e.g., waiting at hospital, commuting, have 30 minutes free"
+                      value={contextInput}
+                      onChange={(e) => setContextInput(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Available Time (minutes)</label>
+                    <Input
+                      type="number"
+                      value={timeInput}
+                      onChange={(e) => setTimeInput(e.target.value)}
+                      min="5"
+                      max="240"
+                    />
+                  </div>
+                  <Button onClick={handleContextSubmit} className="w-full">
+                    Get Suggestions
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
         </CardContent>
       </Card>
     )
@@ -180,9 +185,9 @@ export function OpportunisticTaskSuggestions({
             <Lightbulb className="h-5 w-5" />
             Smart Suggestions
             {hasActiveTask && (
-              <Badge variant="outline" className="text-xs bg-orange-100 text-orange-700 border-orange-300">
-                <AlertTriangle className="h-3 w-3 mr-1" />
-                Task Active
+              <Badge variant="outline" className="text-xs bg-green-100 text-green-700 border-green-300">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Ready for Quick Tasks
               </Badge>
             )}
           </div>
@@ -225,14 +230,24 @@ export function OpportunisticTaskSuggestions({
       </CardHeader>
 
       <CardContent className="space-y-3">
-        {hasActiveTask && (
-          <div className="p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800 mb-4">
-            <div className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
-              <AlertTriangle className="h-4 w-4" />
-              <span className="text-sm font-medium">You have an active task running</span>
+        {hasActiveTask ? (
+          <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800 mb-4">
+            <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+              <CheckCircle className="h-4 w-4" />
+              <span className="text-sm font-medium">Perfect! You can start quick tasks during breaks</span>
             </div>
-            <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
-              You can save suggestions for later, but pause your current task before starting a new one.
+            <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+              These suggestions are designed to be done alongside your main task during natural breaks.
+            </p>
+          </div>
+        ) : (
+          <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800 mb-4">
+            <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+              <Clock className="h-4 w-4" />
+              <span className="text-sm font-medium">Start your main task first</span>
+            </div>
+            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+              Smart suggestions work best when you have a main task running. You can save these for later!
             </p>
           </div>
         )}
@@ -303,13 +318,13 @@ export function OpportunisticTaskSuggestions({
                     <Button
                       size="sm"
                       onClick={() => handleStartTask(suggestion, index)}
-                      disabled={loadingStates[index] !== null || hasActiveTask}
+                      disabled={loadingStates[index] !== null || !hasActiveTask}
                       className={`${
-                        hasActiveTask
+                        !hasActiveTask
                           ? "bg-gray-400 hover:bg-gray-400 cursor-not-allowed opacity-60"
                           : "bg-yellow-600 hover:bg-yellow-700 shadow-md hover:shadow-lg"
                       } transition-all duration-200`}
-                      title={hasActiveTask ? "Pause your current task first" : "Start this task now"}
+                      title={!hasActiveTask ? "Start your main task first" : "Start this quick task now"}
                     >
                       {loadingStates[index] === "start" ? (
                         <Zap className="h-3 w-3 mr-1 animate-spin" />

@@ -29,6 +29,10 @@ export default function TasksDashboard() {
 
   const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0
 
+  // Check if there are any active tasks
+  const activeTasks = tasks.filter((t) => t.status === "in_progress")
+  const hasActiveTask = activeTasks.length > 0
+
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6 bg-background">
       {/* Header */}
@@ -115,7 +119,7 @@ export default function TasksDashboard() {
       <AINextTaskWidget tasks={tasks} />
 
       {/* Opportunistic Task Suggestions */}
-      <OpportunisticTaskSuggestions availableTime={30} activeTasks={tasks.filter((t) => t.status === "in_progress")} />
+      <OpportunisticTaskSuggestions availableTime={30} activeTasks={activeTasks} hasActiveTask={hasActiveTask} />
 
       {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
