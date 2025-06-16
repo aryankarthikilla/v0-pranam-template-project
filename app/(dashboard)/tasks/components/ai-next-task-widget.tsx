@@ -9,7 +9,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Brain, Clock, RefreshCw, Sparkles, Play, Pause, CheckCircle, SkipForward } from "lucide-react"
 import { prioritizeMyTasks } from "../actions/ai-task-actions-enhanced"
-import { startTaskSession, pauseTaskSession, completeTask, skipTask } from "../actions/enhanced-task-actions"
+import {
+  startTaskSession,
+  pauseTaskSession,
+  completeTask,
+  skipTask,
+  getActiveSessions,
+} from "../actions/enhanced-task-actions"
 import { toast } from "sonner"
 
 interface AINextTaskWidgetProps {
@@ -64,8 +70,34 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
           })
 
           // Set task state based on current status
-          setTaskState(taskDetails.status || "pending")
-          setCurrentSessionId(taskDetails.current_session_id || null)
+          const status = taskDetails.status || "pending"
+          setTaskState(status)
+
+          // If task is in progress, try to find the active session
+          if (status === "in_progress" || status === "active") {
+            const sessionId = taskDetails.current_session_id
+            if (sessionId) {
+              setCurrentSessionId(sessionId)
+            } else {
+              // Fallback: check for active sessions for this task
+              try {
+                const activeSessions = await getActiveSessions()
+                const taskSession = activeSessions.find((s) => s.task_id === taskId)
+                if (taskSession) {
+                  setCurrentSessionId(taskSession.id)
+                } else {
+                  // No active session found, reset task state
+                  console.warn("Task marked as in_progress but no active session found")
+                  setTaskState("pending")
+                }
+              } catch (error) {
+                console.error("Failed to get active sessions:", error)
+                setTaskState("pending")
+              }
+            }
+          } else {
+            setCurrentSessionId(null)
+          }
         }
       } else {
         toast.error("No recommendations available")
@@ -99,19 +131,39 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
   }
 
   const handlePauseTask = async () => {
-    console.log("handlePauseTask called", { currentSessionId, pauseReason })
+    console.log("handlePauseTask called", { currentSessionId, pauseReason, taskId: recommendation?.task_details?.id })
 
-    if (!currentSessionId) {
-      console.error("No current session ID available")
-      toast.error("No active session found")
+    // If no session ID, try to find it
+    let sessionIdToUse = currentSessionId
+
+    if (!sessionIdToUse && recommendation?.task_details?.id) {
+      console.log("No session ID, trying to find active session for task")
+      try {
+        const activeSessions = await getActiveSessions()
+        const taskSession = activeSessions.find((s) => s.task_id === recommendation.task_details.id)
+        if (taskSession) {
+          sessionIdToUse = taskSession.id
+          setCurrentSessionId(taskSession.id)
+          console.log("Found active session:", taskSession.id)
+        }
+      } catch (error) {
+        console.error("Failed to find active session:", error)
+      }
+    }
+
+    if (!sessionIdToUse) {
+      console.error("No session ID available, cannot pause task")
+      toast.error("No active session found. Task may not be properly started.")
       setShowPauseModal(false)
+      // Reset task state since there's no active session
+      setTaskState("pending")
       return
     }
 
     setIsLoading(true)
     try {
-      console.log("Calling pauseTaskSession with:", currentSessionId, pauseReason)
-      const result = await pauseTaskSession(currentSessionId, pauseReason)
+      console.log("Calling pauseTaskSession with:", sessionIdToUse, pauseReason)
+      const result = await pauseTaskSession(sessionIdToUse, pauseReason)
       console.log("pauseTaskSession result:", result)
 
       if (result.success) {
@@ -155,6 +207,7 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
       if (result.success) {
         toast.success("Task completed successfully!")
         setTaskState("completed")
+        setCurrentSessionId(null)
         setCompletionNotes("")
         setShowCompleteModal(false)
         getRecommendation() // Refresh to get next recommendation
@@ -473,10 +526,6 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
                       </Dialog>
                     </>
                   )}
-                  {/* Temporary debug button */}
-                  <Button size="sm" variant="ghost" onClick={debugCurrentState}>
-                    Debug
-                  </Button>
                 </div>
               </div>
             </div>
