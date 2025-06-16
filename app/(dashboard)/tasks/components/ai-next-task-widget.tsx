@@ -109,16 +109,22 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
         setTaskState("pending")
         setCurrentSessionId(null)
         setPauseReason("")
-        setShowPauseModal(false)
+        setShowPauseModal(false) // Ensure modal closes
         getRecommendation() // Refresh to get next recommendation
       } else {
         toast.error(result.error || "Failed to pause task")
       }
     } catch (error) {
+      console.error("Pause task error:", error)
       toast.error("Failed to pause task")
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleCancelPause = () => {
+    setPauseReason("")
+    setShowPauseModal(false)
   }
 
   const handleCompleteTask = async () => {
@@ -392,7 +398,7 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
                               />
                             </div>
                             <div className="flex justify-end gap-2">
-                              <Button variant="outline" onClick={() => setShowPauseModal(false)}>
+                              <Button variant="outline" onClick={handleCancelPause}>
                                 Cancel
                               </Button>
                               <Button onClick={handlePauseTask} disabled={isLoading}>
