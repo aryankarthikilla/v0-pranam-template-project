@@ -196,9 +196,9 @@ export async function suggestTaskPriority(taskTitle: string, taskDescription?: s
 }
 
 export async function generateOpportunisticTasks(context: {
-  location?: string
+  context?: string
   availableTime?: number
-  currentTasks?: any[]
+  activeTasks?: any[]
 }) {
   console.log("🚀 Server Action: Generating opportunistic tasks", context)
 
@@ -226,16 +226,16 @@ export async function generateOpportunisticTasks(context: {
 Based on the user's context and task history, suggest 3-5 quick opportunistic tasks:
 
 Context:
-- Location: ${context.location || "unknown"}
+- Situation: ${context.context || "general"}
 - Available time: ${context.availableTime || 30} minutes
-- Current active tasks: ${context.currentTasks?.length || 0}
+- Current active tasks: ${context.activeTasks?.length || 0}
 
 Recent task patterns:
 ${recentTasks?.map((task) => `- ${task.title} (${task.priority})`).join("\n") || "No recent tasks"}
 
 Generate tasks that:
 1. Can be completed in the available time
-2. Are suitable for the current location/context
+2. Are suitable for the current situation/context
 3. Are productive and meaningful
 4. Don't conflict with active tasks
 
@@ -254,7 +254,7 @@ Return JSON format:
 }
 `
 
-    // Call Gemini AI (using existing service)
+    // Call Gemini AI
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`,
       {
@@ -320,7 +320,7 @@ Return JSON format:
       prompt: prompt.substring(0, 1000),
       response: JSON.stringify(suggestions),
       tokens_used: aiResponse?.length || 0,
-      response_time_ms: Date.now() - Date.now(), // Simplified for now
+      response_time_ms: Date.now() - Date.now(),
       success: true,
     })
 

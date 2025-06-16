@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Lightbulb, Clock, MapPin, Zap, Plus, Timer } from "lucide-react"
-import { startTaskSession } from "../actions/enhanced-task-actions"
+import { Lightbulb, Clock, MapPin, Zap, Plus, Save, Play } from "lucide-react"
 import { generateOpportunisticTasks } from "../actions/ai-task-actions-enhanced"
+import { createTaskFromSuggestion, createAndStartTaskFromSuggestion } from "../actions/smart-task-actions"
 import { toast } from "sonner"
 
 interface OpportunisticTaskSuggestionsProps {
@@ -27,13 +27,14 @@ export function OpportunisticTaskSuggestions({
   const [isContextOpen, setIsContextOpen] = useState(false)
   const [contextInput, setContextInput] = useState("")
   const [timeInput, setTimeInput] = useState(availableTime.toString())
+  const [loadingStates, setLoadingStates] = useState<{ [key: number]: "start" | "save" | null }>({})
 
   const getSuggestions = async (context?: string, time?: number) => {
     setIsLoading(true)
     try {
       const result = await generateOpportunisticTasks({
         context: context || currentLocation || "general",
-        availableMinutes: time || availableTime,
+        availableTime: time || availableTime,
         activeTasks: activeTasks.map((t) => ({ id: t.id, title: t.title, priority: t.priority })),
       })
 
@@ -49,19 +50,60 @@ export function OpportunisticTaskSuggestions({
     }
   }
 
-  const handleStartOpportunisticTask = async (suggestion: any) => {
+  const handleSaveTask = async (suggestion: any, index: number) => {
+    setLoadingStates((prev) => ({ ...prev, [index]: "save" }))
+
     try {
-      // First create the task (you might want to add this to your task actions)
-      // For now, we'll start a session with the suggestion as context
-      const result = await startTaskSession(suggestion.id || "temp-" + Date.now(), currentLocation, "mobile")
+      const result = await createTaskFromSuggestion({
+        title: suggestion.title,
+        description: suggestion.description,
+        estimated_minutes: suggestion.estimated_minutes || suggestion.estimatedMinutes || 15,
+        priority: suggestion.priority,
+        context_type: suggestion.context_type,
+        reasoning: suggestion.reasoning,
+      })
 
       if (result.success) {
-        toast.success("Opportunistic task started!")
+        toast.success(`Task "${suggestion.title}" saved to your task list!`)
+        // Remove this suggestion from the list
+        setSuggestions((prev) => prev.filter((_, i) => i !== index))
       } else {
-        toast.error("Failed to start task")
+        toast.error(result.error || "Failed to save task")
+      }
+    } catch (error) {
+      toast.error("Failed to save task")
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, [index]: null }))
+    }
+  }
+
+  const handleStartTask = async (suggestion: any, index: number) => {
+    setLoadingStates((prev) => ({ ...prev, [index]: "start" }))
+
+    try {
+      const result = await createAndStartTaskFromSuggestion(
+        {
+          title: suggestion.title,
+          description: suggestion.description,
+          estimated_minutes: suggestion.estimated_minutes || suggestion.estimatedMinutes || 15,
+          priority: suggestion.priority,
+          context_type: suggestion.context_type,
+          reasoning: suggestion.reasoning,
+        },
+        currentLocation,
+      )
+
+      if (result.success) {
+        toast.success(`Task "${suggestion.title}" created and started!`)
+        // Remove this suggestion from the list
+        setSuggestions((prev) => prev.filter((_, i) => i !== index))
+      } else {
+        toast.error(result.error || "Failed to start task")
       }
     } catch (error) {
       toast.error("Failed to start task")
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, [index]: null }))
     }
   }
 
@@ -81,7 +123,7 @@ export function OpportunisticTaskSuggestions({
       <Card className="border-dashed border-2 border-muted">
         <CardContent className="flex flex-col items-center justify-center py-6">
           <Lightbulb className="h-8 w-8 text-muted-foreground mb-2" />
-          <p className="text-muted-foreground text-center text-sm mb-3">No opportunistic tasks available right now</p>
+          <p className="text-muted-foreground text-center text-sm mb-3">No smart suggestions available right now</p>
           <Dialog open={isContextOpen} onOpenChange={setIsContextOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
@@ -91,7 +133,7 @@ export function OpportunisticTaskSuggestions({
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Get Task Suggestions</DialogTitle>
+                <DialogTitle>Get Smart Task Suggestions</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
@@ -201,30 +243,52 @@ export function OpportunisticTaskSuggestions({
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">{suggestion.title}</h4>
                     <p className="text-xs text-muted-foreground mt-1">{suggestion.description}</p>
+                    {suggestion.reasoning && (
+                      <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1 italic">
+                        💡 {suggestion.reasoning}
+                      </p>
+                    )}
                   </div>
                   <Badge variant="outline" className="text-xs">
-                    {suggestion.estimatedMinutes}m
+                    {suggestion.estimated_minutes || suggestion.estimatedMinutes}m
                   </Badge>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Badge className="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                      {suggestion.priority}
-                    </Badge>
-                    {suggestion.reasoning && (
-                      <span className="text-xs text-muted-foreground">{suggestion.reasoning}</span>
-                    )}
-                  </div>
+                  <Badge className="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                    {suggestion.priority}
+                  </Badge>
 
-                  <Button
-                    size="sm"
-                    onClick={() => handleStartOpportunisticTask(suggestion)}
-                    className="bg-yellow-600 hover:bg-yellow-700"
-                  >
-                    <Timer className="h-3 w-3 mr-1" />
-                    Start
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleSaveTask(suggestion, index)}
+                      disabled={loadingStates[index] !== null}
+                      className="text-yellow-700 border-yellow-300 hover:bg-yellow-50"
+                    >
+                      {loadingStates[index] === "save" ? (
+                        <Zap className="h-3 w-3 mr-1 animate-spin" />
+                      ) : (
+                        <Save className="h-3 w-3 mr-1" />
+                      )}
+                      Save
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      onClick={() => handleStartTask(suggestion, index)}
+                      disabled={loadingStates[index] !== null}
+                      className="bg-yellow-600 hover:bg-yellow-700"
+                    >
+                      {loadingStates[index] === "start" ? (
+                        <Zap className="h-3 w-3 mr-1 animate-spin" />
+                      ) : (
+                        <Play className="h-3 w-3 mr-1" />
+                      )}
+                      Start
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
