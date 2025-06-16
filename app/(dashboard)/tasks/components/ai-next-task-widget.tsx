@@ -276,71 +276,25 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
     }
   }
 
-  // Check for active tasks first, only analyze if none found
-  const checkActiveTasksFirst = async () => {
-    if (tasks.length === 0) return
-
-    console.log("🔍 Checking for active tasks first...")
-
-    // Look for active/in_progress tasks
-    const activeTasks = tasks.filter(
-      (task) => task.status === "in_progress" || task.status === "active" || task.current_session_id,
-    )
-
-    if (activeTasks.length > 0) {
-      console.log("✅ Found active task, displaying without AI analysis:", activeTasks[0])
-
-      // Display the first active task without AI analysis
-      const activeTask = activeTasks[0]
-
-      setRecommendation({
-        task_id: activeTask.id,
-        task_details: activeTask,
-        reason: "This task is currently active and in progress. Continue working on it or pause if you need a break.",
-        confidence: 1.0,
-      })
-
-      setTaskState("in_progress")
-      setCurrentSessionId(activeTask.current_session_id)
-      setLastUpdated(new Date())
-
-      // Try to get session ID if not available
-      if (!activeTask.current_session_id) {
-        try {
-          const activeSessions = await getActiveSessions()
-          const taskSession = activeSessions.find((s) => s.task_id === activeTask.id)
-          if (taskSession) {
-            setCurrentSessionId(taskSession.id)
-          }
-        } catch (error) {
-          console.error("Failed to get active sessions:", error)
-        }
-      }
-
-      return true // Found active task
-    }
-
-    console.log("ℹ️ No active tasks found, will run AI analysis")
-    return false // No active tasks found
-  }
-
-  // Auto-load logic: check active tasks first, then AI analysis if needed
+  // Auto-load on mount if we have tasks
   useEffect(() => {
-    const initializeWidget = async () => {
-      if (tasks.length === 0) return
-
-      // First check for active tasks
-      const foundActiveTask = await checkActiveTasksFirst()
-
-      // Only run AI analysis if no active tasks were found
-      if (!foundActiveTask && !recommendation) {
-        console.log("🤖 Running AI analysis for task recommendation...")
-        getRecommendation()
-      }
+    if (tasks.length > 0 && !recommendation) {
+      getRecommendation()
     }
+  }, [tasks.length])
 
-    initializeWidget()
-  }, [tasks.length]) // Only depend on tasks.length to avoid infinite loops
+  if (tasks.length === 0) {
+    return (
+      <Card className="border-dashed border-2 border-muted">
+        <CardContent className="flex flex-col items-center justify-center py-8">
+          <Brain className="h-12 w-12 text-muted-foreground mb-4" />
+          <p className="text-muted-foreground text-center">
+            Create some tasks first, then I'll suggest which one to work on next!
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
 
   const skipDurationOptions = [
     { value: "1hour", label: "1 Hour", icon: "⏰" },
@@ -349,20 +303,6 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
     { value: "3days", label: "3 Days", icon: "📆" },
     { value: "1week", label: "1 Week", icon: "🗓️" },
   ]
-
-  // Update the refresh button onClick to use the same logic
-  const handleRefresh = async () => {
-    console.log("🔄 Manual refresh triggered")
-
-    // First check for active tasks
-    const foundActiveTask = await checkActiveTasksFirst()
-
-    // Only run AI analysis if no active tasks
-    if (!foundActiveTask) {
-      console.log("🤖 No active tasks, running AI analysis...")
-      getRecommendation()
-    }
-  }
 
   return (
     <Card className="border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
@@ -378,7 +318,7 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleRefresh}
+            onClick={getRecommendation}
             disabled={isLoading}
             className="text-purple-600 hover:text-purple-700 hover:bg-purple-100 dark:hover:bg-purple-900/20"
           >
