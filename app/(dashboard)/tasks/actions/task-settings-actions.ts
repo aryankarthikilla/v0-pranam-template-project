@@ -11,7 +11,15 @@ export async function getTaskSettings() {
 
   if (!user) return { show_completed_tasks: "no" }
 
-  const { data } = await supabase.from("task_settings").select("show_completed_tasks").eq("user_id", user.id).single()
+  const { data, error } = await supabase
+    .from("task_settings")
+    .select("show_completed_tasks")
+    .eq("user_id", user.id)
+    .single()
+
+  if (error) {
+    console.log("No existing record found, will create on first update")
+  }
 
   return data || { show_completed_tasks: "no" }
 }
@@ -32,37 +40,36 @@ export async function updateTaskSettings(showCompletedTasks: string) {
 
   if (!user) throw new Error("Not authenticated")
 
-  // First, check if a record exists for this user
-  const { data: existingRecord } = await supabase.from("task_settings").select("id").eq("user_id", user.id).single()
+  // Try to update first
+  const { data: updateData, error: updateError } = await supabase
+    .from("task_settings")
+    .update({
+      show_completed_tasks: showCompletedTasks,
+    })
+    .eq("user_id", user.id)
+    .select()
 
-  if (existingRecord) {
-    // Record exists - UPDATE
-    const { data } = await supabase
-      .from("task_settings")
-      .update({
-        show_completed_tasks: showCompletedTasks,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("user_id", user.id)
-      .select()
-      .single()
+  if (updateError || !updateData || updateData.length === 0) {
+    // Update failed or no rows affected, so insert new record
+    console.log("Creating new task_settings record for user:", user.id)
 
-    revalidatePath("/dashboard/tasks")
-    return data
-  } else {
-    // No record exists - CREATE
-    const { data } = await supabase
+    const { data: insertData, error: insertError } = await supabase
       .from("task_settings")
       .insert({
         user_id: user.id,
         show_completed_tasks: showCompletedTasks,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
       })
       .select()
-      .single()
+
+    if (insertError) {
+      console.error("Insert error:", insertError)
+      throw new Error(`Failed to create settings: ${insertError.message}`)
+    }
 
     revalidatePath("/dashboard/tasks")
-    return data
+    return insertData[0]
   }
+
+  revalidatePath("/dashboard/tasks")
+  return updateData[0]
 }

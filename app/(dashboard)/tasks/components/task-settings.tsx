@@ -26,15 +26,21 @@ export function TaskSettings({ onSettingsChange }: { onSettingsChange?: () => vo
 
   const handleChange = async (newValue: string) => {
     setValue(newValue)
-    await updateTaskSettings(newValue)
-    onSettingsChange?.()
+    try {
+      await updateTaskSettings(newValue)
+      onSettingsChange?.()
+    } catch (error) {
+      console.error("Failed to update settings:", error)
+      // Revert the UI change if update failed
+      setValue(value)
+    }
   }
 
   const getOptionLabel = (option: FilterOption) => {
     if (option.filter_key === "no") {
       return "Don't show completed tasks"
     }
-    return `Show completed tasks from last ${option.filter_key}`
+    return option.filter_key
   }
 
   if (loading) return <div>Loading...</div>
