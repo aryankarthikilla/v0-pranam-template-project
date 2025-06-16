@@ -17,7 +17,8 @@ export async function generateTasksFromText(input: string) {
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" })
+    // Updated model name - Google changed from "gemini-pro" to "gemini-1.5-flash"
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
     const prompt = `
     Convert this natural language input into structured tasks. Return a JSON array of tasks with this exact format:
@@ -41,7 +42,7 @@ export async function generateTasksFromText(input: string) {
     - Return only valid JSON, no other text
     `
 
-    console.log("🤖 AI: Sending request to Gemini...")
+    console.log("🤖 AI: Sending request to Gemini 1.5 Flash...")
     const result = await model.generateContent(prompt)
     const response = await result.response
     const text = response.text()
@@ -75,7 +76,8 @@ export async function breakdownTask(taskTitle: string, taskDescription?: string)
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" })
+    // Updated model name
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
     const prompt = `
     Break down this task into smaller, actionable subtasks. Return a JSON array:
@@ -124,7 +126,8 @@ export async function suggestPriority(taskTitle: string, taskDescription?: strin
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" })
+    // Updated model name
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
     const prompt = `
     Analyze this task and suggest the appropriate priority level. Consider urgency, importance, and deadline.
