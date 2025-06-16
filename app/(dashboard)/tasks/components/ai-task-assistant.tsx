@@ -21,30 +21,43 @@ export function AITaskAssistant({ open, onOpenChange }: AITaskAssistantProps) {
   const [activeTab, setActiveTab] = useState("generate")
 
   const handleGenerate = async () => {
+    console.log("🔥 Button clicked! Input:", input)
+
     if (!input.trim()) {
+      console.log("❌ Empty input")
       toast.error("Please enter a description")
       return
     }
 
+    console.log("🚀 Starting AI task generation...")
     setIsLoading(true)
+
     try {
+      console.log("📡 Calling createTasksFromAI...")
       const result = await createTasksFromAI(input)
+      console.log("📥 Result received:", result)
 
       if (result.success) {
+        console.log("✅ Success! Tasks created:", result.tasks?.length)
         toast.success(`Created ${result.tasks?.length || 0} tasks successfully!`)
         setInput("")
         onOpenChange(false)
       } else {
+        console.error("❌ AI Error:", result.error)
         toast.error(result.error || "Failed to generate tasks")
       }
     } catch (error) {
+      console.error("💥 Unexpected error:", error)
       toast.error("Something went wrong")
     } finally {
+      console.log("🏁 Finished, setting loading to false")
       setIsLoading(false)
     }
   }
 
   const handlePrioritySuggestion = async () => {
+    console.log("🎯 Priority button clicked! Input:", input)
+
     if (!input.trim()) {
       toast.error("Please enter a task description")
       return
@@ -60,10 +73,17 @@ export function AITaskAssistant({ open, onOpenChange }: AITaskAssistantProps) {
         toast.error("Failed to suggest priority")
       }
     } catch (error) {
+      console.error("Priority error:", error)
       toast.error("Something went wrong")
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Test function to verify the component is working
+  const handleTest = () => {
+    console.log("🧪 Test button clicked!")
+    toast.success("Component is working!")
   }
 
   return (
@@ -102,14 +122,23 @@ export function AITaskAssistant({ open, onOpenChange }: AITaskAssistantProps) {
                   placeholder="Describe your project or goal...
 Examples:
 • Plan a product launch
-• Organize a conference
+• Organize a conference  
 • Build a mobile app
 • Start a fitness routine"
                   value={input}
-                  onChange={(e) => setInput(e.target.value)}
+                  onChange={(e) => {
+                    console.log("📝 Input changed:", e.target.value)
+                    setInput(e.target.value)
+                  }}
                   className="min-h-[120px]"
                   disabled={isLoading}
                 />
+
+                {/* Test button for debugging */}
+                <Button onClick={handleTest} variant="outline" className="w-full mb-2">
+                  🧪 Test Component (Check Console)
+                </Button>
+
                 <Button
                   onClick={handleGenerate}
                   disabled={isLoading || !input.trim()}
@@ -127,6 +156,13 @@ Examples:
                     </>
                   )}
                 </Button>
+
+                {/* Debug info */}
+                <div className="text-xs text-muted-foreground p-2 bg-gray-50 dark:bg-gray-900 rounded">
+                  <div>Input length: {input.length}</div>
+                  <div>Loading: {isLoading.toString()}</div>
+                  <div>Button disabled: {(isLoading || !input.trim()).toString()}</div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
