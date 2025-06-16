@@ -65,6 +65,11 @@ export async function getCompletedFilters() {
   }
 }
 
+// Add the missing export - alias for getCompletedFilters
+export async function getFilterOptions() {
+  return await getCompletedFilters()
+}
+
 export async function updateTaskSettings(showCompletedTasks: string) {
   try {
     const supabase = await createClient()
@@ -77,7 +82,6 @@ export async function updateTaskSettings(showCompletedTasks: string) {
       redirect("/login")
     }
 
-    // Simple upsert approach
     const { data, error } = await supabase
       .from("task_settings")
       .upsert(
@@ -98,6 +102,7 @@ export async function updateTaskSettings(showCompletedTasks: string) {
     }
 
     revalidatePath("/dashboard/tasks")
+    revalidatePath("/dashboard/tasks/manage")
     return data
   } catch (error) {
     console.error("Error in updateTaskSettings:", error)

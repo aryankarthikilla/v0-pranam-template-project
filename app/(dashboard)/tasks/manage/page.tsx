@@ -12,6 +12,7 @@ import { DeleteTaskModal } from "../components/delete-task-modal"
 import { RandomTask } from "../components/random-task"
 import { TasksDataTable } from "../components/tasks-data-table"
 import { useTaskData } from "../hooks/use-task-data"
+import { TaskSettingsModal } from "../components/task-settings-modal"
 
 export default function ManageTasksPage() {
   const { t } = useTranslations("tasks")
@@ -62,9 +63,12 @@ export default function ManageTasksPage() {
     <div className="flex-1 space-y-6 p-6 bg-background">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Manage Tasks</h1>
-          <p className="text-muted-foreground">Create, edit, and organize your tasks</p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Manage Tasks</h1>
+            <p className="text-muted-foreground">Create, edit, and organize your tasks</p>
+          </div>
+          <TaskSettingsModal onSettingsChange={refreshTasks} />
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => setShowQuickTask(true)} className="border-border hover:bg-accent">
