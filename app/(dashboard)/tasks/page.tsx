@@ -5,6 +5,7 @@ import { useTranslations } from "@/lib/i18n/hooks"
 import { BarChart3, CheckSquare, Clock, AlertTriangle, TrendingUp, Calendar } from "lucide-react"
 import Link from "next/link"
 import { useTaskData } from "./hooks/use-task-data"
+import { AINextTaskWidget } from "./components/ai-next-task-widget"
 
 export default function TasksDashboard() {
   const { t } = useTranslations("tasks")
@@ -102,6 +103,9 @@ export default function TasksDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* AI Recommendation Widget */}
+      <AINextTaskWidget tasks={tasks} />
 
       {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
