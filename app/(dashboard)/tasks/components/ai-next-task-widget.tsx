@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Brain, Clock, RefreshCw, Sparkles, Play, Pause, CheckCircle, SkipForward } from "lucide-react"
+import { Brain, Clock, RefreshCw, Sparkles, Play, Pause, CheckCircle, SkipForward, Calendar } from "lucide-react"
 import { prioritizeMyTasks } from "../actions/ai-task-actions-enhanced"
 import {
   startTaskSession,
@@ -35,6 +35,7 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
   const [showPauseModal, setShowPauseModal] = useState(false)
   const [showCompleteModal, setShowCompleteModal] = useState(false)
   const [showSkipModal, setShowSkipModal] = useState(false)
+  const [noTasksReason, setNoTasksReason] = useState<string | null>(null)
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -53,6 +54,7 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
     if (tasks.length === 0) return
 
     setIsLoading(true)
+    setNoTasksReason(null)
     try {
       const result = await prioritizeMyTasks()
 
@@ -100,11 +102,20 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
           }
         }
       } else {
-        toast.error("No recommendations available")
+        // No recommendations available - could be because all tasks are scheduled
+        setRecommendation(null)
+        setNoTasksReason(result.error || "No recommendations available")
+
+        if (result.error && result.error.includes("scheduled for later")) {
+          toast.info("All tasks are scheduled for later. Great job managing your time!")
+        } else {
+          toast.error("No recommendations available")
+        }
       }
     } catch (error) {
       console.error("Failed to get AI recommendation:", error)
       toast.error("Failed to get AI recommendation")
+      setNoTasksReason("Failed to get recommendations")
     } finally {
       setIsLoading(false)
     }
@@ -168,7 +179,7 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
 
       if (result.success) {
         console.log("Pause successful, updating state")
-        toast.success("Task paused successfully!")
+        toast.success("Task paused successfully! Use Skip to reschedule when you want to work on it again.")
         setTaskState("pending")
         setCurrentSessionId(null)
         setPauseReason("")
@@ -269,16 +280,6 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
     { value: "3days", label: "3 Days", icon: "📆" },
     { value: "1week", label: "1 Week", icon: "🗓️" },
   ]
-
-  const debugCurrentState = () => {
-    console.log("Current widget state:", {
-      taskState,
-      currentSessionId,
-      recommendation: recommendation?.task_details,
-      showPauseModal,
-      isLoading,
-    })
-  }
 
   return (
     <Card className="border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
@@ -479,6 +480,12 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
                                 className="mt-1"
                               />
                             </div>
+                            <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                              <p className="text-sm text-blue-700 dark:text-blue-300">
+                                💡 <strong>Tip:</strong> After pausing, you can use the "Skip" button to schedule when
+                                you want to work on this task again!
+                              </p>
+                            </div>
                             <div className="flex justify-end gap-2">
                               <Button variant="outline" onClick={handleCancelPause}>
                                 Cancel
@@ -528,6 +535,35 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        ) : noTasksReason ? (
+          <div className="text-center py-8">
+            <div className="flex flex-col items-center gap-4">
+              {noTasksReason.includes("scheduled for later") ? (
+                <>
+                  <Calendar className="h-12 w-12 text-green-500" />
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-green-700 dark:text-green-300">All Tasks Scheduled!</h3>
+                    <p className="text-sm text-muted-foreground max-w-md">
+                      Great job! All your tasks are scheduled for later. The AI will recommend them when it's time to
+                      work on them.
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Brain className="h-12 w-12 text-muted-foreground" />
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-muted-foreground">No Recommendations</h3>
+                    <p className="text-sm text-muted-foreground">{noTasksReason}</p>
+                  </div>
+                </>
+              )}
+              <Button onClick={getRecommendation} variant="outline" className="mt-2">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
             </div>
           </div>
         ) : (

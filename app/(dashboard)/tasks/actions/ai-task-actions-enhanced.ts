@@ -49,7 +49,7 @@ export async function createTasksFromAI(input: string) {
 }
 
 export async function prioritizeMyTasks() {
-  console.log("🚀 Server Action: Prioritizing existing tasks")
+  console.log("🚀 Server Action: Prioritizing existing tasks (excluding scheduled)")
 
   try {
     const supabase = await createClient()
@@ -61,10 +61,17 @@ export async function prioritizeMyTasks() {
       throw new Error("Not authenticated")
     }
 
-    // Get user's pending tasks
+    // Get user's pending tasks, excluding those that are scheduled/skipped
     const { data: tasks, error: fetchError } = await supabase
       .from("tasks")
-      .select("*")
+      .select(`
+        *,
+        task_schedules!left (
+          id,
+          is_active,
+          scheduled_for
+        )
+      `)
       .eq("created_by", user.id)
       .eq("is_deleted", false)
       .in("status", ["pending", "in_progress"])
@@ -76,8 +83,37 @@ export async function prioritizeMyTasks() {
       return { success: false, error: "No tasks found to prioritize" }
     }
 
-    // Get AI prioritization recommendations
-    const prioritization = await prioritizeExistingTasks(tasks, user.id)
+    // Filter out tasks that are currently scheduled (skipped)
+    const availableTasks = tasks.filter((task) => {
+      // If task has no schedules, it's available
+      if (!task.task_schedules || task.task_schedules.length === 0) {
+        return true
+      }
+
+      // Check if any active schedule is still in the future
+      const hasActiveSchedule = task.task_schedules.some((schedule: any) => {
+        if (!schedule.is_active) return false
+        const scheduledTime = new Date(schedule.scheduled_for)
+        const now = new Date()
+        return scheduledTime > now
+      })
+
+      // If no active future schedules, task is available
+      return !hasActiveSchedule
+    })
+
+    console.log(`📊 Filtered ${tasks.length} total tasks to ${availableTasks.length} available tasks`)
+
+    if (availableTasks.length === 0) {
+      return {
+        success: false,
+        error:
+          "All tasks are currently scheduled for later. Use the Skip feature to reschedule tasks when you're ready!",
+      }
+    }
+
+    // Get AI prioritization recommendations for available tasks only
+    const prioritization = await prioritizeExistingTasks(availableTasks, user.id)
 
     // Update tasks with AI priority values
     const updates = prioritization.priority_updates || []
@@ -94,6 +130,8 @@ export async function prioritizeMyTasks() {
       success: true,
       prioritization,
       updated_count: updates.length,
+      available_tasks_count: availableTasks.length,
+      total_tasks_count: tasks.length,
     }
   } catch (error) {
     console.error("❌ Server Action: Prioritize tasks error:", error)
