@@ -7,7 +7,18 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Zap, Clock, Pause, CheckCircle, AlertCircle, RefreshCw, Brain, Play, SkipForward } from "lucide-react"
+import {
+  Zap,
+  Clock,
+  Pause,
+  CheckCircle,
+  AlertCircle,
+  RefreshCw,
+  Brain,
+  Play,
+  SkipForward,
+  Sparkles,
+} from "lucide-react"
 import { pauseTaskSession, completeTask, startTaskSession, skipTask } from "../actions/enhanced-task-actions"
 import { prioritizeMyTasks } from "../actions/ai-task-actions-enhanced"
 import { toast } from "sonner"
@@ -30,7 +41,6 @@ interface AINextTaskWidgetProps {
 
 export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
   const [isLoading, setIsLoading] = useState(false)
-  const [showAIRecommendation, setShowAIRecommendation] = useState(false)
   const [aiRecommendation, setAiRecommendation] = useState<any>(null)
   const [showPauseModal, setShowPauseModal] = useState(false)
   const [showCompleteModal, setShowCompleteModal] = useState(false)
@@ -97,7 +107,6 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
             task_details: taskDetails,
           })
           setLastUpdated(new Date())
-          setShowAIRecommendation(true)
         } else {
           // If recommended task is not in non-active tasks, get the first pending task
           const firstPendingTask = nonActiveTasks[0]
@@ -108,7 +117,6 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
               task_details: firstPendingTask,
             })
             setLastUpdated(new Date())
-            setShowAIRecommendation(true)
           }
         }
       } else {
@@ -130,7 +138,6 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
       const result = await startTaskSession(aiRecommendation.task_details.id, undefined, "web")
       if (result.success) {
         toast.success("Task started successfully!")
-        setShowAIRecommendation(false)
         setAiRecommendation(null)
         // Refresh the page to update the task list
         window.location.reload()
@@ -225,10 +232,155 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
     { value: "1week", label: "1 Week", icon: "🗓️" },
   ]
 
-  // Show active tasks if they exist
-  if (activeTasks.length > 0) {
-    return (
-      <>
+  return (
+    <div className="space-y-4">
+      {/* AI Recommendation Card - Always show if there are non-active tasks */}
+      {nonActiveTasks.length > 0 && (
+        <Card className="border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center justify-between text-purple-700 dark:text-purple-300">
+              <div className="flex items-center gap-2">
+                <Brain className="h-5 w-5" />
+                AI Recommended Next Task
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={getAIRecommendation}
+                disabled={isLoading}
+                className="text-purple-600 hover:text-purple-700 hover:bg-purple-100 dark:hover:bg-purple-900/20"
+              >
+                {isLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              </Button>
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            {aiRecommendation ? (
+              <div className="space-y-4">
+                {/* Recommended Task */}
+                <div className="p-4 bg-white/60 dark:bg-gray-900/60 rounded-lg border border-purple-200 dark:border-purple-800">
+                  <div className="flex items-start justify-between mb-2">
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex-1">
+                      {aiRecommendation.task_details?.title || "Task"}
+                    </h4>
+                    {aiRecommendation.task_details?.priority && (
+                      <Badge className={getPriorityColor(aiRecommendation.task_details.priority)}>
+                        {aiRecommendation.task_details.priority}
+                      </Badge>
+                    )}
+                  </div>
+
+                  {aiRecommendation.task_details?.description && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                      {aiRecommendation.task_details.description}
+                    </p>
+                  )}
+
+                  <div className="flex items-center gap-2 text-xs text-purple-600 dark:text-purple-400 mb-3">
+                    <Brain className="h-3 w-3" />
+                    <span className="font-medium">AI Reasoning:</span>
+                  </div>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 bg-purple-50 dark:bg-purple-950/30 p-3 rounded border-l-4 border-purple-400">
+                    {aiRecommendation.reason}
+                  </p>
+
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      {lastUpdated && <span>Updated {lastUpdated.toLocaleTimeString()}</span>}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={handleStartRecommendedTask}
+                        disabled={isLoading}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <Play className="h-3 w-3 mr-1" />
+                        Start
+                      </Button>
+
+                      <Dialog open={showSkipModal} onOpenChange={setShowSkipModal}>
+                        <DialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-orange-300 text-orange-700 hover:bg-orange-50"
+                          >
+                            <SkipForward className="h-3 w-3 mr-1" />
+                            Skip
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Skip Task - Reschedule</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div>
+                              <Label>When should this task be rescheduled?</Label>
+                              <div className="grid grid-cols-2 gap-2 mt-2">
+                                {skipDurationOptions.map((option) => (
+                                  <Button
+                                    key={option.value}
+                                    variant={skipDuration === option.value ? "default" : "outline"}
+                                    onClick={() => setSkipDuration(option.value)}
+                                    className="justify-start"
+                                  >
+                                    <span className="mr-2">{option.icon}</span>
+                                    {option.label}
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+                            <div>
+                              <Label htmlFor="skip-reason">Reason (optional)</Label>
+                              <Textarea
+                                id="skip-reason"
+                                value={skipReason}
+                                onChange={(e) => setSkipReason(e.target.value)}
+                                placeholder="Why are you skipping this task?"
+                                className="mt-1"
+                              />
+                            </div>
+                            <div className="flex justify-end gap-2">
+                              <Button variant="outline" onClick={() => setShowSkipModal(false)}>
+                                Cancel
+                              </Button>
+                              <Button onClick={handleSkipRecommendedTask} disabled={isLoading}>
+                                Skip Task
+                              </Button>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <Button
+                  onClick={getAIRecommendation}
+                  disabled={isLoading}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                >
+                  {isLoading ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4 mr-2" />
+                  )}
+                  Need More Tasks? Get AI Recommendation
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Active Tasks Card - Show if there are active tasks */}
+      {activeTasks.length > 0 && (
         <Card className="border-orange-200 bg-orange-50/50 dark:border-orange-800 dark:bg-orange-950/20">
           <CardHeader>
             <CardTitle className="flex items-center justify-between text-orange-700 dark:text-orange-300">
@@ -364,169 +516,19 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
                 </div>
               </div>
             ))}
-
-            <div className="pt-4 border-t">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={getAIRecommendation}
-                disabled={isLoading || nonActiveTasks.length === 0}
-                className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300 dark:hover:bg-purple-950/20"
-              >
-                {isLoading ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Brain className="h-4 w-4 mr-2" />}
-                {nonActiveTasks.length === 0 ? "No More Tasks Available" : "Need More Tasks? Get AI Recommendation"}
-              </Button>
-            </div>
           </CardContent>
         </Card>
+      )}
 
-        {/* AI Recommendation Modal */}
-        <Dialog open={showAIRecommendation} onOpenChange={setShowAIRecommendation}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
-                <Brain className="h-5 w-5" />
-                AI Recommended Next Task
-              </DialogTitle>
-            </DialogHeader>
-
-            {aiRecommendation && (
-              <div className="space-y-4">
-                <div className="p-4 bg-purple-50 dark:bg-purple-950/30 rounded-lg border border-purple-200 dark:border-purple-800">
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex-1">
-                      {aiRecommendation.task_details?.title || "Task"}
-                    </h4>
-                    {aiRecommendation.task_details?.priority && (
-                      <Badge className={getPriorityColor(aiRecommendation.task_details.priority)}>
-                        {aiRecommendation.task_details.priority}
-                      </Badge>
-                    )}
-                  </div>
-
-                  {aiRecommendation.task_details?.description && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                      {aiRecommendation.task_details.description}
-                    </p>
-                  )}
-
-                  <div className="flex items-center gap-2 text-xs text-purple-600 dark:text-purple-400 mb-3">
-                    <Brain className="h-3 w-3" />
-                    <span className="font-medium">AI Reasoning:</span>
-                  </div>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 p-3 rounded border-l-4 border-purple-400">
-                    {aiRecommendation.reason}
-                  </p>
-
-                  <div className="flex items-center justify-between mt-4">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      {lastUpdated && <span>Updated {lastUpdated.toLocaleTimeString()}</span>}
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={handleStartRecommendedTask}
-                        disabled={isLoading}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <Play className="h-3 w-3 mr-1" />
-                        Start
-                      </Button>
-
-                      <Dialog open={showSkipModal} onOpenChange={setShowSkipModal}>
-                        <DialogTrigger asChild>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-orange-300 text-orange-700 hover:bg-orange-50"
-                          >
-                            <SkipForward className="h-3 w-3 mr-1" />
-                            Skip
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Skip Task - Reschedule</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label>When should this task be rescheduled?</Label>
-                              <div className="grid grid-cols-2 gap-2 mt-2">
-                                {skipDurationOptions.map((option) => (
-                                  <Button
-                                    key={option.value}
-                                    variant={skipDuration === option.value ? "default" : "outline"}
-                                    onClick={() => setSkipDuration(option.value)}
-                                    className="justify-start"
-                                  >
-                                    <span className="mr-2">{option.icon}</span>
-                                    {option.label}
-                                  </Button>
-                                ))}
-                              </div>
-                            </div>
-                            <div>
-                              <Label htmlFor="skip-reason">Reason (optional)</Label>
-                              <Textarea
-                                id="skip-reason"
-                                value={skipReason}
-                                onChange={(e) => setSkipReason(e.target.value)}
-                                placeholder="Why are you skipping this task?"
-                                className="mt-1"
-                              />
-                            </div>
-                            <div className="flex justify-end gap-2">
-                              <Button variant="outline" onClick={() => setShowSkipModal(false)}>
-                                Cancel
-                              </Button>
-                              <Button onClick={handleSkipRecommendedTask} disabled={isLoading}>
-                                Skip Task
-                              </Button>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-
-                      <Button size="sm" variant="outline" onClick={getAIRecommendation} disabled={isLoading}>
-                        <RefreshCw className="h-3 w-3 mr-1" />
-                        Next
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
-      </>
-    )
-  }
-
-  // Show AI assistant when no active tasks
-  return (
-    <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 dark:border-purple-800">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
-          <Brain className="h-5 w-5" />
-          AI Task Recommendations
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          No active tasks found. Let AI help you prioritize and start your next task.
-        </p>
-
-        <Button
-          onClick={getAIRecommendation}
-          disabled={isLoading || nonActiveTasks.length === 0}
-          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-        >
-          {isLoading ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Brain className="h-4 w-4 mr-2" />}
-          {nonActiveTasks.length === 0 ? "No Tasks Available" : "Get AI Task Recommendation"}
-        </Button>
-      </CardContent>
-    </Card>
+      {/* Show message when no tasks at all */}
+      {activeTasks.length === 0 && nonActiveTasks.length === 0 && (
+        <Card className="border-dashed border-2 border-muted">
+          <CardContent className="flex flex-col items-center justify-center py-8">
+            <Brain className="h-12 w-12 text-muted-foreground mb-4" />
+            <p className="text-muted-foreground text-center">No tasks available. Create some tasks to get started!</p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   )
 }
