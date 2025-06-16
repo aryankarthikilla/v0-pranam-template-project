@@ -4,22 +4,22 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { getTaskSettings, updateTaskSettings } from "../actions/task-settings-actions"
+import { getTaskSettings, updateTaskSettings, getCompletedFilters } from "../actions/task-settings-actions"
 
-const options = [
-  { value: "no", label: "Don't show completed tasks" },
-  { value: "1 hour", label: "Last 1 hour" },
-  { value: "Today", label: "Today" },
-  { value: "1 week", label: "Last week" },
-]
+interface FilterOption {
+  filter_key: string
+  interval_value: string | null
+}
 
 export function TaskSettings({ onSettingsChange }: { onSettingsChange?: () => void }) {
   const [value, setValue] = useState("no")
+  const [options, setOptions] = useState<FilterOption[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getTaskSettings().then((data) => {
-      setValue(data.show_completed_tasks)
+    Promise.all([getTaskSettings(), getCompletedFilters()]).then(([settings, filters]) => {
+      setValue(settings.show_completed_tasks)
+      setOptions(filters)
       setLoading(false)
     })
   }, [])
@@ -28,6 +28,13 @@ export function TaskSettings({ onSettingsChange }: { onSettingsChange?: () => vo
     setValue(newValue)
     await updateTaskSettings(newValue)
     onSettingsChange?.()
+  }
+
+  const getOptionLabel = (option: FilterOption) => {
+    if (option.filter_key === "no") {
+      return "Don't show completed tasks"
+    }
+    return `Show completed tasks from last ${option.filter_key}`
   }
 
   if (loading) return <div>Loading...</div>
@@ -47,8 +54,8 @@ export function TaskSettings({ onSettingsChange }: { onSettingsChange?: () => vo
             </SelectTrigger>
             <SelectContent>
               {options.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                <SelectItem key={option.filter_key} value={option.filter_key}>
+                  {getOptionLabel(option)}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -16,6 +16,14 @@ export async function getTaskSettings() {
   return data || { show_completed_tasks: "no" }
 }
 
+export async function getCompletedFilters() {
+  const supabase = await createClient()
+
+  const { data } = await supabase.from("completed_filters").select("filter_key, interval_value").order("interval_value")
+
+  return data || []
+}
+
 export async function updateTaskSettings(showCompletedTasks: string) {
   const supabase = await createClient()
   const {
