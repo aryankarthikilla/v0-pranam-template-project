@@ -12,6 +12,7 @@ import { QuickTaskModal } from "./components/quick-task-modal"
 import { RandomTask } from "./components/random-task"
 import { TaskSettings } from "./components/task-settings"
 import { getTasks } from "./actions/task-actions"
+import { PageTitle } from "@/components/page-title"
 
 interface Task {
   id: string
@@ -24,7 +25,6 @@ interface Task {
   updated_at: string
   completed_at?: string
   is_deleted: boolean
-  subtasks?: Task[]
 }
 
 export default function TasksPage() {
@@ -80,8 +80,8 @@ export default function TasksPage() {
     loadTasks()
   }
 
-  const handleEditTask = (task: Task | { parent_id?: string }) => {
-    setEditingTask(task as Task)
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task)
     setShowTaskForm(true)
   }
 
@@ -92,14 +92,13 @@ export default function TasksPage() {
   if (loading) {
     return (
       <div className="container mx-auto p-6">
-        <div className="animate-pulse space-y-6">
-          <div className="flex gap-4">
-            <div className="h-10 bg-muted rounded w-32"></div>
-            <div className="h-10 bg-muted rounded w-40"></div>
+        <PageTitle title={t("title")} />
+        <div className="grid gap-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-muted rounded w-1/4"></div>
+            <div className="h-32 bg-muted rounded"></div>
+            <div className="h-32 bg-muted rounded"></div>
           </div>
-          <div className="h-48 bg-muted rounded"></div>
-          <div className="h-16 bg-muted rounded"></div>
-          <div className="h-32 bg-muted rounded"></div>
         </div>
       </div>
     )
@@ -108,11 +107,12 @@ export default function TasksPage() {
   if (error) {
     return (
       <div className="container mx-auto p-6">
+        <PageTitle title={t("title")} />
         <Card className="border-destructive">
           <CardContent className="p-6">
             <p className="text-destructive">Error: {error}</p>
             <Button onClick={loadTasks} className="mt-4">
-              {t("tryAgain")}
+              Try Again
             </Button>
           </CardContent>
         </Card>
@@ -122,25 +122,30 @@ export default function TasksPage() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      <PageTitle title={t("title")} />
+
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-4">
-        <Button onClick={() => setShowTaskForm(true)} className="flex items-center gap-2 bg-pink-600 hover:bg-pink-700">
+        <Button onClick={() => setShowTaskForm(true)} className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
           {t("addTask")}
         </Button>
-        <Button variant="outline" onClick={() => setShowQuickTask(true)} className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          onClick={() => setShowQuickTask(true)}
+          className="flex items-center gap-2"
+          title="Alt+Q"
+        >
           <Plus className="h-4 w-4" />
           {t("quickTask")} <span className="text-xs opacity-60">(Alt+Q)</span>
         </Button>
+        <RandomTask onTaskSelect={handleEditTask} />
       </div>
-
-      {/* Random Task Section */}
-      <RandomTask onRefresh={loadTasks} />
 
       {/* Task Settings */}
       <TaskSettings onSettingsChange={handleSettingsChange} />
 
-      {/* Tasks Display with Tabs */}
+      {/* Tasks Display */}
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="all">
@@ -154,26 +159,26 @@ export default function TasksPage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="all" className="space-y-4 mt-6">
+        <TabsContent value="all" className="space-y-4">
           {tasks.length === 0 ? (
             <Card>
               <CardContent className="p-6 text-center">
-                <p className="text-muted-foreground">{t("noTasksFound")}</p>
+                <p className="text-muted-foreground">{t("noTasks")}</p>
                 <Button onClick={() => setShowTaskForm(true)} className="mt-4">
                   {t("createFirstTask")}
                 </Button>
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4">
+            <div className="grid gap-4">
               {tasks.map((task) => (
-                <TaskCard key={task.id} task={task} onEdit={handleEditTask} onRefresh={loadTasks} />
+                <TaskCard key={task.id} task={task} onUpdate={handleTaskUpdate} onEdit={handleEditTask} />
               ))}
             </div>
           )}
         </TabsContent>
 
-        <TabsContent value="pending" className="space-y-4 mt-6">
+        <TabsContent value="pending" className="space-y-4">
           {pendingTasks.length === 0 ? (
             <Card>
               <CardContent className="p-6 text-center">
@@ -181,15 +186,15 @@ export default function TasksPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4">
+            <div className="grid gap-4">
               {pendingTasks.map((task) => (
-                <TaskCard key={task.id} task={task} onEdit={handleEditTask} onRefresh={loadTasks} />
+                <TaskCard key={task.id} task={task} onUpdate={handleTaskUpdate} onEdit={handleEditTask} />
               ))}
             </div>
           )}
         </TabsContent>
 
-        <TabsContent value="completed" className="space-y-4 mt-6">
+        <TabsContent value="completed" className="space-y-4">
           {completedTasks.length === 0 ? (
             <Card>
               <CardContent className="p-6 text-center">
@@ -197,9 +202,9 @@ export default function TasksPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4">
+            <div className="grid gap-4">
               {completedTasks.map((task) => (
-                <TaskCard key={task.id} task={task} onEdit={handleEditTask} onRefresh={loadTasks} />
+                <TaskCard key={task.id} task={task} onUpdate={handleTaskUpdate} onEdit={handleEditTask} />
               ))}
             </div>
           )}
