@@ -99,25 +99,44 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
   }
 
   const handlePauseTask = async () => {
-    if (!currentSessionId) return
+    console.log("handlePauseTask called", { currentSessionId, pauseReason })
+
+    if (!currentSessionId) {
+      console.error("No current session ID available")
+      toast.error("No active session found")
+      setShowPauseModal(false)
+      return
+    }
 
     setIsLoading(true)
     try {
+      console.log("Calling pauseTaskSession with:", currentSessionId, pauseReason)
       const result = await pauseTaskSession(currentSessionId, pauseReason)
+      console.log("pauseTaskSession result:", result)
+
       if (result.success) {
+        console.log("Pause successful, updating state")
         toast.success("Task paused successfully!")
         setTaskState("pending")
         setCurrentSessionId(null)
         setPauseReason("")
-        setShowPauseModal(false) // Ensure modal closes
-        getRecommendation() // Refresh to get next recommendation
+        setShowPauseModal(false)
+
+        // Small delay before refreshing to ensure state is updated
+        setTimeout(() => {
+          getRecommendation()
+        }, 500)
       } else {
+        console.error("Pause failed:", result.error)
         toast.error(result.error || "Failed to pause task")
+        // Keep modal open on error so user can retry
       }
     } catch (error) {
       console.error("Pause task error:", error)
       toast.error("Failed to pause task")
+      // Keep modal open on error so user can retry
     } finally {
+      console.log("Setting loading to false")
       setIsLoading(false)
     }
   }
@@ -197,6 +216,16 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
     { value: "3days", label: "3 Days", icon: "📆" },
     { value: "1week", label: "1 Week", icon: "🗓️" },
   ]
+
+  const debugCurrentState = () => {
+    console.log("Current widget state:", {
+      taskState,
+      currentSessionId,
+      recommendation: recommendation?.task_details,
+      showPauseModal,
+      isLoading,
+    })
+  }
 
   return (
     <Card className="border-purple-200 dark:border-purple-800 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20">
@@ -444,6 +473,10 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
                       </Dialog>
                     </>
                   )}
+                  {/* Temporary debug button */}
+                  <Button size="sm" variant="ghost" onClick={debugCurrentState}>
+                    Debug
+                  </Button>
                 </div>
               </div>
             </div>

@@ -81,14 +81,18 @@ export async function startTaskSession(taskId: string, locationContext?: string,
 
 // Pause a task session
 export async function pauseTaskSession(sessionId: string, reason?: string) {
+  console.log("pauseTaskSession called with:", { sessionId, reason })
   const supabase = await createClient()
 
   try {
     const {
       data: { user },
     } = await supabase.auth.getUser()
+
+    console.log("User authenticated:", !!user)
     if (!user) throw new Error("Not authenticated")
 
+    console.log("Updating session:", sessionId)
     // End current session
     const { data: session, error: sessionError } = await supabase
       .from("task_sessions")
@@ -102,7 +106,12 @@ export async function pauseTaskSession(sessionId: string, reason?: string) {
       .select()
       .single()
 
-    if (sessionError) throw sessionError
+    if (sessionError) {
+      console.error("Session update error:", sessionError)
+      throw sessionError
+    }
+
+    console.log("Session updated successfully:", session)
 
     // Update task status
     const { error: taskError } = await supabase
@@ -114,10 +123,16 @@ export async function pauseTaskSession(sessionId: string, reason?: string) {
       })
       .eq("id", session.task_id)
 
-    if (taskError) throw taskError
+    if (taskError) {
+      console.error("Task update error:", taskError)
+      throw taskError
+    }
+
+    console.log("Task updated successfully")
 
     // Add note if reason provided
     if (reason) {
+      console.log("Adding pause note")
       await supabase.from("task_notes").insert({
         task_id: session.task_id,
         user_id: user.id,
@@ -128,6 +143,7 @@ export async function pauseTaskSession(sessionId: string, reason?: string) {
     }
 
     revalidatePath("/dashboard/tasks")
+    console.log("pauseTaskSession completed successfully")
     return { success: true }
   } catch (error) {
     console.error("Pause task session error:", error)
