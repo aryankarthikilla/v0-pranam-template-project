@@ -7,85 +7,57 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Skeleton } from "@/components/ui/skeleton"
 import {
-  Zap,
+  Brain,
   Clock,
+  RefreshCw,
+  Sparkles,
+  Play,
   Pause,
   CheckCircle,
-  AlertCircle,
-  RefreshCw,
-  Brain,
-  Play,
   SkipForward,
-  Sparkles,
+  Calendar,
+  Zap,
+  AlertCircle,
   Plus,
 } from "lucide-react"
-import { pauseTaskSession, completeTask, startTaskSession, skipTask } from "../actions/enhanced-task-actions"
 import { prioritizeMyTasks } from "../actions/ai-task-actions-enhanced"
+import {
+  startTaskSession,
+  pauseTaskSession,
+  completeTask,
+  skipTask,
+  getActiveSessions,
+} from "../actions/enhanced-task-actions"
 import { toast } from "sonner"
 
-interface Task {
-  id: string
-  title: string
-  description?: string
-  status: string
-  priority: string
-  created_at: string
-  updated_at: string
-  estimated_minutes?: number
-  current_session_id?: string
-}
-
 interface AINextTaskWidgetProps {
-  tasks: Task[]
+  tasks: any[]
   loading: boolean
 }
 
 export function AINextTaskWidget({ tasks, loading }: AINextTaskWidgetProps) {
+  const [recommendation, setRecommendation] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [aiRecommendation, setAiRecommendation] = useState<any>(null)
-  const [showPauseModal, setShowPauseModal] = useState(false)
-  const [showCompleteModal, setShowCompleteModal] = useState(false)
-  const [showSkipModal, setShowSkipModal] = useState(false)
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [taskState, setTaskState] = useState<"pending" | "in_progress" | "completed">("pending")
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
   const [pauseReason, setPauseReason] = useState("")
   const [completionNotes, setCompletionNotes] = useState("")
   const [skipDuration, setSkipDuration] = useState("1hour")
   const [skipReason, setSkipReason] = useState("")
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [showPauseModal, setShowPauseModal] = useState(false)
+  const [showCompleteModal, setShowCompleteModal] = useState(false)
+  const [showSkipModal, setShowSkipModal] = useState(false)
+  const [noTasksReason, setNoTasksReason] = useState<string | null>(null)
 
   // Filter tasks by status
   const activeTasks = tasks.filter((task) => task.status === "in_progress" || task.status === "active")
   const pendingTasks = tasks.filter((task) => task.status === "pending" || task.status === "todo")
-  const completedTasks = tasks.filter((task) => task.status === "completed")
   const totalTasks = tasks.length
 
-  // Auto-load AI recommendation on mount if there are pending tasks and no active tasks
-  useEffect(() => {
-    if (!loading && pendingTasks.length > 0 && activeTasks.length === 0 && !aiRecommendation) {
-      getAIRecommendation()
-    }
-  }, [loading, pendingTasks.length, activeTasks.length])
-
-  // Show loading skeleton while data is being fetched
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        <Card className="border-purple-200 dark:border-purple-800">
-          <CardHeader>
-            <Skeleton className="h-6 w-48" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-20 w-full" />
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
   const getPriorityColor = (priority: string) => {
-    switch (priority?.toLowerCase()) {
+    switch (priority) {
       case "urgent":
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
       case "high":
@@ -112,59 +84,101 @@ export function AINextTaskWidget({ tasks, loading }: AINextTaskWidgetProps) {
     }
   }
 
-  const getAIRecommendation = async () => {
+  const getRecommendation = async () => {
     if (pendingTasks.length === 0) {
-      toast.info("No pending tasks available for AI recommendation")
+      setNoTasksReason("No pending tasks available")
       return
     }
 
     setIsLoading(true)
+    setNoTasksReason(null)
     try {
       const result = await prioritizeMyTasks()
 
       if (result.success && result.prioritization?.recommended_next_task) {
+        setRecommendation(result.prioritization.recommended_next_task)
+        setLastUpdated(new Date())
+
+        // Find the actual task details
         const taskId = result.prioritization.recommended_next_task.task_id
         const taskDetails = pendingTasks.find((t) => t.id === taskId)
-
         if (taskDetails) {
-          setAiRecommendation({
+          setRecommendation({
             ...result.prioritization.recommended_next_task,
             task_details: taskDetails,
           })
-          setLastUpdated(new Date())
-        } else {
-          // Fallback to first pending task
-          const firstPendingTask = pendingTasks[0]
-          if (firstPendingTask) {
-            setAiRecommendation({
-              task_id: firstPendingTask.id,
-              reason: "This is your next pending task. Consider starting it when you're ready.",
-              task_details: firstPendingTask,
-            })
-            setLastUpdated(new Date())
+
+          // Set task state based on current status
+          const status = taskDetails.status || "pending"
+          setTaskState(status)
+
+          // If task is in progress, try to find the active session
+          if (status === "in_progress" || status === "active") {
+            const sessionId = taskDetails.current_session_id
+            if (sessionId) {
+              setCurrentSessionId(sessionId)
+            } else {
+              // Fallback: check for active sessions for this task
+              try {
+                const activeSessions = await getActiveSessions()
+                const taskSession = activeSessions.find((s) => s.task_id === taskId)
+                if (taskSession) {
+                  setCurrentSessionId(taskSession.id)
+                } else {
+                  // No active session found, reset task state
+                  console.warn("Task marked as in_progress but no active session found")
+                  setTaskState("pending")
+                }
+              } catch (error) {
+                console.error("Failed to get active sessions:", error)
+                setTaskState("pending")
+              }
+            }
+          } else {
+            setCurrentSessionId(null)
           }
         }
       } else {
-        toast.error("No AI recommendations available")
+        // No recommendations available - could be because all tasks are scheduled
+        setRecommendation(null)
+        setNoTasksReason(result.error || "No recommendations available")
+
+        if (result.error && result.error.includes("scheduled for later")) {
+          toast.info("All tasks are scheduled for later. Great job managing your time!")
+        } else {
+          toast.error("No recommendations available")
+        }
       }
     } catch (error) {
       console.error("Failed to get AI recommendation:", error)
       toast.error("Failed to get AI recommendation")
+      setNoTasksReason("Failed to get recommendations")
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleStartRecommendedTask = async () => {
-    if (!aiRecommendation?.task_details?.id) return
+  const handleStartTask = async () => {
+    if (!recommendation?.task_details?.id) return
 
     setIsLoading(true)
     try {
-      const result = await startTaskSession(aiRecommendation.task_details.id, undefined, "web")
+      const result = await startTaskSession(recommendation.task_details.id, undefined, "web")
       if (result.success) {
         toast.success("Task started successfully!")
-        setAiRecommendation(null)
-        window.location.reload()
+
+        // Immediately update local state - don't wait for re-analysis
+        setTaskState("in_progress")
+        setCurrentSessionId(result.session.id)
+
+        // Update the recommendation reasoning to reflect the new state
+        setRecommendation((prev) => ({
+          ...prev,
+          reason:
+            "This task is now active and in progress. You can pause it if you need a break or complete it when finished.",
+        }))
+
+        setLastUpdated(new Date())
       } else {
         toast.error(result.error || "Failed to start task")
       }
@@ -175,18 +189,119 @@ export function AINextTaskWidget({ tasks, loading }: AINextTaskWidgetProps) {
     }
   }
 
-  const handleSkipRecommendedTask = async () => {
-    if (!aiRecommendation?.task_details?.id) return
+  const handlePauseTask = async () => {
+    console.log("handlePauseTask called", { currentSessionId, pauseReason, taskId: recommendation?.task_details?.id })
+
+    // If no session ID, try to find it
+    let sessionIdToUse = currentSessionId
+
+    if (!sessionIdToUse && recommendation?.task_details?.id) {
+      console.log("No session ID, trying to find active session for task")
+      try {
+        const activeSessions = await getActiveSessions()
+        const taskSession = activeSessions.find((s) => s.task_id === recommendation.task_details.id)
+        if (taskSession) {
+          sessionIdToUse = taskSession.id
+          setCurrentSessionId(taskSession.id)
+          console.log("Found active session:", taskSession.id)
+        }
+      } catch (error) {
+        console.error("Failed to find active session:", error)
+      }
+    }
+
+    if (!sessionIdToUse) {
+      console.error("No session ID available, cannot pause task")
+      toast.error("No active session found. Task may not be properly started.")
+      setShowPauseModal(false)
+      // Reset task state since there's no active session
+      setTaskState("pending")
+      return
+    }
 
     setIsLoading(true)
     try {
-      const result = await skipTask(aiRecommendation.task_details.id, skipDuration, skipReason)
+      console.log("Calling pauseTaskSession with:", sessionIdToUse, pauseReason)
+      const result = await pauseTaskSession(sessionIdToUse, pauseReason)
+      console.log("pauseTaskSession result:", result)
+
+      if (result.success) {
+        console.log("Pause successful, updating state")
+        toast.success("Task paused successfully! Use Skip to reschedule when you want to work on it again.")
+
+        // Immediately update local state
+        setTaskState("pending")
+        setCurrentSessionId(null)
+        setPauseReason("")
+        setShowPauseModal(false)
+
+        // Update reasoning to reflect paused state
+        setRecommendation((prev) => ({
+          ...prev,
+          reason:
+            "This task was paused and is ready to be resumed. You can start it again or skip it to schedule for later.",
+        }))
+
+        setLastUpdated(new Date())
+      } else {
+        console.error("Pause failed:", result.error)
+        toast.error(result.error || "Failed to pause task")
+      }
+    } catch (error) {
+      console.error("Pause task error:", error)
+      toast.error("Failed to pause task")
+    } finally {
+      console.log("Setting loading to false")
+      setIsLoading(false)
+    }
+  }
+
+  const handleCancelPause = () => {
+    setPauseReason("")
+    setShowPauseModal(false)
+  }
+
+  const handleCompleteTask = async () => {
+    if (!recommendation?.task_details?.id) return
+
+    setIsLoading(true)
+    try {
+      const result = await completeTask(recommendation.task_details.id, completionNotes, 100)
+      if (result.success) {
+        toast.success("Task completed successfully!")
+        setTaskState("completed")
+        setCurrentSessionId(null)
+        setCompletionNotes("")
+        setShowCompleteModal(false)
+
+        // Get next recommendation after completing
+        setTimeout(() => {
+          getRecommendation()
+        }, 1000)
+      } else {
+        toast.error(result.error || "Failed to complete task")
+      }
+    } catch (error) {
+      toast.error("Failed to complete task")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSkipTask = async () => {
+    if (!recommendation?.task_details?.id) return
+
+    setIsLoading(true)
+    try {
+      const result = await skipTask(recommendation.task_details.id, skipDuration, skipReason)
       if (result.success) {
         toast.success(`Task skipped and rescheduled!`)
         setSkipReason("")
         setShowSkipModal(false)
+
+        // Get next recommendation after skipping
         setTimeout(() => {
-          getAIRecommendation()
+          getRecommendation()
         }, 1000)
       } else {
         toast.error(result.error || "Failed to skip task")
@@ -198,62 +313,32 @@ export function AINextTaskWidget({ tasks, loading }: AINextTaskWidgetProps) {
     }
   }
 
-  const handlePauseTask = async () => {
-    if (!selectedTask?.current_session_id) {
-      toast.error("No active session found")
-      return
+  // Auto-load on mount if we have tasks and no active tasks
+  useEffect(() => {
+    if (!loading && pendingTasks.length > 0 && activeTasks.length === 0 && !recommendation) {
+      getRecommendation()
     }
+  }, [loading, pendingTasks.length, activeTasks.length])
 
-    setIsLoading(true)
-    try {
-      const result = await pauseTaskSession(selectedTask.current_session_id, pauseReason)
-      if (result.success) {
-        toast.success("Task paused successfully")
-        setShowPauseModal(false)
-        setPauseReason("")
-        setSelectedTask(null)
-        window.location.reload()
-      } else {
-        toast.error(result.error || "Failed to pause task")
-      }
-    } catch (error) {
-      console.error("Error pausing task:", error)
-      toast.error("Something went wrong")
-    } finally {
-      setIsLoading(false)
-    }
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <Card className="border-purple-200 dark:border-purple-800">
+          <CardHeader>
+            <div className="animate-pulse">
+              <div className="h-6 bg-muted rounded w-48"></div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="animate-pulse">
+              <div className="h-20 bg-muted rounded"></div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
-
-  const handleCompleteTask = async () => {
-    if (!selectedTask?.id) return
-
-    setIsLoading(true)
-    try {
-      const result = await completeTask(selectedTask.id, completionNotes, 100)
-      if (result.success) {
-        toast.success("Task completed successfully!")
-        setShowCompleteModal(false)
-        setCompletionNotes("")
-        setSelectedTask(null)
-        window.location.reload()
-      } else {
-        toast.error(result.error || "Failed to complete task")
-      }
-    } catch (error) {
-      console.error("Error completing task:", error)
-      toast.error("Something went wrong")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const skipDurationOptions = [
-    { value: "1hour", label: "1 Hour", icon: "⏰" },
-    { value: "4hours", label: "4 Hours", icon: "🕐" },
-    { value: "tomorrow", label: "Tomorrow", icon: "📅" },
-    { value: "3days", label: "3 Days", icon: "📆" },
-    { value: "1week", label: "1 Week", icon: "🗓️" },
-  ]
 
   // SCENARIO 1: No tasks at all in the system
   if (totalTasks === 0) {
@@ -274,27 +359,13 @@ export function AINextTaskWidget({ tasks, loading }: AINextTaskWidgetProps) {
     )
   }
 
-  // SCENARIO 2: All tasks are completed
-  if (completedTasks.length === totalTasks) {
-    return (
-      <Card className="border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20">
-        <CardContent className="flex flex-col items-center justify-center py-8">
-          <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
-          <h3 className="font-semibold text-lg mb-2 text-green-700 dark:text-green-300">All Tasks Completed!</h3>
-          <p className="text-green-600 dark:text-green-400 text-center mb-4">
-            Great job! You've completed all {totalTasks} tasks. Time to create new ones or take a break!
-          </p>
-          <Button
-            variant="outline"
-            className="border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-300"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Create New Tasks
-          </Button>
-        </CardContent>
-      </Card>
-    )
-  }
+  const skipDurationOptions = [
+    { value: "1hour", label: "1 Hour", icon: "⏰" },
+    { value: "4hours", label: "4 Hours", icon: "🕐" },
+    { value: "tomorrow", label: "Tomorrow", icon: "📅" },
+    { value: "3days", label: "3 Days", icon: "📆" },
+    { value: "1week", label: "1 Week", icon: "🗓️" },
+  ]
 
   return (
     <div className="space-y-4">
@@ -315,7 +386,7 @@ export function AINextTaskWidget({ tasks, loading }: AINextTaskWidgetProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={getAIRecommendation}
+                onClick={getRecommendation}
                 disabled={isLoading}
                 className="text-purple-600 hover:text-purple-700 hover:bg-purple-100 dark:hover:bg-purple-900/20"
               >
@@ -325,23 +396,31 @@ export function AINextTaskWidget({ tasks, loading }: AINextTaskWidgetProps) {
           </CardHeader>
 
           <CardContent>
-            {aiRecommendation ? (
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="flex items-center gap-2 text-purple-600">
+                  <Sparkles className="h-5 w-5 animate-pulse" />
+                  <span>AI is analyzing your tasks...</span>
+                </div>
+              </div>
+            ) : recommendation ? (
               <div className="space-y-4">
+                {/* Recommended Task */}
                 <div className="p-4 bg-white/60 dark:bg-gray-900/60 rounded-lg border border-purple-200 dark:border-purple-800">
                   <div className="flex items-start justify-between mb-2">
                     <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex-1">
-                      {aiRecommendation.task_details?.title || "Task"}
+                      {recommendation.task_details?.title || "Task"}
                     </h4>
-                    {aiRecommendation.task_details?.priority && (
-                      <Badge className={getPriorityColor(aiRecommendation.task_details.priority)}>
-                        {aiRecommendation.task_details.priority}
+                    {recommendation.task_details?.priority && (
+                      <Badge className={getPriorityColor(recommendation.task_details.priority)}>
+                        {recommendation.task_details.priority}
                       </Badge>
                     )}
                   </div>
 
-                  {aiRecommendation.task_details?.description && (
+                  {recommendation.task_details?.description && (
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                      {aiRecommendation.task_details.description}
+                      {recommendation.task_details.description}
                     </p>
                   )}
 
@@ -350,7 +429,7 @@ export function AINextTaskWidget({ tasks, loading }: AINextTaskWidgetProps) {
                     <span className="font-medium">AI Reasoning:</span>
                   </div>
                   <p className="text-sm text-gray-700 dark:text-gray-300 bg-purple-50 dark:bg-purple-950/30 p-3 rounded border-l-4 border-purple-400">
-                    {aiRecommendation.reason}
+                    {recommendation.reason}
                   </p>
 
                   <div className="flex items-center justify-between mt-4">
@@ -360,85 +439,231 @@ export function AINextTaskWidget({ tasks, loading }: AINextTaskWidgetProps) {
                     </div>
 
                     <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={handleStartRecommendedTask}
-                        disabled={isLoading}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        <Play className="h-3 w-3 mr-1" />
-                        Start
-                      </Button>
-
-                      <Dialog open={showSkipModal} onOpenChange={setShowSkipModal}>
-                        <DialogTrigger asChild>
+                      {/* Task State: PENDING - Show Start, Skip, Complete */}
+                      {taskState === "pending" && (
+                        <>
                           <Button
                             size="sm"
-                            variant="outline"
-                            className="border-orange-300 text-orange-700 hover:bg-orange-50"
+                            onClick={handleStartTask}
+                            disabled={isLoading}
+                            className="bg-green-600 hover:bg-green-700"
                           >
-                            <SkipForward className="h-3 w-3 mr-1" />
-                            Skip
+                            <Play className="h-3 w-3 mr-1" />
+                            Start
                           </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Skip Task - Reschedule</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label>When should this task be rescheduled?</Label>
-                              <div className="grid grid-cols-2 gap-2 mt-2">
-                                {skipDurationOptions.map((option) => (
-                                  <Button
-                                    key={option.value}
-                                    variant={skipDuration === option.value ? "default" : "outline"}
-                                    onClick={() => setSkipDuration(option.value)}
-                                    className="justify-start"
-                                  >
-                                    <span className="mr-2">{option.icon}</span>
-                                    {option.label}
+
+                          <Dialog open={showSkipModal} onOpenChange={setShowSkipModal}>
+                            <DialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-orange-300 text-orange-700 hover:bg-orange-50"
+                              >
+                                <SkipForward className="h-3 w-3 mr-1" />
+                                Skip
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Skip Task - Reschedule</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div>
+                                  <Label>When should this task be rescheduled?</Label>
+                                  <div className="grid grid-cols-2 gap-2 mt-2">
+                                    {skipDurationOptions.map((option) => (
+                                      <Button
+                                        key={option.value}
+                                        variant={skipDuration === option.value ? "default" : "outline"}
+                                        onClick={() => setSkipDuration(option.value)}
+                                        className="justify-start"
+                                      >
+                                        <span className="mr-2">{option.icon}</span>
+                                        {option.label}
+                                      </Button>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div>
+                                  <Label htmlFor="skip-reason">Reason (optional)</Label>
+                                  <Textarea
+                                    id="skip-reason"
+                                    value={skipReason}
+                                    onChange={(e) => setSkipReason(e.target.value)}
+                                    placeholder="Why are you skipping this task?"
+                                    className="mt-1"
+                                  />
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                  <Button variant="outline" onClick={() => setShowSkipModal(false)}>
+                                    Cancel
                                   </Button>
-                                ))}
+                                  <Button onClick={handleSkipTask} disabled={isLoading}>
+                                    Skip Task
+                                  </Button>
+                                </div>
                               </div>
-                            </div>
-                            <div>
-                              <Label htmlFor="skip-reason">Reason (optional)</Label>
-                              <Textarea
-                                id="skip-reason"
-                                value={skipReason}
-                                onChange={(e) => setSkipReason(e.target.value)}
-                                placeholder="Why are you skipping this task?"
-                                className="mt-1"
-                              />
-                            </div>
-                            <div className="flex justify-end gap-2">
-                              <Button variant="outline" onClick={() => setShowSkipModal(false)}>
-                                Cancel
+                            </DialogContent>
+                          </Dialog>
+
+                          <Dialog open={showCompleteModal} onOpenChange={setShowCompleteModal}>
+                            <DialogTrigger asChild>
+                              <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Complete
                               </Button>
-                              <Button onClick={handleSkipRecommendedTask} disabled={isLoading}>
-                                Skip Task
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Complete Task</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div>
+                                  <Label htmlFor="completion-notes">Completion Notes (optional)</Label>
+                                  <Textarea
+                                    id="completion-notes"
+                                    value={completionNotes}
+                                    onChange={(e) => setCompletionNotes(e.target.value)}
+                                    placeholder="Any notes about completing this task?"
+                                    className="mt-1"
+                                  />
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                  <Button variant="outline" onClick={() => setShowCompleteModal(false)}>
+                                    Cancel
+                                  </Button>
+                                  <Button onClick={handleCompleteTask} disabled={isLoading}>
+                                    Complete Task
+                                  </Button>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        </>
+                      )}
+
+                      {/* Task State: IN_PROGRESS - Show Pause, Complete (NO Skip) */}
+                      {taskState === "in_progress" && (
+                        <>
+                          <Dialog open={showPauseModal} onOpenChange={setShowPauseModal}>
+                            <DialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                              >
+                                <Pause className="h-3 w-3 mr-1" />
+                                Pause
                               </Button>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Pause Task</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div>
+                                  <Label htmlFor="pause-reason">Reason for pausing (optional)</Label>
+                                  <Textarea
+                                    id="pause-reason"
+                                    value={pauseReason}
+                                    onChange={(e) => setPauseReason(e.target.value)}
+                                    placeholder="Why are you pausing this task?"
+                                    className="mt-1"
+                                  />
+                                </div>
+                                <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                                    💡 <strong>Tip:</strong> After pausing, you can use the "Skip" button to schedule
+                                    when you want to work on this task again!
+                                  </p>
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                  <Button variant="outline" onClick={handleCancelPause}>
+                                    Cancel
+                                  </Button>
+                                  <Button onClick={handlePauseTask} disabled={isLoading}>
+                                    Pause Task
+                                  </Button>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+
+                          <Dialog open={showCompleteModal} onOpenChange={setShowCompleteModal}>
+                            <DialogTrigger asChild>
+                              <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Complete
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Complete Task</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div>
+                                  <Label htmlFor="completion-notes">Completion Notes (optional)</Label>
+                                  <Textarea
+                                    id="completion-notes"
+                                    value={completionNotes}
+                                    onChange={(e) => setCompletionNotes(e.target.value)}
+                                    placeholder="Any notes about completing this task?"
+                                    className="mt-1"
+                                  />
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                  <Button variant="outline" onClick={() => setShowCompleteModal(false)}>
+                                    Cancel
+                                  </Button>
+                                  <Button onClick={handleCompleteTask} disabled={isLoading}>
+                                    Complete Task
+                                  </Button>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        </>
+                      )}
                     </div>
                   </div>
+                </div>
+              </div>
+            ) : noTasksReason ? (
+              <div className="text-center py-8">
+                <div className="flex flex-col items-center gap-4">
+                  {noTasksReason.includes("scheduled for later") ? (
+                    <>
+                      <Calendar className="h-12 w-12 text-green-500" />
+                      <div className="space-y-2">
+                        <h3 className="font-semibold text-green-700 dark:text-green-300">All Tasks Scheduled!</h3>
+                        <p className="text-sm text-muted-foreground max-w-md">
+                          Great job! All your tasks are scheduled for later. The AI will recommend them when it's time
+                          to work on them.
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <Brain className="h-12 w-12 text-muted-foreground" />
+                      <div className="space-y-2">
+                        <h3 className="font-semibold text-muted-foreground">No Recommendations</h3>
+                        <p className="text-sm text-muted-foreground">{noTasksReason}</p>
+                      </div>
+                    </>
+                  )}
+                  <Button onClick={getRecommendation} variant="outline" className="mt-2">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Refresh
+                  </Button>
                 </div>
               </div>
             ) : (
               <div className="text-center py-6">
                 <Button
-                  onClick={getAIRecommendation}
-                  disabled={isLoading}
+                  onClick={getRecommendation}
                   className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                 >
-                  {isLoading ? (
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Sparkles className="h-4 w-4 mr-2" />
-                  )}
+                  <Brain className="h-4 w-4 mr-2" />
                   {activeTasks.length > 0 ? "Need More Tasks? Get AI Recommendation" : "Get AI Task Recommendation"}
                 </Button>
               </div>
@@ -496,91 +721,15 @@ export function AINextTaskWidget({ tasks, loading }: AINextTaskWidgetProps) {
                 </div>
 
                 <div className="flex items-center gap-2 pt-2">
-                  <Dialog
-                    open={showPauseModal && selectedTask?.id === task.id}
-                    onOpenChange={(open) => {
-                      setShowPauseModal(open)
-                      if (open) setSelectedTask(task)
-                      else setSelectedTask(null)
-                    }}
-                  >
-                    <DialogTrigger asChild>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
-                      >
-                        <Pause className="h-4 w-4 mr-1" />
-                        Pause
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Pause Task</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="pause-reason">Reason for pausing (optional)</Label>
-                          <Textarea
-                            id="pause-reason"
-                            value={pauseReason}
-                            onChange={(e) => setPauseReason(e.target.value)}
-                            placeholder="Why are you pausing this task?"
-                            className="mt-1"
-                          />
-                        </div>
-                        <div className="flex justify-end gap-2">
-                          <Button variant="outline" onClick={() => setShowPauseModal(false)}>
-                            Cancel
-                          </Button>
-                          <Button onClick={handlePauseTask} disabled={isLoading}>
-                            Pause Task
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                  <Button size="sm" variant="outline" className="border-yellow-300 text-yellow-700 hover:bg-yellow-50">
+                    <Pause className="h-4 w-4 mr-1" />
+                    Pause
+                  </Button>
 
-                  <Dialog
-                    open={showCompleteModal && selectedTask?.id === task.id}
-                    onOpenChange={(open) => {
-                      setShowCompleteModal(open)
-                      if (open) setSelectedTask(task)
-                      else setSelectedTask(null)
-                    }}
-                  >
-                    <DialogTrigger asChild>
-                      <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                        <CheckCircle className="h-4 w-4 mr-1" />
-                        Complete
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Complete Task</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="completion-notes">Completion Notes (optional)</Label>
-                          <Textarea
-                            id="completion-notes"
-                            value={completionNotes}
-                            onChange={(e) => setCompletionNotes(e.target.value)}
-                            placeholder="Any notes about completing this task?"
-                            className="mt-1"
-                          />
-                        </div>
-                        <div className="flex justify-end gap-2">
-                          <Button variant="outline" onClick={() => setShowCompleteModal(false)}>
-                            Cancel
-                          </Button>
-                          <Button onClick={handleCompleteTask} disabled={isLoading}>
-                            Complete Task
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                  <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                    <CheckCircle className="h-4 w-4 mr-1" />
+                    Complete
+                  </Button>
                 </div>
               </div>
             ))}
