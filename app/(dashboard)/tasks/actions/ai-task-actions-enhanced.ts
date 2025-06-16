@@ -194,3 +194,168 @@ export async function suggestTaskPriority(taskTitle: string, taskDescription?: s
     return { success: false, error: "Failed to suggest priority" }
   }
 }
+
+export async function generateOpportunisticTasks(context: {
+  location?: string
+  availableTime?: number
+  currentTasks?: any[]
+}) {
+  console.log("🚀 Server Action: Generating opportunistic tasks", context)
+
+  try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      throw new Error("Not authenticated")
+    }
+
+    // Get user's task history for context
+    const { data: recentTasks } = await supabase
+      .from("tasks")
+      .select("*")
+      .eq("created_by", user.id)
+      .eq("is_deleted", false)
+      .order("created_at", { ascending: false })
+      .limit(10)
+
+    // Generate AI prompt for opportunistic tasks
+    const prompt = `
+Based on the user's context and task history, suggest 3-5 quick opportunistic tasks:
+
+Context:
+- Location: ${context.location || "unknown"}
+- Available time: ${context.availableTime || 30} minutes
+- Current active tasks: ${context.currentTasks?.length || 0}
+
+Recent task patterns:
+${recentTasks?.map((task) => `- ${task.title} (${task.priority})`).join("\n") || "No recent tasks"}
+
+Generate tasks that:
+1. Can be completed in the available time
+2. Are suitable for the current location/context
+3. Are productive and meaningful
+4. Don't conflict with active tasks
+
+Return JSON format:
+{
+  "tasks": [
+    {
+      "title": "Task title",
+      "description": "Brief description",
+      "estimated_minutes": 15,
+      "priority": "low|medium|high",
+      "context_type": "mobile|computer|location",
+      "reasoning": "Why this task fits the context"
+    }
+  ]
+}
+`
+
+    // Call Gemini AI (using existing service)
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt,
+                },
+              ],
+            },
+          ],
+        }),
+      },
+    )
+
+    if (!response.ok) {
+      throw new Error(`Gemini API error: ${response.status}`)
+    }
+
+    const data = await response.json()
+    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text
+
+    if (!aiResponse) {
+      throw new Error("No response from AI")
+    }
+
+    // Parse AI response
+    let suggestions
+    try {
+      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        suggestions = JSON.parse(jsonMatch[0])
+      } else {
+        throw new Error("No JSON found in response")
+      }
+    } catch (parseError) {
+      console.error("Failed to parse AI response:", aiResponse)
+      // Fallback suggestions
+      suggestions = {
+        tasks: [
+          {
+            title: "Quick Planning Session",
+            description: "Review and organize upcoming tasks",
+            estimated_minutes: 15,
+            priority: "medium",
+            context_type: "mobile",
+            reasoning: "Good use of available time for planning",
+          },
+        ],
+      }
+    }
+
+    // Log the AI request
+    await supabase.from("ai_logs").insert({
+      user_id: user.id,
+      request_type: "opportunistic_tasks",
+      prompt: prompt.substring(0, 1000),
+      response: JSON.stringify(suggestions),
+      tokens_used: aiResponse?.length || 0,
+      response_time_ms: Date.now() - Date.now(), // Simplified for now
+      success: true,
+    })
+
+    return {
+      success: true,
+      suggestions: suggestions.tasks || [],
+    }
+  } catch (error) {
+    console.error("❌ Server Action: Generate opportunistic tasks error:", error)
+
+    // Log the error
+    try {
+      const supabase = await createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (user) {
+        await supabase.from("ai_logs").insert({
+          user_id: user.id,
+          request_type: "opportunistic_tasks",
+          prompt: JSON.stringify(context),
+          response: null,
+          error_message: error instanceof Error ? error.message : "Unknown error",
+          success: false,
+        })
+      }
+    } catch (logError) {
+      console.error("Failed to log error:", logError)
+    }
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to generate opportunistic tasks",
+      suggestions: [],
+    }
+  }
+}

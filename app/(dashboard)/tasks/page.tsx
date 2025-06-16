@@ -6,6 +6,8 @@ import { BarChart3, CheckSquare, Clock, AlertTriangle, TrendingUp, Calendar } fr
 import Link from "next/link"
 import { useTaskData } from "./hooks/use-task-data"
 import { AINextTaskWidget } from "./components/ai-next-task-widget"
+import { MultiTaskWidget } from "./components/multi-task-widget"
+import { OpportunisticTaskSuggestions } from "./components/opportunistic-task-suggestions"
 
 export default function TasksDashboard() {
   const { t } = useTranslations("tasks")
@@ -28,21 +30,21 @@ export default function TasksDashboard() {
   const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0
 
   return (
-    <div className="flex-1 space-y-6 p-6 bg-background">
+    <div className="flex-1 space-y-6 p-4 md:p-6 bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("tasksDashboard")}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">{t("tasksDashboard")}</h1>
           <p className="text-muted-foreground">{t("tasksDashboardDescription")}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" size="sm">
             <Link href="/tasks/manage">
               <CheckSquare className="mr-2 h-4 w-4" />
               {t("manage")}
             </Link>
           </Button>
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" size="sm">
             <Link href="/tasks/settings">
               <BarChart3 className="mr-2 h-4 w-4" />
               {t("settings")}
@@ -52,14 +54,14 @@ export default function TasksDashboard() {
       </div>
 
       {/* Overview Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-card-foreground">{t("totalTasks")}</CardTitle>
             <CheckSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-card-foreground">{stats.total}</div>
+            <div className="text-xl md:text-2xl font-bold text-card-foreground">{stats.total}</div>
             <p className="text-xs text-muted-foreground">
               {todayTasks.length} {t("createdToday")}
             </p>
@@ -72,7 +74,9 @@ export default function TasksDashboard() {
             <TrendingUp className="h-4 w-4 text-emerald-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.completed}</div>
+            <div className="text-xl md:text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+              {stats.completed}
+            </div>
             <p className="text-xs text-muted-foreground">
               {completionRate}% {t("completionRate")}
             </p>
@@ -85,7 +89,7 @@ export default function TasksDashboard() {
             <Clock className="h-4 w-4 text-amber-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.pending}</div>
+            <div className="text-xl md:text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.pending}</div>
             <p className="text-xs text-muted-foreground">
               {thisWeekTasks.length} {t("thisWeek")}
             </p>
@@ -98,14 +102,20 @@ export default function TasksDashboard() {
             <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.overdue}</div>
+            <div className="text-xl md:text-2xl font-bold text-red-600 dark:text-red-400">{stats.overdue}</div>
             <p className="text-xs text-muted-foreground">{t("needsAttention")}</p>
           </CardContent>
         </Card>
       </div>
 
+      {/* Multi-Task Control Widget */}
+      <MultiTaskWidget />
+
       {/* AI Recommendation Widget */}
       <AINextTaskWidget tasks={tasks} />
+
+      {/* Opportunistic Task Suggestions */}
+      <OpportunisticTaskSuggestions availableTime={30} activeTasks={tasks.filter((t) => t.status === "in_progress")} />
 
       {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -138,15 +148,17 @@ export default function TasksDashboard() {
         </Card>
 
         <Card className="border-border bg-card hover:bg-accent/50 transition-colors cursor-pointer">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-card-foreground">
-              <Calendar className="h-5 w-5" />
-              {t("upcomingDeadlines")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">{t("upcomingDeadlinesDescription")}</p>
-          </CardContent>
+          <Link href="/ai-logs">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-card-foreground">
+                <Calendar className="h-5 w-5" />
+                AI Insights
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">View AI recommendations and productivity insights</p>
+            </CardContent>
+          </Link>
         </Card>
       </div>
 
@@ -178,7 +190,7 @@ export default function TasksDashboard() {
                     className={`w-2 h-2 rounded-full ${
                       task.status === "completed"
                         ? "bg-emerald-500"
-                        : task.status === "inProgress"
+                        : task.status === "in_progress"
                           ? "bg-blue-500"
                           : "bg-amber-500"
                     }`}
