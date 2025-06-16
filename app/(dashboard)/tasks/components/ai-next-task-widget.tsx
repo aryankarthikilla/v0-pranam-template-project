@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Brain, Clock, ArrowRight, RefreshCw, Sparkles } from "lucide-react"
 import { prioritizeMyTasks } from "../actions/ai-task-actions-enhanced"
+import { startTaskSession } from "../actions/enhanced-task-actions"
 import { toast } from "sonner"
 
 interface AINextTaskWidgetProps {
@@ -144,7 +145,26 @@ export function AINextTaskWidget({ tasks }: AINextTaskWidgetProps) {
                   {lastUpdated && <span>Updated {lastUpdated.toLocaleTimeString()}</span>}
                 </div>
 
-                <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+                <Button
+                  size="sm"
+                  className="bg-purple-600 hover:bg-purple-700"
+                  onClick={async () => {
+                    if (recommendation.task_details?.id) {
+                      try {
+                        const result = await startTaskSession(recommendation.task_details.id, undefined, "web")
+                        if (result.success) {
+                          toast.success("Task started successfully!")
+                          // Refresh the recommendation
+                          getRecommendation()
+                        } else {
+                          toast.error(result.error || "Failed to start task")
+                        }
+                      } catch (error) {
+                        toast.error("Failed to start task")
+                      }
+                    }
+                  }}
+                >
                   Start This Task
                   <ArrowRight className="h-3 w-3 ml-1" />
                 </Button>
