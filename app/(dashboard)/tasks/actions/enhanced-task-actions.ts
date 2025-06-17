@@ -12,11 +12,16 @@ export interface TaskSession {
   estimated_minutes?: number
   source?: string
   pause_reason?: string
+  task_title: string
+  task_priority: string
+  location_context?: string
+  duration_minutes: number
   tasks?: {
     id: string
     title: string
     description?: string
     status: string
+    priority?: string
   }
 }
 
