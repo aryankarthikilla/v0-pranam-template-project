@@ -11,6 +11,7 @@ SELECT
     t.current_session_id,
     t.created_at,
     t.updated_at,
+    t.created_by,  -- Fixed: use created_by instead of user_id
     'Task Info' as type
 FROM tasks t
 WHERE t.id = '753234a0-eef0-484c-9a39-c4c997158e0a'
@@ -42,10 +43,7 @@ WHERE t.id IN ('753234a0-eef0-484c-9a39-c4c997158e0a', '161fd852-438f-46c4-acea-
    OR t.title LIKE '%Plan Daily Schedule%'
 ORDER BY ts.started_at DESC;
 
--- 3. Show task update history (if we had audit logs)
--- This will help us understand when the task status changed
-
--- 4. Check if there are any orphaned sessions for this user
+-- 3. Check if there are any orphaned sessions for this user
 SELECT 
     ts.id,
     ts.task_id,
@@ -57,12 +55,12 @@ SELECT
 FROM task_sessions ts
 LEFT JOIN tasks t ON ts.task_id = t.id
 WHERE ts.user_id = (
-    SELECT user_id FROM tasks WHERE id = '753234a0-eef0-484c-9a39-c4c997158e0a'
+    SELECT created_by FROM tasks WHERE id = '753234a0-eef0-484c-9a39-c4c997158e0a'  -- Fixed: use created_by
 )
 AND ts.is_active = true
 AND ts.ended_at IS NULL;
 
--- 5. Show recent task status changes for this user
+-- 4. Show recent task status changes for this user
 SELECT 
     t.id,
     t.title,
@@ -70,8 +68,8 @@ SELECT
     t.current_session_id,
     t.updated_at
 FROM tasks t
-WHERE t.user_id = (
-    SELECT user_id FROM tasks WHERE id = '753234a0-eef0-484c-9a39-c4c997158e0a'
+WHERE t.created_by = (  -- Fixed: use created_by instead of user_id
+    SELECT created_by FROM tasks WHERE id = '753234a0-eef0-484c-9a39-c4c997158e0a'
 )
 AND t.updated_at > NOW() - INTERVAL '12 hours'
 ORDER BY t.updated_at DESC;
