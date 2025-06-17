@@ -60,6 +60,11 @@ export function AINextTaskWidget({ tasks, loading, onTaskUpdate }: AINextTaskWid
   const [noTasksReason, setNoTasksReason] = useState<string | null>(null)
   const [activeTaskActions, setActiveTaskActions] = useState<{ [taskId: string]: boolean }>({})
 
+  // New state for active task pause modal
+  const [showActiveTaskPauseModal, setShowActiveTaskPauseModal] = useState(false)
+  const [activeTaskPauseReason, setActiveTaskPauseReason] = useState("")
+  const [selectedActiveTaskId, setSelectedActiveTaskId] = useState<string | null>(null)
+
   // Filter tasks by status
   const activeTasks = tasks.filter((task) => task.status === "in_progress" || task.status === "active")
   const pendingTasks = tasks.filter((task) => task.status === "pending" || task.status === "todo")
@@ -343,22 +348,38 @@ export function AINextTaskWidget({ tasks, loading, onTaskUpdate }: AINextTaskWid
     }
   }
 
+  // Modified to show modal instead of directly pausing
   const handlePauseActiveTask = async (taskId: string) => {
-    setActiveTaskActions((prev) => ({ ...prev, [taskId]: true }))
+    setSelectedActiveTaskId(taskId)
+    setShowActiveTaskPauseModal(true)
+  }
+
+  // New function to handle the actual pause after getting reason from modal
+  const handleConfirmPauseActiveTask = async () => {
+    if (!selectedActiveTaskId) return
+
+    setActiveTaskActions((prev) => ({ ...prev, [selectedActiveTaskId]: true }))
 
     try {
       // Find active session for this task
       const activeSessions = await getActiveSessions()
-      const taskSession = activeSessions.find((s) => s.task_id === taskId)
+      console.log("Active sessions:", activeSessions)
+      const taskSession = activeSessions.find((s) => s.task_id === selectedActiveTaskId)
 
       if (!taskSession) {
         toast.error("No active session found for this task")
         return
       }
 
-      const result = await pauseTaskSession(taskSession.id, "Paused from active tasks")
+      const result = await pauseTaskSession(taskSession.id, activeTaskPauseReason || "Paused from active tasks")
       if (result.success) {
         toast.success("Task paused successfully!")
+
+        // Close modal and reset state
+        setShowActiveTaskPauseModal(false)
+        setActiveTaskPauseReason("")
+        setSelectedActiveTaskId(null)
+
         if (onTaskUpdate) {
           onTaskUpdate()
         }
@@ -369,8 +390,15 @@ export function AINextTaskWidget({ tasks, loading, onTaskUpdate }: AINextTaskWid
       console.error("Failed to pause active task:", error)
       toast.error("Failed to pause task")
     } finally {
-      setActiveTaskActions((prev) => ({ ...prev, [taskId]: false }))
+      setActiveTaskActions((prev) => ({ ...prev, [selectedActiveTaskId]: false }))
     }
+  }
+
+  // New function to handle cancel pause modal
+  const handleCancelActiveTaskPause = () => {
+    setShowActiveTaskPauseModal(false)
+    setActiveTaskPauseReason("")
+    setSelectedActiveTaskId(null)
   }
 
   const handleCompleteActiveTask = async (taskId: string) => {
@@ -447,6 +475,9 @@ export function AINextTaskWidget({ tasks, loading, onTaskUpdate }: AINextTaskWid
     { value: "3days", label: "3 Days", icon: "📆" },
     { value: "1week", label: "1 Week", icon: "🗓️" },
   ]
+
+  // Get the selected task details for the pause modal
+  const selectedActiveTask = selectedActiveTaskId ? activeTasks.find((task) => task.id === selectedActiveTaskId) : null
 
   return (
     <div className="space-y-4">
@@ -828,6 +859,52 @@ export function AINextTaskWidget({ tasks, loading, onTaskUpdate }: AINextTaskWid
           </CardContent>
         </Card>
       )}
+
+      {/* Active Task Pause Modal */}
+      <Dialog open={showActiveTaskPauseModal} onOpenChange={setShowActiveTaskPauseModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Pause Active Task</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {selectedActiveTask && (
+              <div className="p-3 bg-muted rounded-lg">
+                <h4 className="font-medium text-sm">{selectedActiveTask.title}</h4>
+                {selectedActiveTask.description && (
+                  <p className="text-xs text-muted-foreground mt-1">{selectedActiveTask.description}</p>
+                )}
+              </div>
+            )}
+            <div>
+              <Label htmlFor="active-task-pause-reason">Reason for pausing (optional)</Label>
+              <Textarea
+                id="active-task-pause-reason"
+                value={activeTaskPauseReason}
+                onChange={(e) => setActiveTaskPauseReason(e.target.value)}
+                placeholder="Why are you pausing this task? (e.g., Break, Meeting, Context Switch)"
+                className="mt-1"
+              />
+            </div>
+            <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                💡 <strong>Tip:</strong> Adding a reason helps you remember why you paused and makes it easier to resume
+                later!
+              </p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={handleCancelActiveTaskPause}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleConfirmPauseActiveTask}
+                disabled={selectedActiveTaskId ? activeTaskActions[selectedActiveTaskId] : false}
+              >
+                {selectedActiveTaskId && activeTaskActions[selectedActiveTaskId] ? "Pausing..." : "Pause Task"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
