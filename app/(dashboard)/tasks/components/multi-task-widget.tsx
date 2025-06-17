@@ -103,18 +103,6 @@ export function MultiTaskWidget() {
     return () => clearInterval(interval)
   }, [])
 
-  if (activeSessions.length === 0 && staleSessions.length === 0 && !activeSession) {
-    return (
-      <Card className="border-dashed border-2 border-muted">
-        <CardContent className="flex flex-col items-center justify-center py-6">
-          <Timer className="h-8 w-8 text-muted-foreground mb-2" />
-          <p className="text-muted-foreground text-center text-sm">No active tasks right now</p>
-          <p className="text-xs text-muted-foreground">Start a task to see it here</p>
-        </CardContent>
-      </Card>
-    )
-  }
-
   return (
     <>
       <Card className="border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20">
