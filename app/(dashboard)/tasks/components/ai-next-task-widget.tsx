@@ -362,7 +362,7 @@ export function AINextTaskWidget({ tasks, loading, onTaskUpdate }: AINextTaskWid
     console.log("✅ Modal should be opening for task:", taskId)
   }
 
-  // New function to handle the actual pause after getting reason from modal
+  // Enhanced function to handle the actual pause with better session finding
   const handleConfirmPauseActiveTask = async () => {
     console.log("🚀 handleConfirmPauseActiveTask called")
     console.log("📝 Selected task ID:", selectedActiveTaskId)
@@ -380,77 +380,60 @@ export function AINextTaskWidget({ tasks, loading, onTaskUpdate }: AINextTaskWid
     console.log("⏳ Set loading state for task:", selectedActiveTaskId)
 
     try {
-      // Find active session for this task
-      console.log("🔍 Getting active sessions...")
-      const activeSessions = await getActiveSessions()
-      console.log("📊 Active sessions found:", activeSessions)
-      console.log("🔢 Number of active sessions:", activeSessions.length)
+      // Find the task details
+      const task = activeTasks.find((t) => t.id === selectedActiveTaskId)
+      console.log("📋 Task found:", task)
 
-      // Log each session for debugging
-      activeSessions.forEach((session, index) => {
-        console.log(`📋 Session ${index + 1}:`, {
-          id: session.id,
-          task_id: session.task_id,
-          task_title: session.task_title,
-          started_at: session.started_at,
-        })
-      })
+      // Strategy 1: Use the current_session_id from the task if available
+      const sessionIdToUse = task?.current_session_id
 
-      const taskSession = activeSessions.find((s) => s.task_id === selectedActiveTaskId)
-      console.log("🎯 Found matching session:", taskSession)
+      if (sessionIdToUse) {
+        console.log("🎯 Using current_session_id from task:", sessionIdToUse)
 
-      if (!taskSession) {
-        console.error("❌ No active session found for task:", selectedActiveTaskId)
+        const result = await pauseTaskSession(sessionIdToUse, activeTaskPauseReason || "Paused from active tasks")
+        console.log("✅ Pause result using current_session_id:", result)
 
-        // Check if the task has a current_session_id
-        const task = activeTasks.find((t) => t.id === selectedActiveTaskId)
-        console.log("📋 Task current_session_id:", task?.current_session_id)
+        if (result.success) {
+          toast.success("Task paused successfully!")
+          console.log("🎉 Task paused successfully using current_session_id")
+        } else {
+          console.error("❌ Failed to pause using current_session_id:", result.error)
+          toast.error(result.error || "Failed to pause task")
+        }
+      } else {
+        // Strategy 2: Try to find any active session for this task
+        console.log("🔍 No current_session_id, getting active sessions...")
+        const activeSessions = await getActiveSessions()
+        console.log("📊 Active sessions found:", activeSessions)
 
-        // Try to use the current_session_id from the task if available
-        if (task?.current_session_id) {
-          console.log("🔄 Trying to use current_session_id from task:", task.current_session_id)
-          const result = await pauseTaskSession(
-            task.current_session_id,
-            activeTaskPauseReason || "Paused from active tasks",
-          )
-          console.log("✅ Pause result using current_session_id:", result)
+        const taskSessions = activeSessions.filter((s) => s.task_id === selectedActiveTaskId)
+        console.log("🎯 Sessions for this task:", taskSessions)
+
+        if (taskSessions.length > 0) {
+          // Use the most recent session
+          const sessionToUse = taskSessions[0] // getActiveSessions should return most recent first
+          console.log("⏸️ Attempting to pause session:", sessionToUse.id)
+
+          const result = await pauseTaskSession(sessionToUse.id, activeTaskPauseReason || "Paused from active tasks")
+          console.log("📊 Pause result:", result)
 
           if (result.success) {
             toast.success("Task paused successfully!")
-            console.log("🎉 Task paused successfully using current_session_id")
+            console.log("🎉 Task paused successfully!")
           } else {
             toast.error(result.error || "Failed to pause task")
-            console.error("❌ Failed to pause using current_session_id:", result.error)
+            console.error("❌ Pause failed:", result.error)
           }
         } else {
-          toast.error("No active session found for this task. The task may not be properly started.")
-          console.error("❌ No current_session_id found in task either")
+          console.error("❌ No active sessions found for task:", selectedActiveTaskId)
+          toast.error("No active session found. The task may need to be reset.")
         }
-
-        // Close modal regardless of success/failure
-        setShowActiveTaskPauseModal(false)
-        setActiveTaskPauseReason("")
-        setSelectedActiveTaskId(null)
-        console.log("🔒 Modal closed and state reset")
-        return
       }
 
-      console.log("⏸️ Attempting to pause session:", taskSession.id)
-      const result = await pauseTaskSession(taskSession.id, activeTaskPauseReason || "Paused from active tasks")
-      console.log("📊 Pause result:", result)
-
-      if (result.success) {
-        toast.success("Task paused successfully!")
-        console.log("🎉 Task paused successfully!")
-
-        // Refresh parent data
-        if (onTaskUpdate) {
-          console.log("🔄 Calling onTaskUpdate")
-          onTaskUpdate()
-        }
-      } else {
-        toast.error(result.error || "Failed to pause task")
-        console.error("❌ Pause failed:", result.error)
+      // Refresh parent data regardless of success/failure
+      if (onTaskUpdate) {
+        console.log("🔄 Calling onTaskUpdate")
+        onTaskUpdate()
       }
     } catch (error) {
       console.error("💥 Exception in handleConfirmPauseActiveTask:", error)

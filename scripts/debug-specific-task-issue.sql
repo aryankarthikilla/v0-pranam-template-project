@@ -3,35 +3,44 @@
 
 -- 1. Show complete task details
 SELECT 
-    id,
-    title,
-    description,
-    status,
-    priority,
-    current_session_id,
-    created_at,
-    updated_at,
-    user_id,
-    created_by
-FROM tasks 
-WHERE id = '753234a0-eef0-484c-9a39-c4c997158e0a';
+    t.id,
+    t.title,
+    t.description,
+    t.status,
+    t.priority,
+    t.current_session_id,
+    t.created_at,
+    t.updated_at,
+    'Task Info' as type
+FROM tasks t
+WHERE t.id = '753234a0-eef0-484c-9a39-c4c997158e0a'
+   OR t.title LIKE '%Plan next 1-2 hours%'
+   OR t.title LIKE '%Plan Daily Schedule%';
 
 -- 2. Show all sessions for this task (active and inactive)
 SELECT 
-    id,
-    task_id,
-    user_id,
-    started_at,
-    ended_at,
-    is_active,
-    session_type,
-    location_context,
-    device_context,
-    notes,
-    created_at
-FROM task_sessions 
-WHERE task_id = '753234a0-eef0-484c-9a39-c4c997158e0a'
-ORDER BY started_at DESC;
+    ts.id as session_id,
+    ts.task_id,
+    ts.user_id,
+    ts.started_at,
+    ts.ended_at,
+    ts.is_active,
+    ts.session_type,
+    ts.location_context,
+    ts.device_context,
+    ts.notes,
+    ts.created_at,
+    CASE 
+        WHEN ts.id = t.current_session_id THEN 'MATCHES_CURRENT'
+        WHEN ts.is_active = true AND ts.ended_at IS NULL THEN 'ACTIVE_BUT_NOT_CURRENT'
+        ELSE 'OTHER'
+    END as session_status
+FROM task_sessions ts
+JOIN tasks t ON ts.task_id = t.id
+WHERE t.id IN ('753234a0-eef0-484c-9a39-c4c997158e0a', '161fd852-438f-46c4-acea-126884af92ce')
+   OR t.title LIKE '%Plan next 1-2 hours%'
+   OR t.title LIKE '%Plan Daily Schedule%'
+ORDER BY ts.started_at DESC;
 
 -- 3. Show task update history (if we had audit logs)
 -- This will help us understand when the task status changed
@@ -55,14 +64,14 @@ AND ts.ended_at IS NULL;
 
 -- 5. Show recent task status changes for this user
 SELECT 
-    id,
-    title,
-    status,
-    current_session_id,
-    updated_at
-FROM tasks 
-WHERE user_id = (
+    t.id,
+    t.title,
+    t.status,
+    t.current_session_id,
+    t.updated_at
+FROM tasks t
+WHERE t.user_id = (
     SELECT user_id FROM tasks WHERE id = '753234a0-eef0-484c-9a39-c4c997158e0a'
 )
-AND updated_at > NOW() - INTERVAL '12 hours'
-ORDER BY updated_at DESC;
+AND t.updated_at > NOW() - INTERVAL '12 hours'
+ORDER BY t.updated_at DESC;
