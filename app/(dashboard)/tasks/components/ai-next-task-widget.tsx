@@ -350,75 +350,154 @@ export function AINextTaskWidget({ tasks, loading, onTaskUpdate }: AINextTaskWid
 
   // Modified to show modal instead of directly pausing
   const handlePauseActiveTask = async (taskId: string) => {
+    console.log("🔄 handlePauseActiveTask called for taskId:", taskId)
+
+    // Find the task details
+    const task = activeTasks.find((t) => t.id === taskId)
+    console.log("📋 Task details:", task)
+
     setSelectedActiveTaskId(taskId)
     setShowActiveTaskPauseModal(true)
+    console.log("✅ Modal should be opening for task:", taskId)
   }
 
   // New function to handle the actual pause after getting reason from modal
   const handleConfirmPauseActiveTask = async () => {
-    if (!selectedActiveTaskId) return
+    console.log("🚀 handleConfirmPauseActiveTask called")
+    console.log("📝 Selected task ID:", selectedActiveTaskId)
+    console.log("💭 Pause reason:", activeTaskPauseReason)
 
+    if (!selectedActiveTaskId) {
+      console.error("❌ No selected task ID")
+      toast.error("No task selected for pausing")
+      setShowActiveTaskPauseModal(false)
+      return
+    }
+
+    // Set loading state for this specific task
     setActiveTaskActions((prev) => ({ ...prev, [selectedActiveTaskId]: true }))
+    console.log("⏳ Set loading state for task:", selectedActiveTaskId)
 
     try {
       // Find active session for this task
+      console.log("🔍 Getting active sessions...")
       const activeSessions = await getActiveSessions()
-      console.log("Active sessions:", activeSessions)
+      console.log("📊 Active sessions found:", activeSessions)
+      console.log("🔢 Number of active sessions:", activeSessions.length)
+
+      // Log each session for debugging
+      activeSessions.forEach((session, index) => {
+        console.log(`📋 Session ${index + 1}:`, {
+          id: session.id,
+          task_id: session.task_id,
+          task_title: session.task_title,
+          started_at: session.started_at,
+        })
+      })
+
       const taskSession = activeSessions.find((s) => s.task_id === selectedActiveTaskId)
+      console.log("🎯 Found matching session:", taskSession)
 
       if (!taskSession) {
-        toast.error("No active session found for this task")
-        return
-      }
+        console.error("❌ No active session found for task:", selectedActiveTaskId)
 
-      const result = await pauseTaskSession(taskSession.id, activeTaskPauseReason || "Paused from active tasks")
-      if (result.success) {
-        toast.success("Task paused successfully!")
+        // Check if the task has a current_session_id
+        const task = activeTasks.find((t) => t.id === selectedActiveTaskId)
+        console.log("📋 Task current_session_id:", task?.current_session_id)
 
-        // Close modal and reset state
+        // Try to use the current_session_id from the task if available
+        if (task?.current_session_id) {
+          console.log("🔄 Trying to use current_session_id from task:", task.current_session_id)
+          const result = await pauseTaskSession(
+            task.current_session_id,
+            activeTaskPauseReason || "Paused from active tasks",
+          )
+          console.log("✅ Pause result using current_session_id:", result)
+
+          if (result.success) {
+            toast.success("Task paused successfully!")
+            console.log("🎉 Task paused successfully using current_session_id")
+          } else {
+            toast.error(result.error || "Failed to pause task")
+            console.error("❌ Failed to pause using current_session_id:", result.error)
+          }
+        } else {
+          toast.error("No active session found for this task. The task may not be properly started.")
+          console.error("❌ No current_session_id found in task either")
+        }
+
+        // Close modal regardless of success/failure
         setShowActiveTaskPauseModal(false)
         setActiveTaskPauseReason("")
         setSelectedActiveTaskId(null)
+        console.log("🔒 Modal closed and state reset")
+        return
+      }
 
+      console.log("⏸️ Attempting to pause session:", taskSession.id)
+      const result = await pauseTaskSession(taskSession.id, activeTaskPauseReason || "Paused from active tasks")
+      console.log("📊 Pause result:", result)
+
+      if (result.success) {
+        toast.success("Task paused successfully!")
+        console.log("🎉 Task paused successfully!")
+
+        // Refresh parent data
         if (onTaskUpdate) {
+          console.log("🔄 Calling onTaskUpdate")
           onTaskUpdate()
         }
       } else {
         toast.error(result.error || "Failed to pause task")
+        console.error("❌ Pause failed:", result.error)
       }
     } catch (error) {
-      console.error("Failed to pause active task:", error)
+      console.error("💥 Exception in handleConfirmPauseActiveTask:", error)
       toast.error("Failed to pause task")
     } finally {
+      // Always clean up state
+      console.log("🧹 Cleaning up state...")
       setActiveTaskActions((prev) => ({ ...prev, [selectedActiveTaskId]: false }))
+      setShowActiveTaskPauseModal(false)
+      setActiveTaskPauseReason("")
+      setSelectedActiveTaskId(null)
+      console.log("✅ State cleanup complete")
     }
   }
 
   // New function to handle cancel pause modal
   const handleCancelActiveTaskPause = () => {
+    console.log("❌ handleCancelActiveTaskPause called")
     setShowActiveTaskPauseModal(false)
     setActiveTaskPauseReason("")
     setSelectedActiveTaskId(null)
+    console.log("✅ Modal cancelled and state reset")
   }
 
   const handleCompleteActiveTask = async (taskId: string) => {
+    console.log("✅ handleCompleteActiveTask called for taskId:", taskId)
     setActiveTaskActions((prev) => ({ ...prev, [taskId]: true }))
 
     try {
       const result = await completeTask(taskId, "Completed from active tasks", 100)
+      console.log("📊 Complete result:", result)
+
       if (result.success) {
         toast.success("Task completed successfully!")
+        console.log("🎉 Task completed successfully!")
         if (onTaskUpdate) {
           onTaskUpdate()
         }
       } else {
         toast.error(result.error || "Failed to complete task")
+        console.error("❌ Complete failed:", result.error)
       }
     } catch (error) {
-      console.error("Failed to complete active task:", error)
+      console.error("💥 Exception in handleCompleteActiveTask:", error)
       toast.error("Failed to complete task")
     } finally {
       setActiveTaskActions((prev) => ({ ...prev, [taskId]: false }))
+      console.log("✅ Complete action finished for task:", taskId)
     }
   }
 
@@ -873,6 +952,12 @@ export function AINextTaskWidget({ tasks, loading, onTaskUpdate }: AINextTaskWid
                 {selectedActiveTask.description && (
                   <p className="text-xs text-muted-foreground mt-1">{selectedActiveTask.description}</p>
                 )}
+                <div className="text-xs text-muted-foreground mt-2">
+                  <span>Task ID: {selectedActiveTask.id}</span>
+                  {selectedActiveTask.current_session_id && (
+                    <span className="ml-2">Session ID: {selectedActiveTask.current_session_id}</span>
+                  )}
+                </div>
               </div>
             )}
             <div>
