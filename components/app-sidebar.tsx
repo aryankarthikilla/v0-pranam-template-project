@@ -12,6 +12,7 @@ import {
   List,
   Cog,
   Brain,
+  Shuffle,
 } from "lucide-react"
 import {
   Sidebar,
@@ -72,6 +73,11 @@ export function AppSidebar({ user }: AppSidebarProps) {
           title: t("manage"),
           url: "/tasks/manage",
           icon: List,
+        },
+        {
+          title: t("randomTask"),
+          url: "/tasks/random",
+          icon: Shuffle,
         },
         {
           title: t("settings"),
