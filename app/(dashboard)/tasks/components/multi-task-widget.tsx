@@ -8,26 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea"
 import { Timer, Pause, Square, AlertTriangle, Clock, Play } from "lucide-react"
 import { getActiveSessions, getStaleSessionsCheck, resolveStaleSession } from "../actions/enhanced-task-actions"
+import type { TaskSession, StaleSession } from "../actions/enhanced-task-actions"
 import { toast } from "sonner"
-
-interface TaskSession {
-  session_id: string
-  task_id: string
-  task_title: string
-  task_priority: string
-  started_at: string
-  duration_minutes: number
-  location_context?: string
-  is_opportunistic: boolean
-}
-
-interface StaleSession {
-  session_id: string
-  task_id: string
-  task_title: string
-  started_at: string
-  minutes_inactive: number
-}
 
 export function MultiTaskWidget() {
   const [activeSessions, setActiveSessions] = useState<TaskSession[]>([])
@@ -50,7 +32,7 @@ export function MultiTaskWidget() {
 
       // Show stale session modal if we have stale sessions
       if (stale.length > 0 && !showStaleModal) {
-        setSelectedStaleSession(stale[0])
+        setSelectedStaleSession(stale[0] || null)
         setShowStaleModal(true)
       }
     } catch (error) {
