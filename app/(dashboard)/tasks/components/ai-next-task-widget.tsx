@@ -34,9 +34,10 @@ import { toast } from "sonner"
 interface AINextTaskWidgetProps {
   tasks: any[]
   loading: boolean
+  onTaskUpdate?: () => void
 }
 
-export function AINextTaskWidget({ tasks, loading }: AINextTaskWidgetProps) {
+export function AINextTaskWidget({ tasks, loading, onTaskUpdate }: AINextTaskWidgetProps) {
   const [recommendation, setRecommendation] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
@@ -179,6 +180,11 @@ export function AINextTaskWidget({ tasks, loading }: AINextTaskWidgetProps) {
         }))
 
         setLastUpdated(new Date())
+
+        // Refresh parent data
+        if (onTaskUpdate) {
+          onTaskUpdate()
+        }
       } else {
         toast.error(result.error || "Failed to start task")
       }
@@ -243,6 +249,11 @@ export function AINextTaskWidget({ tasks, loading }: AINextTaskWidgetProps) {
         }))
 
         setLastUpdated(new Date())
+
+        // Refresh parent data
+        if (onTaskUpdate) {
+          onTaskUpdate()
+        }
       } else {
         console.error("Pause failed:", result.error)
         toast.error(result.error || "Failed to pause task")
@@ -273,6 +284,11 @@ export function AINextTaskWidget({ tasks, loading }: AINextTaskWidgetProps) {
         setCurrentSessionId(null)
         setCompletionNotes("")
         setShowCompleteModal(false)
+
+        // Refresh parent data
+        if (onTaskUpdate) {
+          onTaskUpdate()
+        }
 
         // Get next recommendation after completing
         setTimeout(() => {

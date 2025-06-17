@@ -6,8 +6,14 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
-import { Timer, Pause, Square, AlertTriangle, Clock, Play } from 'lucide-react'
-import { getActiveSessions, getStaleSessionsCheck, resolveStaleSession } from "../actions/enhanced-task-actions"
+import { Timer, Pause, Square, AlertTriangle, Clock, Play } from "lucide-react"
+import {
+  getActiveSessions,
+  getStaleSessionsCheck,
+  resolveStaleSession,
+  pauseTaskSession,
+  completeTask,
+} from "../actions/enhanced-task-actions"
 import type { TaskSession, StaleSession } from "../actions/enhanced-task-actions"
 import { toast } from "sonner"
 
@@ -21,6 +27,46 @@ export function MultiTaskWidget() {
   const [staleReason, setStaleReason] = useState("")
   const [isRunning, setIsRunning] = useState(false)
   const [activeSession, setActiveSession] = useState<string | null>(null)
+
+  const handlePauseTask = async (sessionId: string, taskId: string, taskTitle: string) => {
+    try {
+      setIsLoading(true)
+      const result = await pauseTaskSession(sessionId, "User paused task from dashboard")
+
+      if (result.success) {
+        toast.success(`"${taskTitle}" paused successfully`)
+        // Refresh sessions immediately
+        await loadSessions()
+      } else {
+        toast.error(result.error || "Failed to pause task")
+      }
+    } catch (error) {
+      console.error("Error pausing task:", error)
+      toast.error("Failed to pause task")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleCompleteTask = async (taskId: string, taskTitle: string) => {
+    try {
+      setIsLoading(true)
+      const result = await completeTask(taskId, "Task completed from dashboard", 100)
+
+      if (result.success) {
+        toast.success(`"${taskTitle}" completed successfully!`)
+        // Refresh sessions immediately
+        await loadSessions()
+      } else {
+        toast.error(result.error || "Failed to complete task")
+      }
+    } catch (error) {
+      console.error("Error completing task:", error)
+      toast.error("Failed to complete task")
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const loadSessions = async () => {
     setIsLoading(true)
@@ -156,10 +202,22 @@ export function MultiTaskWidget() {
                   <span className="text-xs text-green-600 dark:text-green-400">Active</span>
                 </div>
                 <div className="flex gap-1">
-                  <Button size="sm" variant="outline" className="h-6 px-2 text-xs">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-6 px-2 text-xs border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                    onClick={() => handlePauseTask(session.id, session.task_id, session.task_title)}
+                    disabled={isLoading}
+                  >
                     <Pause className="h-3 w-3" />
                   </Button>
-                  <Button size="sm" variant="outline" className="h-6 px-2 text-xs">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-6 px-2 text-xs border-green-300 text-green-700 hover:bg-green-50"
+                    onClick={() => handleCompleteTask(session.task_id, session.task_title)}
+                    disabled={isLoading}
+                  >
                     <Square className="h-3 w-3" />
                   </Button>
                 </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { getTasks } from "../actions/task-actions"
+import { getActiveSessions } from "../actions/enhanced-task-actions"
 
 export function useTaskData() {
   const [tasks, setTasks] = useState<any[]>([])
@@ -12,22 +13,27 @@ export function useTaskData() {
     pending: 0,
     overdue: 0,
   })
+  const [activeSessions, setActiveSessions] = useState<any[]>([])
 
   const fetchTasks = useCallback(async () => {
     setLoading(true)
     try {
-      console.log("Fetching tasks...")
-      const data = await getTasks()
-      console.log("Fetched tasks:", data.length)
-      setTasks(data)
+      console.log("Fetching tasks and sessions...")
+      const [tasksData, sessionsData] = await Promise.all([getTasks(), getActiveSessions()])
+
+      console.log("Fetched tasks:", tasksData.length)
+      console.log("Fetched active sessions:", sessionsData.length)
+
+      setTasks(tasksData)
+      setActiveSessions(sessionsData)
 
       // Calculate stats
       const now = new Date()
       const statsData = {
-        total: data.length,
-        completed: data.filter((task: any) => task.status === "completed").length,
-        pending: data.filter((task: any) => task.status === "pending").length,
-        overdue: data.filter(
+        total: tasksData.length,
+        completed: tasksData.filter((task: any) => task.status === "completed").length,
+        pending: tasksData.filter((task: any) => task.status === "pending").length,
+        overdue: tasksData.filter(
           (task: any) => task.due_date && new Date(task.due_date) < now && task.status !== "completed",
         ).length,
       }
@@ -35,6 +41,7 @@ export function useTaskData() {
     } catch (error) {
       console.error("Error fetching tasks:", error)
       setTasks([])
+      setActiveSessions([])
       setStats({
         total: 0,
         completed: 0,
@@ -54,6 +61,7 @@ export function useTaskData() {
     tasks,
     loading,
     stats,
+    activeSessions,
     refreshTasks: fetchTasks,
   }
 }
