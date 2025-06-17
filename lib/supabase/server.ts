@@ -22,4 +22,4 @@ export function createClient() {
   })
 }
 
-// Add the named export that was missing
+// Named export for createClient
