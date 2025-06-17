@@ -3,6 +3,31 @@
 import { createClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
 
+export interface TaskSession {
+  id: string
+  task_id: string
+  user_id: string
+  started_at: string
+  ended_at?: string | null
+  estimated_minutes?: number
+  source?: string
+  pause_reason?: string
+  tasks?: {
+    id: string
+    title: string
+    description?: string
+    status: string
+  }
+}
+
+export interface StaleSession {
+  session_id: string
+  task_id: string
+  task_title: string
+  started_at: string
+  minutes_inactive: number
+}
+
 export async function startTaskSession(taskId: string, estimatedMinutes?: number, source = "web") {
   console.log("🚀 startTaskSession called:", { taskId, estimatedMinutes, source })
 
@@ -387,7 +412,7 @@ export async function skipTask(taskId: string, duration: string, reason?: string
       .single()
 
     if (updateError) {
-      console.error("❌ Failed to update task:", updateError)
+      console.error("❌ Failed to skip task:", updateError)
       return { success: false, error: "Failed to skip task: " + updateError.message }
     }
 
