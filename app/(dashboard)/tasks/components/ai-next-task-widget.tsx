@@ -4,7 +4,14 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import {
@@ -937,6 +944,7 @@ export function AINextTaskWidget({ tasks, loading, onTaskUpdate }: AINextTaskWid
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Pause Active Task</DialogTitle>
+            <DialogDescription>Pause this active task and provide an optional reason for pausing.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             {selectedActiveTask && (
