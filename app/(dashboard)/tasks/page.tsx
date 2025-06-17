@@ -5,14 +5,25 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useTranslations } from "@/lib/i18n/hooks"
 import { BarChart3, CheckSquare, Clock, AlertTriangle, TrendingUp, Calendar } from "lucide-react"
 import Link from "next/link"
-import { useTaskData } from "./hooks/use-task-data"
+import { useTasks } from "@/hooks/use-tasks"
 import { AINextTaskWidget } from "./components/ai-next-task-widget"
 import { MultiTaskWidget } from "./components/multi-task-widget"
 import { OpportunisticTaskSuggestions } from "./components/opportunistic-task-suggestions"
 
 export default function TasksDashboard() {
   const { t } = useTranslations("tasks")
-  const { tasks, loading, stats } = useTaskData()
+  const { tasks, loading, error } = useTasks()
+
+  // Calculate stats from tasks
+  const stats = {
+    total: tasks.length,
+    completed: tasks.filter((t) => t.status === "completed").length,
+    pending: tasks.filter((t) => t.status === "pending").length,
+    overdue: tasks.filter((t) => {
+      if (!t.due_date) return false
+      return new Date(t.due_date) < new Date() && t.status !== "completed"
+    }).length,
+  }
 
   // Calculate additional dashboard stats
   const todayTasks = tasks.filter((task) => {
@@ -33,6 +44,20 @@ export default function TasksDashboard() {
   // Check if there are any active tasks
   const activeTasks = tasks.filter((t) => t.status === "in_progress")
   const hasActiveTask = activeTasks.length > 0
+
+  if (error) {
+    return (
+      <div className="flex-1 space-y-6 p-4 md:p-6 bg-background">
+        <div className="text-center py-8">
+          <h1 className="text-2xl font-bold text-red-600 mb-2">Error Loading Tasks</h1>
+          <p className="text-muted-foreground">{error}</p>
+          <Button onClick={() => window.location.reload()} className="mt-4">
+            Retry
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6 bg-background">
