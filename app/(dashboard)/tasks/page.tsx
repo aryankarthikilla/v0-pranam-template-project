@@ -34,6 +34,10 @@ export default function TasksDashboard() {
   const activeTasks = tasks.filter((t) => t.status === "in_progress")
   const hasActiveTask = activeTasks.length > 0
 
+  console.log("Debug - Active tasks count:", activeTasks.length)
+  console.log("Debug - Active tasks:", activeTasks)
+  console.log("Debug - All tasks:", tasks)
+
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6 bg-background">
       {/* Header */}
@@ -130,8 +134,8 @@ export default function TasksDashboard() {
 
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-card-foreground">{t("overdue")}</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <CardTitle className="text-sm font-medium text-card-foreground">In Progress</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -141,8 +145,10 @@ export default function TasksDashboard() {
               </>
             ) : (
               <>
-                <div className="text-xl md:text-2xl font-bold text-red-600 dark:text-red-400">{stats.overdue}</div>
-                <p className="text-xs text-muted-foreground">{t("needsAttention")}</p>
+                <div className="text-xl md:text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {activeTasks.length}
+                </div>
+                <p className="text-xs text-muted-foreground">currently active</p>
               </>
             )}
           </CardContent>
