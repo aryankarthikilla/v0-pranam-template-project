@@ -412,17 +412,23 @@ export function AINextTaskWidget({ tasks, loading, onTaskUpdate }: AINextTaskWid
         if (taskSessions.length > 0) {
           // Use the most recent session
           const sessionToUse = taskSessions[0] // getActiveSessions should return most recent first
-          console.log("⏸️ Attempting to pause session:", sessionToUse.id)
 
-          const result = await pauseTaskSession(sessionToUse.id, activeTaskPauseReason || "Paused from active tasks")
-          console.log("📊 Pause result:", result)
+          if (sessionToUse) {
+            console.log("⏸️ Attempting to pause session:", sessionToUse.id)
 
-          if (result.success) {
-            toast.success("Task paused successfully!")
-            console.log("🎉 Task paused successfully!")
+            const result = await pauseTaskSession(sessionToUse.id, activeTaskPauseReason || "Paused from active tasks")
+            console.log("📊 Pause result:", result)
+
+            if (result.success) {
+              toast.success("Task paused successfully!")
+              console.log("🎉 Task paused successfully!")
+            } else {
+              toast.error(result.error || "Failed to pause task")
+              console.error("❌ Pause failed:", result.error)
+            }
           } else {
-            toast.error(result.error || "Failed to pause task")
-            console.error("❌ Pause failed:", result.error)
+            console.error("❌ Session found but is undefined")
+            toast.error("Session data is invalid. The task may need to be reset.")
           }
         } else {
           console.error("❌ No active sessions found for task:", selectedActiveTaskId)
