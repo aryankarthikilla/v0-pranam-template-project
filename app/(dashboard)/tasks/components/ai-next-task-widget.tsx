@@ -37,8 +37,15 @@ interface AINextTaskWidgetProps {
   onTaskUpdate?: () => void
 }
 
+interface TaskRecommendation {
+  task_id: string
+  reason: string
+  task_details?: any
+  [key: string]: any
+}
+
 export function AINextTaskWidget({ tasks, loading, onTaskUpdate }: AINextTaskWidgetProps) {
-  const [recommendation, setRecommendation] = useState<any>(null)
+  const [recommendation, setRecommendation] = useState<TaskRecommendation | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [taskState, setTaskState] = useState<"pending" | "in_progress" | "completed">("pending")
@@ -173,7 +180,7 @@ export function AINextTaskWidget({ tasks, loading, onTaskUpdate }: AINextTaskWid
         setCurrentSessionId(result.session.id)
 
         // Update the recommendation reasoning to reflect the new state
-        setRecommendation((prev) => ({
+        setRecommendation((prev: TaskRecommendation | null) => ({
           ...prev,
           reason:
             "This task is now active and in progress. You can pause it if you need a break or complete it when finished.",
@@ -242,7 +249,7 @@ export function AINextTaskWidget({ tasks, loading, onTaskUpdate }: AINextTaskWid
         setShowPauseModal(false)
 
         // Update reasoning to reflect paused state
-        setRecommendation((prev) => ({
+        setRecommendation((prev: TaskRecommendation | null) => ({
           ...prev,
           reason:
             "This task was paused and is ready to be resumed. You can start it again or skip it to schedule for later.",
