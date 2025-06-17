@@ -254,3 +254,120 @@ export async function markTaskComplete(taskId: string) {
   revalidatePath("/dashboard/tasks")
   return data
 }
+
+export async function startTaskSession(taskId: string) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error("User not authenticated")
+  }
+
+  // First update the task status to in_progress
+  const { data: task, error: updateError } = await supabase
+    .from("tasks")
+    .update({
+      status: "in_progress",
+      updated_by: user.id,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", taskId)
+    .select()
+    .single()
+
+  if (updateError) {
+    throw new Error(`Error updating task status: ${updateError.message}`)
+  }
+
+  // Create a new session
+  const { data: session, error: sessionError } = await supabase
+    .from("task_sessions")
+    .insert({
+      task_id: taskId,
+      user_id: user.id,
+      started_at: new Date().toISOString(),
+      status: "active",
+    })
+    .select()
+    .single()
+
+  if (sessionError) {
+    throw new Error(`Error creating task session: ${sessionError.message}`)
+  }
+
+  // Update task with current session ID
+  const { error: linkError } = await supabase
+    .from("tasks")
+    .update({
+      current_session_id: session.id,
+    })
+    .eq("id", taskId)
+
+  if (linkError) {
+    throw new Error(`Error linking session to task: ${linkError.message}`)
+  }
+
+  revalidatePath("/dashboard/tasks")
+  return { task, session }
+}
+
+export async function completeTaskSession(taskId: string) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error("User not authenticated")
+  }
+
+  // Get the current task with session info
+  const { data: task, error: fetchError } = await supabase
+    .from("tasks")
+    .select("current_session_id")
+    .eq("id", taskId)
+    .single()
+
+  if (fetchError) {
+    throw new Error(`Error fetching task: ${fetchError.message}`)
+  }
+
+  // End the current session if it exists
+  if (task.current_session_id) {
+    const { error: sessionError } = await supabase
+      .from("task_sessions")
+      .update({
+        ended_at: new Date().toISOString(),
+        status: "completed",
+      })
+      .eq("id", task.current_session_id)
+
+    if (sessionError) {
+      console.error("Error ending session:", sessionError)
+    }
+  }
+
+  // Mark task as completed
+  const completedAt = new Date().toISOString()
+  const { data: updatedTask, error: updateError } = await supabase
+    .from("tasks")
+    .update({
+      status: "completed",
+      completed_at: completedAt,
+      current_session_id: null,
+      updated_by: user.id,
+      updated_at: completedAt,
+    })
+    .eq("id", taskId)
+    .select()
+    .single()
+
+  if (updateError) {
+    throw new Error(`Error completing task: ${updateError.message}`)
+  }
+
+  revalidatePath("/dashboard/tasks")
+  return updatedTask
+}

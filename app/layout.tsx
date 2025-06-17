@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/contexts/theme-context"
 import { I18nProvider } from "@/lib/i18n/context"
 import { FaviconGenerator } from "@/components/favicon-generator"
 import { DynamicMetadata } from "@/components/dynamic-metadata"
+import { SessionProvider } from "@/lib/next-auth-compat"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
     icon: "/images/pranam-logo.png",
     apple: "/images/pranam-logo.png",
   },
-    generator: 'v0.dev'
+  generator: "v0.dev",
 }
 
 export default function RootLayout({
@@ -28,12 +29,14 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <FaviconGenerator />
-        <I18nProvider>
-          <ThemeProvider>
-            <DynamicMetadata />
-            {children}
-          </ThemeProvider>
-        </I18nProvider>
+        <SessionProvider>
+          <I18nProvider>
+            <ThemeProvider>
+              <DynamicMetadata />
+              {children}
+            </ThemeProvider>
+          </I18nProvider>
+        </SessionProvider>
       </body>
     </html>
   )
