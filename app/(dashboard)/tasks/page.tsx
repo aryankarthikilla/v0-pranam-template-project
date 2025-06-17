@@ -169,48 +169,6 @@ export default function TasksDashboard() {
         <AINextTaskWidget tasks={tasks} loading={loading} />
       )}
 
-      {/* Active Tasks in Progress */}
-      {activeTasks.length > 0 && (
-        <Card className="border-border bg-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-card-foreground">
-              <AlertTriangle className="h-5 w-5 text-orange-600" />
-              {t("activeTasksInProgress")} ({activeTasks.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              {t("youHaveActiveTasks", { count: activeTasks.length })}
-            </p>
-            <div className="space-y-3">
-              {activeTasks.slice(0, 3).map((task) => (
-                <div key={task.id} className="flex items-center justify-between p-3 rounded-lg border">
-                  <div className="flex-1">
-                    <h4 className="font-medium text-card-foreground">{task.title}</h4>
-                    <p className="text-sm text-muted-foreground">{task.description}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${
-                        task.priority === "urgent"
-                          ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                          : task.priority === "high"
-                            ? "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
-                            : task.priority === "medium"
-                              ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                              : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                      }`}
-                    >
-                      {t(`priority.${task.priority}`)}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Opportunistic Task Suggestions */}
       {loading ? (
         <Card className="border-border bg-card">
