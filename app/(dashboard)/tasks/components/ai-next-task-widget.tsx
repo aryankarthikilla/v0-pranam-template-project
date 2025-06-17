@@ -30,6 +30,7 @@ import {
   getActiveSessions,
 } from "../actions/enhanced-task-actions"
 import { toast } from "sonner"
+import { SessionRecoveryWidget } from "./session-recovery-widget"
 
 interface AINextTaskWidgetProps {
   tasks: any[]
@@ -938,6 +939,9 @@ export function AINextTaskWidget({ tasks, loading, onTaskUpdate }: AINextTaskWid
           </CardContent>
         </Card>
       )}
+
+      {/* Session Recovery Widget - Show when there are data issues */}
+      {activeTasks.length > 0 && <SessionRecoveryWidget onRecoveryComplete={onTaskUpdate} />}
 
       {/* Active Task Pause Modal */}
       <Dialog open={showActiveTaskPauseModal} onOpenChange={setShowActiveTaskPauseModal}>
