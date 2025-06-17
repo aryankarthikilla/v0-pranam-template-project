@@ -58,6 +58,7 @@ export function AINextTaskWidget({ tasks, loading, onTaskUpdate }: AINextTaskWid
   const [showCompleteModal, setShowCompleteModal] = useState(false)
   const [showSkipModal, setShowSkipModal] = useState(false)
   const [noTasksReason, setNoTasksReason] = useState<string | null>(null)
+  const [activeTaskActions, setActiveTaskActions] = useState<{ [taskId: string]: boolean }>({})
 
   // Filter tasks by status
   const activeTasks = tasks.filter((task) => task.status === "in_progress" || task.status === "active")
@@ -339,6 +340,57 @@ export function AINextTaskWidget({ tasks, loading, onTaskUpdate }: AINextTaskWid
       toast.error("Failed to skip task")
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handlePauseActiveTask = async (taskId: string) => {
+    setActiveTaskActions((prev) => ({ ...prev, [taskId]: true }))
+
+    try {
+      // Find active session for this task
+      const activeSessions = await getActiveSessions()
+      const taskSession = activeSessions.find((s) => s.task_id === taskId)
+
+      if (!taskSession) {
+        toast.error("No active session found for this task")
+        return
+      }
+
+      const result = await pauseTaskSession(taskSession.id, "Paused from active tasks")
+      if (result.success) {
+        toast.success("Task paused successfully!")
+        if (onTaskUpdate) {
+          onTaskUpdate()
+        }
+      } else {
+        toast.error(result.error || "Failed to pause task")
+      }
+    } catch (error) {
+      console.error("Failed to pause active task:", error)
+      toast.error("Failed to pause task")
+    } finally {
+      setActiveTaskActions((prev) => ({ ...prev, [taskId]: false }))
+    }
+  }
+
+  const handleCompleteActiveTask = async (taskId: string) => {
+    setActiveTaskActions((prev) => ({ ...prev, [taskId]: true }))
+
+    try {
+      const result = await completeTask(taskId, "Completed from active tasks", 100)
+      if (result.success) {
+        toast.success("Task completed successfully!")
+        if (onTaskUpdate) {
+          onTaskUpdate()
+        }
+      } else {
+        toast.error(result.error || "Failed to complete task")
+      }
+    } catch (error) {
+      console.error("Failed to complete active task:", error)
+      toast.error("Failed to complete task")
+    } finally {
+      setActiveTaskActions((prev) => ({ ...prev, [taskId]: false }))
     }
   }
 
@@ -750,14 +802,25 @@ export function AINextTaskWidget({ tasks, loading, onTaskUpdate }: AINextTaskWid
                 </div>
 
                 <div className="flex items-center gap-2 pt-2">
-                  <Button size="sm" variant="outline" className="border-yellow-300 text-yellow-700 hover:bg-yellow-50">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                    onClick={() => handlePauseActiveTask(task.id)}
+                    disabled={activeTaskActions[task.id] || isLoading}
+                  >
                     <Pause className="h-4 w-4 mr-1" />
-                    Pause
+                    {activeTaskActions[task.id] ? "Pausing..." : "Pause"}
                   </Button>
 
-                  <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                  <Button
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={() => handleCompleteActiveTask(task.id)}
+                    disabled={activeTaskActions[task.id] || isLoading}
+                  >
                     <CheckCircle className="h-4 w-4 mr-1" />
-                    Complete
+                    {activeTaskActions[task.id] ? "Completing..." : "Complete"}
                   </Button>
                 </div>
               </div>
