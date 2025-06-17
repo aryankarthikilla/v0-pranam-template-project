@@ -119,7 +119,9 @@ export function MultiTaskWidget() {
         setStaleReason("")
         loadSessions() // Reload sessions
       } else {
-        toast.error(result.error || "Failed to resolve session")
+        // Type-safe error handling
+        const errorMessage = "error" in result ? result.error : "Failed to resolve session"
+        toast.error(errorMessage)
       }
     } catch (error) {
       toast.error("Failed to resolve session")
