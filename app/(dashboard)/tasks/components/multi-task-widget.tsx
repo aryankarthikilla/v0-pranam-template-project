@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
-import { Timer, Pause, Square, AlertTriangle, Clock, Play } from "lucide-react"
+import { Timer, Pause, Square, AlertTriangle, Clock, Play } from 'lucide-react'
 import { getActiveSessions, getStaleSessionsCheck, resolveStaleSession } from "../actions/enhanced-task-actions"
 import type { TaskSession, StaleSession } from "../actions/enhanced-task-actions"
 import { toast } from "sonner"
@@ -125,9 +125,9 @@ export function MultiTaskWidget() {
         </CardHeader>
 
         <CardContent className="space-y-3">
-          {activeSessions.map((session) => (
+          {activeSessions.map((session, index) => (
             <div
-              key={session.session_id}
+              key={session.id || `session-${index}`}
               className="p-3 bg-white/60 dark:bg-gray-900/60 rounded-lg border border-blue-200 dark:border-blue-800"
             >
               <div className="flex items-center justify-between mb-2">
