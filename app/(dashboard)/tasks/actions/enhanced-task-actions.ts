@@ -1,8 +1,7 @@
 "use server"
 
-import { createServerComponentClient } from "@/lib/supabase/server"
+import { createClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
-import { redirect } from "next/navigation"
 
 export interface TaskSession {
   id: string
@@ -34,45 +33,29 @@ export interface StaleSession {
   minutes_inactive: number
 }
 
-export async function deleteTask(id: string) {
-  const supabase = createServerComponentClient()
-
-  const { error } = await supabase.from("tasks").delete().match({ id })
-
-  if (error) {
-    console.log(error)
-    return redirect("/error")
-  }
-
-  revalidatePath("/(dashboard)/tasks")
-  redirect("/(dashboard)/tasks")
-}
-
-export async function toggleTaskStatus(id: string, completed: boolean) {
-  const supabase = createServerComponentClient()
-
-  const { error } = await supabase.from("tasks").update({ completed }).match({ id })
-
-  if (error) {
-    console.log(error)
-    return redirect("/error")
-  }
-
-  revalidatePath("/(dashboard)/tasks")
-}
-
 export async function fixOrphanedTasks() {
   console.log("🔧 fixOrphanedTasks called")
 
   try {
-    const supabase = createServerComponentClient()
+    const supabase = await createClient()
 
-    console.log("👤 Getting orphaned tasks...")
+    // Get current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error("❌ User authentication failed:", userError)
+      return { success: false, error: "Authentication required" }
+    }
+
+    console.log("👤 User authenticated:", user.id)
 
     // Find tasks marked as in_progress but with no active sessions
     const { data: activeTasks, error: tasksError } = await supabase
       .from("tasks")
       .select("id, title, status, current_session_id")
+      .eq("user_id", user.id)
       .in("status", ["in_progress", "active"])
 
     if (tasksError) {
@@ -95,6 +78,7 @@ export async function fixOrphanedTasks() {
         .from("task_sessions")
         .select("id")
         .eq("task_id", task.id)
+        .eq("user_id", user.id)
         .is("ended_at", null)
 
       if (sessionError) {
@@ -124,6 +108,7 @@ export async function fixOrphanedTasks() {
         updated_at: new Date().toISOString(),
       })
       .in("id", taskIds)
+      .eq("user_id", user.id)
 
     if (resetError) {
       console.error("❌ Failed to reset orphaned tasks:", resetError)
@@ -148,12 +133,27 @@ export async function startTaskSession(taskId: string, estimatedMinutes?: number
   console.log("🚀 startTaskSession called:", { taskId, estimatedMinutes, source })
 
   try {
-    const supabase = createServerComponentClient()
+    const supabase = await createClient()
 
-    console.log("👤 Starting task session...")
+    // Get current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error("❌ User authentication failed:", userError)
+      return { success: false, error: "Authentication required" }
+    }
 
-    // Check if task exists
-    const { data: task, error: taskError } = await supabase.from("tasks").select("*").eq("id", taskId).single()
+    console.log("👤 User authenticated:", user.id)
+
+    // Check if task exists and belongs to user
+    const { data: task, error: taskError } = await supabase
+      .from("tasks")
+      .select("*")
+      .eq("id", taskId)
+      .eq("user_id", user.id)
+      .single()
 
     if (taskError || !task) {
       console.error("❌ Task not found:", taskError)
@@ -167,6 +167,7 @@ export async function startTaskSession(taskId: string, estimatedMinutes?: number
       .from("task_sessions")
       .select("*")
       .eq("task_id", taskId)
+      .eq("user_id", user.id)
       .is("ended_at", null)
 
     if (sessionCheckError) {
@@ -186,6 +187,7 @@ export async function startTaskSession(taskId: string, estimatedMinutes?: number
           pause_reason: "Auto-paused: New session started",
         })
         .eq("task_id", taskId)
+        .eq("user_id", user.id)
         .is("ended_at", null)
 
       if (endError) {
@@ -197,6 +199,7 @@ export async function startTaskSession(taskId: string, estimatedMinutes?: number
     // Create new session
     const sessionData = {
       task_id: taskId,
+      user_id: user.id,
       started_at: new Date().toISOString(),
       estimated_minutes: estimatedMinutes,
       source: source,
@@ -226,6 +229,7 @@ export async function startTaskSession(taskId: string, estimatedMinutes?: number
         updated_at: new Date().toISOString(),
       })
       .eq("id", taskId)
+      .eq("user_id", user.id)
 
     if (updateError) {
       console.error("❌ Failed to update task:", updateError)
@@ -246,15 +250,26 @@ export async function pauseTaskSession(sessionId: string, reason?: string) {
   console.log("⏸️ pauseTaskSession called:", { sessionId, reason })
 
   try {
-    const supabase = createServerComponentClient()
+    const supabase = await createClient()
 
-    console.log("👤 Pausing task session...")
+    // Get current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error("❌ User authentication failed:", userError)
+      return { success: false, error: "Authentication required" }
+    }
 
-    // Get the session to verify it exists
+    console.log("👤 User authenticated:", user.id)
+
+    // Get the session to verify it exists and belongs to user
     const { data: session, error: sessionError } = await supabase
       .from("task_sessions")
       .select("*, tasks(*)")
       .eq("id", sessionId)
+      .eq("user_id", user.id)
       .single()
 
     if (sessionError) {
@@ -292,6 +307,7 @@ export async function pauseTaskSession(sessionId: string, reason?: string) {
       .from("task_sessions")
       .update(updateData)
       .eq("id", sessionId)
+      .eq("user_id", user.id)
       .select()
       .single()
 
@@ -311,7 +327,11 @@ export async function pauseTaskSession(sessionId: string, reason?: string) {
 
     console.log("📝 Updating task with:", taskUpdateData)
 
-    const { error: taskUpdateError } = await supabase.from("tasks").update(taskUpdateData).eq("id", session.task_id)
+    const { error: taskUpdateError } = await supabase
+      .from("tasks")
+      .update(taskUpdateData)
+      .eq("id", session.task_id)
+      .eq("user_id", user.id)
 
     if (taskUpdateError) {
       console.error("❌ Failed to update task:", taskUpdateError)
@@ -332,12 +352,27 @@ export async function completeTask(taskId: string, notes?: string, completionPer
   console.log("✅ completeTask called:", { taskId, notes, completionPercentage })
 
   try {
-    const supabase = createServerComponentClient()
+    const supabase = await createClient()
 
-    console.log("👤 Completing task...")
+    // Get current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error("❌ User authentication failed:", userError)
+      return { success: false, error: "Authentication required" }
+    }
 
-    // Get the task to verify it exists
-    const { data: task, error: taskError } = await supabase.from("tasks").select("*").eq("id", taskId).single()
+    console.log("👤 User authenticated:", user.id)
+
+    // Get the task to verify it exists and belongs to user
+    const { data: task, error: taskError } = await supabase
+      .from("tasks")
+      .select("*")
+      .eq("id", taskId)
+      .eq("user_id", user.id)
+      .single()
 
     if (taskError || !task) {
       console.error("❌ Task not found:", taskError)
@@ -354,6 +389,7 @@ export async function completeTask(taskId: string, notes?: string, completionPer
         pause_reason: "Task completed",
       })
       .eq("task_id", taskId)
+      .eq("user_id", user.id)
       .is("ended_at", null)
 
     if (sessionEndError) {
@@ -377,6 +413,7 @@ export async function completeTask(taskId: string, notes?: string, completionPer
       .from("tasks")
       .update(updateData)
       .eq("id", taskId)
+      .eq("user_id", user.id)
       .select()
       .single()
 
@@ -399,9 +436,19 @@ export async function skipTask(taskId: string, duration: string, reason?: string
   console.log("⏭️ skipTask called:", { taskId, duration, reason })
 
   try {
-    const supabase = createServerComponentClient()
+    const supabase = await createClient()
 
-    console.log("👤 Skipping task...")
+    // Get current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error("❌ User authentication failed:", userError)
+      return { success: false, error: "Authentication required" }
+    }
+
+    console.log("👤 User authenticated:", user.id)
 
     // Calculate next available time based on duration
     const now = new Date()
@@ -438,6 +485,7 @@ export async function skipTask(taskId: string, duration: string, reason?: string
         pause_reason: `Skipped: ${reason || "User skipped task"}`,
       })
       .eq("task_id", taskId)
+      .eq("user_id", user.id)
       .is("ended_at", null)
 
     if (sessionEndError) {
@@ -460,6 +508,7 @@ export async function skipTask(taskId: string, duration: string, reason?: string
       .from("tasks")
       .update(updateData)
       .eq("id", taskId)
+      .eq("user_id", user.id)
       .select()
       .single()
 
@@ -482,9 +531,19 @@ export async function getActiveSessions() {
   console.log("🔍 getActiveSessions called")
 
   try {
-    const supabase = createServerComponentClient()
+    const supabase = await createClient()
 
-    console.log("👤 Getting active sessions...")
+    // Get current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error("❌ User authentication failed:", userError)
+      return []
+    }
+
+    console.log("👤 User authenticated:", user.id)
 
     const { data: sessions, error } = await supabase
       .from("task_sessions")
@@ -497,6 +556,7 @@ export async function getActiveSessions() {
           status
         )
       `)
+      .eq("user_id", user.id)
       .is("ended_at", null)
       .order("started_at", { ascending: false })
 
@@ -517,15 +577,26 @@ export async function addTaskNote(taskId: string, noteText: string, noteType = "
   console.log("📝 addTaskNote called:", { taskId, noteText, noteType })
 
   try {
-    const supabase = createServerComponentClient()
+    const supabase = await createClient()
 
-    console.log("👤 Adding task note...")
+    // Get current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error("❌ User authentication failed:", userError)
+      return { success: false, error: "Authentication required" }
+    }
+
+    console.log("👤 User authenticated:", user.id)
 
     // Insert the note
     const { data: note, error: noteError } = await supabase
       .from("task_notes")
       .insert({
         task_id: taskId,
+        user_id: user.id,
         note_text: noteText,
         note_type: noteType,
         created_at: new Date().toISOString(),
@@ -552,9 +623,19 @@ export async function updateTaskEstimatedTime(taskId: string, estimatedMinutes: 
   console.log("⏱️ updateTaskEstimatedTime called:", { taskId, estimatedMinutes })
 
   try {
-    const supabase = createServerComponentClient()
+    const supabase = await createClient()
 
-    console.log("👤 Updating estimated time...")
+    // Get current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error("❌ User authentication failed:", userError)
+      return { success: false, error: "Authentication required" }
+    }
+
+    console.log("👤 User authenticated:", user.id)
 
     // Update the task's estimated time
     const { data: task, error: updateError } = await supabase
@@ -564,6 +645,7 @@ export async function updateTaskEstimatedTime(taskId: string, estimatedMinutes: 
         updated_at: new Date().toISOString(),
       })
       .eq("id", taskId)
+      .eq("user_id", user.id)
       .select()
       .single()
 
@@ -586,9 +668,19 @@ export async function getStaleSessionsCheck() {
   console.log("🔍 getStaleSessionsCheck called")
 
   try {
-    const supabase = createServerComponentClient()
+    const supabase = await createClient()
 
-    console.log("👤 Getting stale sessions...")
+    // Get current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error("❌ User authentication failed:", userError)
+      return []
+    }
+
+    console.log("👤 User authenticated:", user.id)
 
     // Get sessions that have been active for more than 30 minutes without updates
     const thirtyMinutesAgo = new Date()
@@ -605,6 +697,7 @@ export async function getStaleSessionsCheck() {
           status
         )
       `)
+      .eq("user_id", user.id)
       .is("ended_at", null)
       .lt("started_at", thirtyMinutesAgo.toISOString())
       .order("started_at", { ascending: false })
@@ -641,15 +734,26 @@ export async function resolveStaleSession(
   console.log("🔧 resolveStaleSession called:", { sessionId, action, reason })
 
   try {
-    const supabase = createServerComponentClient()
+    const supabase = await createClient()
 
-    console.log("👤 Resolving stale session...")
+    // Get current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error("❌ User authentication failed:", userError)
+      return { success: false, error: "Authentication required" }
+    }
+
+    console.log("👤 User authenticated:", user.id)
 
     // Get the session details
     const { data: session, error: sessionError } = await supabase
       .from("task_sessions")
       .select("*, tasks(*)")
       .eq("id", sessionId)
+      .eq("user_id", user.id)
       .single()
 
     if (sessionError || !session) {

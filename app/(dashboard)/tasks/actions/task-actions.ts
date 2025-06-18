@@ -1,16 +1,26 @@
 "use server"
 
-import { createServerComponentClient } from "@/lib/supabase/server"
+import { createClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
 
 export async function getTasks() {
-  const supabase = createServerComponentClient()
+  const supabase = await createClient()
 
   try {
-    console.log("🔍 Calling get_user_tasks stored procedure")
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      throw new Error("User not authenticated")
+    }
+
+    console.log("🔍 Calling get_user_tasks stored procedure for user:", user.id)
 
     // Call your stored procedure
-    const { data, error } = await supabase.rpc("get_user_tasks")
+    const { data, error } = await supabase.rpc("get_user_tasks", {
+      p_user_id: user.id,
+    })
 
     if (error) {
       console.error("❌ Stored procedure error:", error)
@@ -27,7 +37,7 @@ export async function getTasks() {
 }
 
 export async function getCompletedFilters() {
-  const supabase = createServerComponentClient()
+  const supabase = await createClient()
 
   try {
     const { data, error } = await supabase
@@ -48,12 +58,21 @@ export async function getCompletedFilters() {
 }
 
 export async function createTask(taskData: any) {
-  const supabase = createServerComponentClient()
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error("User not authenticated")
+  }
 
   const { data, error } = await supabase
     .from("tasks")
     .insert({
       ...taskData,
+      created_by: user.id,
+      updated_by: user.id,
     })
     .select()
     .single()
@@ -67,10 +86,18 @@ export async function createTask(taskData: any) {
 }
 
 export async function updateTask(taskId: string, taskData: any) {
-  const supabase = createServerComponentClient()
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error("User not authenticated")
+  }
 
   const updateData = {
     ...taskData,
+    updated_by: user.id,
     updated_at: new Date().toISOString(),
   }
 
@@ -94,12 +121,21 @@ export async function updateTask(taskId: string, taskData: any) {
 }
 
 export async function deleteTask(taskId: string) {
-  const supabase = createServerComponentClient()
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    throw new Error("User not authenticated")
+  }
 
   const { data, error } = await supabase
     .from("tasks")
     .update({
       is_deleted: true,
+      updated_by: user.id,
       updated_at: new Date().toISOString(),
     })
     .eq("id", taskId)
@@ -119,7 +155,14 @@ export async function deleteTask(taskId: string) {
 }
 
 export async function toggleTaskStatus(taskId: string) {
-  const supabase = createServerComponentClient()
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error("User not authenticated")
+  }
 
   // Get current task
   const { data: task, error: fetchError } = await supabase.from("tasks").select("status").eq("id", taskId).single()
@@ -134,6 +177,7 @@ export async function toggleTaskStatus(taskId: string) {
 
   const updateData: any = {
     status: newStatus,
+    updated_by: user.id,
     updated_at: new Date().toISOString(),
   }
 
@@ -157,7 +201,7 @@ export async function toggleTaskStatus(taskId: string) {
 }
 
 export async function getRandomTask() {
-  const supabase = createServerComponentClient()
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from("tasks")
@@ -179,7 +223,14 @@ export async function getRandomTask() {
 }
 
 export async function markTaskComplete(taskId: string) {
-  const supabase = createServerComponentClient()
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error("User not authenticated")
+  }
 
   const completedAt = new Date().toISOString()
   console.log("✅ Marking task complete with completed_at:", completedAt)
@@ -189,6 +240,7 @@ export async function markTaskComplete(taskId: string) {
     .update({
       status: "completed",
       completed_at: completedAt,
+      updated_by: user.id,
       updated_at: new Date().toISOString(),
     })
     .eq("id", taskId)
@@ -204,13 +256,21 @@ export async function markTaskComplete(taskId: string) {
 }
 
 export async function startTaskSession(taskId: string) {
-  const supabase = createServerComponentClient()
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error("User not authenticated")
+  }
 
   // First update the task status to in_progress
   const { data: task, error: updateError } = await supabase
     .from("tasks")
     .update({
       status: "in_progress",
+      updated_by: user.id,
       updated_at: new Date().toISOString(),
     })
     .eq("id", taskId)
@@ -226,6 +286,7 @@ export async function startTaskSession(taskId: string) {
     .from("task_sessions")
     .insert({
       task_id: taskId,
+      user_id: user.id,
       started_at: new Date().toISOString(),
       status: "active",
     })
@@ -253,7 +314,14 @@ export async function startTaskSession(taskId: string) {
 }
 
 export async function completeTaskSession(taskId: string) {
-  const supabase = createServerComponentClient()
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error("User not authenticated")
+  }
 
   // Get the current task with session info
   const { data: task, error: fetchError } = await supabase
@@ -289,6 +357,7 @@ export async function completeTaskSession(taskId: string) {
       status: "completed",
       completed_at: completedAt,
       current_session_id: null,
+      updated_by: user.id,
       updated_at: completedAt,
     })
     .eq("id", taskId)
