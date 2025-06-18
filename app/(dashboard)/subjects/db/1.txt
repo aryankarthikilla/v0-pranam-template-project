@@ -1,0 +1,27 @@
+create table public.subjects (
+  id uuid primary key default gen_random_uuid(),
+  subject_name text not null,
+  subject_type text,
+  course_name text,
+  tags text[],
+  description text,
+  is_active boolean default true,
+  is_deleted boolean default false,
+  created_at timestamptz default now(),
+  created_by uuid references auth.users(id),
+  updated_at timestamptz default now(),
+  updated_by uuid references auth.users(id)
+);
+
+-- Indexes for filtering
+create index idx_subjects_created_by on public.subjects (created_by);
+create index idx_subjects_is_deleted on public.subjects (is_deleted);
+
+-- RLS
+alter table public.subjects enable row level security;
+
+create policy "Allow user access to their subjects"
+on public.subjects for all
+to public
+using (auth.uid() = created_by)
+with check (auth.uid() = created_by);
