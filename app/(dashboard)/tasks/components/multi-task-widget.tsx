@@ -1,153 +1,182 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
-import { Timer, Pause, Square, AlertTriangle, Clock, Play } from "lucide-react"
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Timer, Pause, Square, AlertTriangle, Clock, Play } from "lucide-react";
 import {
   getActiveSessions,
   getStaleSessionsCheck,
   resolveStaleSession,
   pauseTaskSession,
   completeTask,
-} from "../actions/enhanced-task-actions"
-import type { TaskSession, StaleSession } from "../actions/enhanced-task-actions"
-import { toast } from "sonner"
+} from "../actions/enhanced-task-actions";
+import type {
+  TaskSession,
+  StaleSession,
+} from "../actions/enhanced-task-actions";
+import { toast } from "sonner";
 
 export function MultiTaskWidget() {
-  const [activeSessions, setActiveSessions] = useState<TaskSession[]>([])
-  const [staleSessions, setStaleSessions] = useState<StaleSession[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [showStaleModal, setShowStaleModal] = useState(false)
-  const [selectedStaleSession, setSelectedStaleSession] = useState<StaleSession | null>(null)
-  const [staleResolution, setStaleResolution] = useState<"continue" | "pause" | "complete">("continue")
-  const [staleReason, setStaleReason] = useState("")
-  const [isRunning, setIsRunning] = useState(false)
-  const [activeSession, setActiveSession] = useState<string | null>(null)
+  const [activeSessions, setActiveSessions] = useState<TaskSession[]>([]);
+  const [staleSessions, setStaleSessions] = useState<StaleSession[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showStaleModal, setShowStaleModal] = useState(false);
+  const [selectedStaleSession, setSelectedStaleSession] =
+    useState<StaleSession | null>(null);
+  const [staleResolution, setStaleResolution] = useState<
+    "continue" | "pause" | "complete"
+  >("continue");
+  const [staleReason, setStaleReason] = useState("");
+  const [isRunning, setIsRunning] = useState(false);
+  const [activeSession, setActiveSession] = useState<string | null>(null);
 
-  const handlePauseTask = async (sessionId: string, taskId: string, taskTitle: string) => {
+  const handlePauseTask = async (
+    sessionId: string,
+    taskId: string,
+    taskTitle: string
+  ) => {
     try {
-      setIsLoading(true)
-      const result = await pauseTaskSession(sessionId, "User paused task from dashboard")
+      setIsLoading(true);
+      const result = await pauseTaskSession(
+        sessionId,
+        "User paused task from dashboard"
+      );
 
       if (result.success) {
-        toast.success(`"${taskTitle}" paused successfully`)
+        toast.success(`"${taskTitle}" paused successfully`);
         // Refresh sessions immediately
-        await loadSessions()
+        await loadSessions();
       } else {
-        toast.error(result.error || "Failed to pause task")
+        toast.error(result.error || "Failed to pause task");
       }
     } catch (error) {
-      console.error("Error pausing task:", error)
-      toast.error("Failed to pause task")
+      console.error("Error pausing task:", error);
+      toast.error("Failed to pause task");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleCompleteTask = async (taskId: string, taskTitle: string) => {
     try {
-      setIsLoading(true)
-      const result = await completeTask(taskId, "Task completed from dashboard", 100)
+      setIsLoading(true);
+      const result = await completeTask(
+        taskId,
+        "Task completed from dashboard",
+        100
+      );
 
       if (result.success) {
-        toast.success(`"${taskTitle}" completed successfully!`)
+        toast.success(`"${taskTitle}" completed successfully!`);
         // Refresh sessions immediately
-        await loadSessions()
+        await loadSessions();
       } else {
-        toast.error(result.error || "Failed to complete task")
+        toast.error(result.error || "Failed to complete task");
       }
     } catch (error) {
-      console.error("Error completing task:", error)
-      toast.error("Failed to complete task")
+      console.error("Error completing task:", error);
+      toast.error("Failed to complete task");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const loadSessions = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const [active, stale] = await Promise.all([getActiveSessions(), getStaleSessionsCheck()])
+      const [active, stale] = await Promise.all([
+        getActiveSessions(),
+        getStaleSessionsCheck(),
+      ]);
 
-      setActiveSessions(active)
-      setStaleSessions(stale)
+      setActiveSessions(active);
+      setStaleSessions(stale);
 
       // Show stale session modal if we have stale sessions
       if (stale.length > 0 && !showStaleModal) {
-        setSelectedStaleSession(stale[0] || null)
-        setShowStaleModal(true)
+        setSelectedStaleSession(stale[0] || null);
+        setShowStaleModal(true);
       }
     } catch (error) {
-      console.error("Failed to load sessions:", error)
-      toast.error("Failed to load active sessions")
+      console.error("Failed to load sessions:", error);
+      toast.error("Failed to load active sessions");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleStaleResolution = async () => {
-    if (!selectedStaleSession) return
+    if (!selectedStaleSession) return;
 
     try {
-      const result = await resolveStaleSession(selectedStaleSession.session_id, staleResolution, staleReason)
+      const result = await resolveStaleSession(
+        selectedStaleSession.session_id,
+        staleResolution,
+        staleReason
+      );
 
       if (result.success) {
-        toast.success(`Session ${staleResolution}d successfully`)
-        setShowStaleModal(false)
-        setSelectedStaleSession(null)
-        setStaleReason("")
-        loadSessions() // Reload sessions
+        toast.success(`Session ${staleResolution}d successfully`);
+        setShowStaleModal(false);
+        setSelectedStaleSession(null);
+        setStaleReason("");
+        loadSessions(); // Reload sessions
       } else {
-        toast.error(result.error || "Failed to resolve session")
+        toast.error(result.error || "Failed to resolve session");
       }
     } catch (error) {
-      toast.error("Failed to resolve session")
+      toast.error("Failed to resolve session");
     }
-  }
+  };
 
   const handleStart = () => {
-    setIsRunning(true)
-    setActiveSession("Focus Session")
-  }
+    setIsRunning(true);
+    setActiveSession("Focus Session");
+  };
 
   const handlePause = () => {
-    setIsRunning(false)
-  }
+    setIsRunning(false);
+  };
 
   const handleStop = () => {
-    setIsRunning(false)
-    setActiveSession(null)
-  }
+    setIsRunning(false);
+    setActiveSession(null);
+  };
 
   const formatDuration = (minutes: number) => {
-    const hours = Math.floor(minutes / 60)
-    const mins = minutes % 60
-    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`
-  }
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "urgent":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
       case "high":
-        return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+        return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200";
       case "medium":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
       default:
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
     }
-  }
+  };
 
   useEffect(() => {
-    loadSessions()
+    loadSessions();
     // Refresh every 30 seconds
-    const interval = setInterval(loadSessions, 30000)
-    return () => clearInterval(interval)
-  }, [])
+    const interval = setInterval(loadSessions, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>
@@ -178,11 +207,17 @@ export function MultiTaskWidget() {
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex-1">
-                  <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">{session.task_title}</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm">
+                    {session.task_title}
+                  </h4>
                   <div className="flex items-center gap-2 mt-1">
-                    <Badge className={getPriorityColor(session.task_priority)}>{session.task_priority}</Badge>
+                    <Badge className={getPriorityColor(session.task_priority)}>
+                      {session.task_priority}
+                    </Badge>
                     {session.location_context && (
-                      <span className="text-xs text-muted-foreground">📍 {session.location_context}</span>
+                      <span className="text-xs text-muted-foreground">
+                        📍 {session.location_context}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -199,14 +234,22 @@ export function MultiTaskWidget() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-xs text-green-600 dark:text-green-400">Active</span>
+                  <span className="text-xs text-green-600 dark:text-green-400">
+                    Active
+                  </span>
                 </div>
                 <div className="flex gap-1">
                   <Button
                     size="sm"
                     variant="outline"
                     className="h-6 px-2 text-xs border-yellow-300 text-yellow-700 hover:bg-yellow-50"
-                    onClick={() => handlePauseTask(session.id, session.task_id, session.task_title)}
+                    onClick={() =>
+                      handlePauseTask(
+                        session.id,
+                        session.task_id,
+                        session.task_title
+                      )
+                    }
                     disabled={isLoading}
                   >
                     <Pause className="h-3 w-3" />
@@ -215,7 +258,9 @@ export function MultiTaskWidget() {
                     size="sm"
                     variant="outline"
                     className="h-6 px-2 text-xs border-green-300 text-green-700 hover:bg-green-50"
-                    onClick={() => handleCompleteTask(session.task_id, session.task_title)}
+                    onClick={() =>
+                      handleCompleteTask(session.task_id, session.task_title)
+                    }
                     disabled={isLoading}
                   >
                     <Square className="h-3 w-3" />
@@ -229,7 +274,9 @@ export function MultiTaskWidget() {
             <div className="p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
               <div className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
                 <AlertTriangle className="h-4 w-4" />
-                <span className="text-sm font-medium">{staleSessions.length} inactive sessions detected</span>
+                <span className="text-sm font-medium">
+                  {staleSessions.length} inactive sessions detected
+                </span>
               </div>
               <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
                 Tasks inactive for more than 30 minutes need attention
@@ -242,11 +289,15 @@ export function MultiTaskWidget() {
       {activeSession ? (
         <Card className="border-border bg-card mt-4">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-card-foreground">Multi-Task Control</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-card-foreground">
+              Multi-Task Control
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-2">Active Session</p>
+              <p className="text-sm text-muted-foreground mb-2">
+                Active Session
+              </p>
               <p className="font-medium text-foreground">{activeSession}</p>
               <div className="flex gap-2 mt-4">
                 <Button
@@ -254,7 +305,11 @@ export function MultiTaskWidget() {
                   onClick={isRunning ? handlePause : handleStart}
                   className="flex-1"
                 >
-                  {isRunning ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
+                  {isRunning ? (
+                    <Pause className="h-4 w-4 mr-2" />
+                  ) : (
+                    <Play className="h-4 w-4 mr-2" />
+                  )}
                   {isRunning ? "Pause" : "Resume"}
                 </Button>
                 <Button variant="outline" onClick={handleStop}>
@@ -284,10 +339,15 @@ export function MultiTaskWidget() {
           {selectedStaleSession && (
             <div className="space-y-4">
               <div className="p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
-                <h4 className="font-medium">{selectedStaleSession.task_title}</h4>
+                <h4 className="font-medium">
+                  {selectedStaleSession.task_title}
+                </h4>
                 <p className="text-sm text-muted-foreground">
-                  Started {new Date(selectedStaleSession.started_at).toLocaleTimeString()} •{" "}
-                  {selectedStaleSession.minutes_inactive} minutes ago
+                  Started{" "}
+                  {new Date(
+                    selectedStaleSession.started_at
+                  ).toLocaleTimeString()}{" "}
+                  • {selectedStaleSession.minutes_inactive} minutes ago
                 </p>
               </div>
 
@@ -299,7 +359,9 @@ export function MultiTaskWidget() {
                       type="radio"
                       value="continue"
                       checked={staleResolution === "continue"}
-                      onChange={(e) => setStaleResolution(e.target.value as any)}
+                      onChange={(e) =>
+                        setStaleResolution(e.target.value as any)
+                      }
                     />
                     <span className="text-sm">Continue working on it</span>
                   </label>
@@ -308,7 +370,9 @@ export function MultiTaskWidget() {
                       type="radio"
                       value="pause"
                       checked={staleResolution === "pause"}
-                      onChange={(e) => setStaleResolution(e.target.value as any)}
+                      onChange={(e) =>
+                        setStaleResolution(e.target.value as any)
+                      }
                     />
                     <span className="text-sm">Pause for now</span>
                   </label>
@@ -317,7 +381,9 @@ export function MultiTaskWidget() {
                       type="radio"
                       value="complete"
                       checked={staleResolution === "complete"}
-                      onChange={(e) => setStaleResolution(e.target.value as any)}
+                      onChange={(e) =>
+                        setStaleResolution(e.target.value as any)
+                      }
                     />
                     <span className="text-sm">Mark as completed</span>
                   </label>
@@ -335,7 +401,10 @@ export function MultiTaskWidget() {
               </div>
 
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowStaleModal(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowStaleModal(false)}
+                >
                   Skip
                 </Button>
                 <Button onClick={handleStaleResolution}>Update Task</Button>
@@ -345,5 +414,5 @@ export function MultiTaskWidget() {
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }

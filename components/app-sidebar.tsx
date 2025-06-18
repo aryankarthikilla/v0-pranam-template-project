@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   Home,
@@ -13,7 +13,7 @@ import {
   Cog,
   Brain,
   Shuffle,
-} from "lucide-react"
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -28,31 +28,45 @@ import {
   SidebarMenuSubItem,
   SidebarHeader,
   useSidebar,
-} from "@/components/ui/sidebar"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import type { User as SupabaseUser } from "@supabase/supabase-js"
-import { Logo } from "@/components/logo"
-import { useTranslations } from "@/lib/i18n/hooks"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { ChevronRight } from "lucide-react"
+} from "@/components/ui/sidebar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { Logo } from "@/components/logo";
+import { useTranslations } from "@/lib/i18n/hooks";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { ChevronRight } from "lucide-react";
 
 interface AppSidebarProps {
-  user: SupabaseUser
+  user: SupabaseUser;
 }
 
 export function AppSidebar({ user }: AppSidebarProps) {
-  const { t } = useTranslations("common")
-  const { state } = useSidebar()
-  const isCollapsed = state === "collapsed"
-  const pathname = usePathname()
+  const { t } = useTranslations("common");
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
+  const pathname = usePathname();
 
   const menuItems = [
     {
       title: t("dashboard"),
       url: "/dashboard",
       icon: Home,
+    },
+    {
+      title: "Thoughts",
+      url: "/thoughts",
+      icon: Brain,
     },
     {
       title: t("analytics"),
@@ -111,7 +125,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
       url: "/profile",
       icon: User,
     },
-  ]
+  ];
 
   const supportItems = [
     {
@@ -119,11 +133,15 @@ export function AppSidebar({ user }: AppSidebarProps) {
       url: "/help",
       icon: HelpCircle,
     },
-  ]
+  ];
 
-  const SidebarMenuItemWithTooltip = ({ item }: { item: (typeof menuItems)[0] }) => {
-    const hasSubItems = item.subItems && item.subItems.length > 0
-    const isActive = pathname.startsWith(item.url)
+  const SidebarMenuItemWithTooltip = ({
+    item,
+  }: {
+    item: (typeof menuItems)[0];
+  }) => {
+    const hasSubItems = item.subItems && item.subItems.length > 0;
+    const isActive = pathname.startsWith(item.url);
 
     if (hasSubItems && !isCollapsed) {
       return (
@@ -139,8 +157,14 @@ export function AppSidebar({ user }: AppSidebarProps) {
             <SidebarMenuSub>
               {item.subItems.map((subItem) => (
                 <SidebarMenuSubItem key={subItem.title}>
-                  <SidebarMenuSubButton asChild isActive={pathname === subItem.url}>
-                    <Link href={subItem.url} className="flex items-center gap-2">
+                  <SidebarMenuSubButton
+                    asChild
+                    isActive={pathname === subItem.url}
+                  >
+                    <Link
+                      href={subItem.url}
+                      className="flex items-center gap-2"
+                    >
                       <subItem.icon className="h-3 w-3" />
                       <span>{subItem.title}</span>
                     </Link>
@@ -150,7 +174,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
             </SidebarMenuSub>
           </CollapsibleContent>
         </Collapsible>
-      )
+      );
     }
 
     const menuButton = (
@@ -164,7 +188,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
           {!isCollapsed && <span className="truncate">{item.title}</span>}
         </Link>
       </SidebarMenuButton>
-    )
+    );
 
     if (isCollapsed) {
       return (
@@ -182,7 +206,10 @@ export function AppSidebar({ user }: AppSidebarProps) {
               {hasSubItems && (
                 <div className="mt-1 space-y-1">
                   {item.subItems.map((subItem) => (
-                    <p key={subItem.title} className="text-xs text-muted-foreground">
+                    <p
+                      key={subItem.title}
+                      className="text-xs text-muted-foreground"
+                    >
                       {subItem.title}
                     </p>
                   ))}
@@ -191,16 +218,21 @@ export function AppSidebar({ user }: AppSidebarProps) {
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-      )
+      );
     }
 
-    return menuButton
-  }
+    return menuButton;
+  };
 
   return (
-    <Sidebar className="border-r border-border bg-background/95 backdrop-blur-sm" collapsible="icon">
+    <Sidebar
+      className="border-r border-border bg-background/95 backdrop-blur-sm"
+      collapsible="icon"
+    >
       <SidebarHeader className="border-b border-border/50">
-        <div className={`px-3 py-3 ${isCollapsed ? "flex justify-center" : ""}`}>
+        <div
+          className={`px-3 py-3 ${isCollapsed ? "flex justify-center" : ""}`}
+        >
           <Logo size={isCollapsed ? "xs" : "sm"} showText={!isCollapsed} />
         </div>
       </SidebarHeader>
@@ -241,5 +273,5 @@ export function AppSidebar({ user }: AppSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
-  )
+  );
 }
