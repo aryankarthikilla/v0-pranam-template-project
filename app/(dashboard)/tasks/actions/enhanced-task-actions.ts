@@ -3,713 +3,559 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
+export interface TaskSession {
+  id: string;
+  task_id: string;
+  task_title: string;
+  task_priority: string;
+  started_at: string;
+  duration_minutes: number;
+  location_context?: string;
+  is_opportunistic: boolean;
+}
+
+export interface StaleSession {
+  session_id: string;
+  task_id: string;
+  task_title: string;
+  started_at: string;
+  minutes_inactive: number;
+}
+
+// Start a task session
 export async function startTaskSession(
   taskId: string,
-  estimatedMinutes?: number,
-  source = "web"
+  locationContext?: string,
+  deviceContext?: string
 ) {
-  console.log("🚀 startTaskSession called:", {
-    taskId,
-    estimatedMinutes,
-    source,
-  });
+  const supabase = await createClient();
 
   try {
-    const supabase = await createClient();
-
-    // Get current user
     const {
       data: { user },
-      error: userError,
     } = await supabase.auth.getUser();
-    if (userError || !user) {
-      console.error("❌ User authentication failed:", userError);
-      return { success: false, error: "Authentication required" };
-    }
-
-    console.log("👤 User authenticated:", user.id);
-
-    // Check if task exists and belongs to user
-    const { data: task, error: taskError } = await supabase
-      .from("tasks")
-      .select("*")
-      .eq("id", taskId)
-      .eq("user_id", user.id)
-      .single();
-
-    if (taskError || !task) {
-      console.error("❌ Task not found:", taskError);
-      return { success: false, error: "Task not found" };
-    }
-
-    console.log("📋 Task found:", task.title);
-
-    // Check for existing active sessions for this task
-    const { data: existingSessions, error: sessionCheckError } = await supabase
-      .from("task_sessions")
-      .select("*")
-      .eq("task_id", taskId)
-      .eq("user_id", user.id)
-      .is("ended_at", null);
-
-    if (sessionCheckError) {
-      console.error("❌ Error checking existing sessions:", sessionCheckError);
-      return { success: false, error: "Failed to check existing sessions" };
-    }
-
-    console.log("🔍 Existing active sessions:", existingSessions?.length || 0);
-
-    // If there are existing active sessions, end them first
-    if (existingSessions && existingSessions.length > 0) {
-      console.log("⏹️ Ending existing active sessions...");
-      const { error: endError } = await supabase
-        .from("task_sessions")
-        .update({
-          ended_at: new Date().toISOString(),
-          pause_reason: "Auto-paused: New session started",
-        })
-        .eq("task_id", taskId)
-        .eq("user_id", user.id)
-        .is("ended_at", null);
-
-      if (endError) {
-        console.error("❌ Failed to end existing sessions:", endError);
-        return { success: false, error: "Failed to end existing sessions" };
-      }
-    }
+    if (!user) throw new Error("Not authenticated");
 
     // Create new session
-    const sessionData = {
-      task_id: taskId,
-      user_id: user.id,
-      started_at: new Date().toISOString(),
-      estimated_minutes: estimatedMinutes,
-      source: source,
-    };
-
-    console.log("📝 Creating new session:", sessionData);
-
     const { data: session, error: sessionError } = await supabase
       .from("task_sessions")
-      .insert(sessionData)
+      .insert({
+        task_id: taskId,
+        user_id: user.id,
+        location_context: locationContext,
+        device_context: deviceContext || "web",
+        session_type: "work",
+        is_active: true,
+      })
       .select()
       .single();
 
-    if (sessionError) {
-      console.error("❌ Failed to create session:", sessionError);
-      return { success: false, error: "Failed to create session" };
-    }
+    if (sessionError) throw sessionError;
 
-    console.log("✅ Session created:", session.id);
-
-    // Update task status and current_session_id
-    const { error: updateError } = await supabase
+    // Update task status and current session
+    const { error: taskError } = await supabase
       .from("tasks")
       .update({
         status: "in_progress",
         current_session_id: session.id,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", taskId)
-      .eq("user_id", user.id);
+      .eq("id", taskId);
 
-    if (updateError) {
-      console.error("❌ Failed to update task:", updateError);
-      return { success: false, error: "Failed to update task status" };
+    if (taskError) throw taskError;
+
+    // Add context tracking
+    if (locationContext) {
+      await supabase.from("task_contexts").insert({
+        task_id: taskId,
+        user_id: user.id,
+        context_type: "location",
+        context_value: locationContext,
+        session_id: session.id,
+      });
     }
 
-    console.log("✅ Task updated to in_progress");
-
-    revalidatePath("/tasks");
+    revalidatePath("/dashboard/tasks");
     return { success: true, session };
   } catch (error) {
-    console.error("💥 Exception in startTaskSession:", error);
-    return { success: false, error: "An unexpected error occurred" };
+    console.error("Start task session error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to start task",
+    };
   }
 }
 
+// Pause a task session
 export async function pauseTaskSession(sessionId: string, reason?: string) {
-  console.log("⏸️ pauseTaskSession called:", { sessionId, reason });
+  console.log("pauseTaskSession called with:", { sessionId, reason });
+  const supabase = await createClient();
 
   try {
-    const supabase = await createClient();
-
-    // Get current user
     const {
       data: { user },
-      error: userError,
     } = await supabase.auth.getUser();
-    if (userError || !user) {
-      console.error("❌ User authentication failed:", userError);
-      return { success: false, error: "Authentication required" };
-    }
 
-    console.log("👤 User authenticated:", user.id);
+    console.log("User authenticated:", !!user);
+    if (!user) throw new Error("Not authenticated");
 
-    // Get the session to verify it exists and belongs to user
+    console.log("Updating session:", sessionId);
+    // End current session
     const { data: session, error: sessionError } = await supabase
       .from("task_sessions")
-      .select("*, tasks(*)")
+      .update({
+        ended_at: new Date().toISOString(),
+        is_active: false,
+        notes: reason ? `Paused: ${reason}` : "Paused",
+      })
       .eq("id", sessionId)
       .eq("user_id", user.id)
+      .select()
       .single();
 
     if (sessionError) {
-      console.error("❌ Session query error:", sessionError);
-      return { success: false, error: "Session not found or access denied" };
+      console.error("Session update error:", sessionError);
+      throw sessionError;
     }
 
-    if (!session) {
-      console.error("❌ Session not found");
-      return { success: false, error: "Session not found" };
-    }
+    console.log("Session updated successfully:", session);
 
-    console.log("📋 Session found:", {
-      id: session.id,
-      task_id: session.task_id,
-      started_at: session.started_at,
-      ended_at: session.ended_at,
-    });
-
-    // Check if session is already ended
-    if (session.ended_at) {
-      console.log("⚠️ Session already ended at:", session.ended_at);
-      return { success: false, error: "Session is already ended" };
-    }
-
-    // Update session with end time and reason
-    const updateData = {
-      ended_at: new Date().toISOString(),
-      pause_reason: reason || "Paused by user",
-    };
-
-    console.log("📝 Updating session with:", updateData);
-
-    const { data: updatedSession, error: updateError } = await supabase
-      .from("task_sessions")
-      .update(updateData)
-      .eq("id", sessionId)
-      .eq("user_id", user.id)
-      .select()
-      .single();
-
-    if (updateError) {
-      console.error("❌ Failed to update session:", updateError);
-      return {
-        success: false,
-        error: "Failed to pause session: " + updateError.message,
-      };
-    }
-
-    console.log("✅ Session updated:", updatedSession);
-
-    // Update task status back to pending and clear current_session_id
-    const taskUpdateData = {
-      status: "pending",
-      current_session_id: null,
-      updated_at: new Date().toISOString(),
-    };
-
-    console.log("📝 Updating task with:", taskUpdateData);
-
-    const { error: taskUpdateError } = await supabase
+    // Update task status
+    const { error: taskError } = await supabase
       .from("tasks")
-      .update(taskUpdateData)
-      .eq("id", session.task_id)
-      .eq("user_id", user.id);
+      .update({
+        status: "paused",
+        current_session_id: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", session.task_id);
 
-    if (taskUpdateError) {
-      console.error("❌ Failed to update task:", taskUpdateError);
-      return {
-        success: false,
-        error: "Failed to update task status: " + taskUpdateError.message,
-      };
+    if (taskError) {
+      console.error("Task update error:", taskError);
+      throw taskError;
     }
 
-    console.log("✅ Task updated to pending");
+    console.log("Task updated successfully");
 
-    revalidatePath("/tasks");
-    return { success: true, session: updatedSession };
+    // Add note if reason provided
+    if (reason) {
+      console.log("Adding pause note");
+      const { error: noteError } = await supabase.from("task_notes").insert({
+        task_id: session.task_id,
+        user_id: user.id,
+        note_text: `Task paused: ${reason}`,
+        note_type: "pause_reason",
+        session_id: sessionId,
+      });
+
+      if (noteError) {
+        console.error("Failed to add pause note:", noteError);
+        // Don't fail the whole operation for note error
+      }
+    }
+
+    revalidatePath("/dashboard/tasks");
+    console.log("pauseTaskSession completed successfully");
+    return { success: true };
   } catch (error) {
-    console.error("💥 Exception in pauseTaskSession:", error);
+    console.error("Pause task session error:", error);
     return {
       success: false,
-      error: "An unexpected error occurred: " + (error as Error).message,
+      error: error instanceof Error ? error.message : "Failed to pause task",
     };
   }
 }
 
+// Complete a task
 export async function completeTask(
   taskId: string,
-  notes?: string,
+  completionNotes?: string,
   completionPercentage = 100
 ) {
-  console.log("✅ completeTask called:", {
-    taskId,
-    notes,
-    completionPercentage,
-  });
+  const supabase = await createClient();
 
   try {
-    const supabase = await createClient();
-
-    // Get current user
     const {
       data: { user },
-      error: userError,
     } = await supabase.auth.getUser();
-    if (userError || !user) {
-      console.error("❌ User authentication failed:", userError);
-      return { success: false, error: "Authentication required" };
-    }
-
-    console.log("👤 User authenticated:", user.id);
-
-    // Get the task to verify it exists and belongs to user
-    const { data: task, error: taskError } = await supabase
-      .from("tasks")
-      .select("*")
-      .eq("id", taskId)
-      .eq("user_id", user.id)
-      .single();
-
-    if (taskError || !task) {
-      console.error("❌ Task not found:", taskError);
-      return { success: false, error: "Task not found" };
-    }
-
-    console.log("📋 Task found:", task.title);
+    if (!user) throw new Error("Not authenticated");
 
     // End any active sessions for this task
-    const { error: sessionEndError } = await supabase
+    await supabase
       .from("task_sessions")
       .update({
         ended_at: new Date().toISOString(),
-        pause_reason: "Task completed",
+        is_active: false,
+        notes: "Task completed",
       })
       .eq("task_id", taskId)
       .eq("user_id", user.id)
       .is("ended_at", null);
 
-    if (sessionEndError) {
-      console.error("❌ Failed to end active sessions:", sessionEndError);
-      // Don't return error here, continue with task completion
-    }
-
-    // Update task status to completed
-    const updateData = {
-      status: "completed",
-      completed_at: new Date().toISOString(),
-      completion_notes: notes,
-      completion_percentage: completionPercentage,
-      current_session_id: null,
-      updated_at: new Date().toISOString(),
-    };
-
-    console.log("📝 Updating task with:", updateData);
-
-    const { data: updatedTask, error: updateError } = await supabase
+    // Update task
+    const { error: taskError } = await supabase
       .from("tasks")
-      .update(updateData)
-      .eq("id", taskId)
-      .eq("user_id", user.id)
-      .select()
-      .single();
+      .update({
+        status: "completed",
+        completion_percentage: completionPercentage,
+        completed_at: new Date().toISOString(),
+        current_session_id: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", taskId);
 
-    if (updateError) {
-      console.error("❌ Failed to update task:", updateError);
-      return {
-        success: false,
-        error: "Failed to complete task: " + updateError.message,
-      };
+    if (taskError) throw taskError;
+
+    // Add completion note
+    if (completionNotes) {
+      await supabase.from("task_notes").insert({
+        task_id: taskId,
+        user_id: user.id,
+        note_text: completionNotes,
+        note_type: "completion_note",
+      });
     }
 
-    console.log("✅ Task completed:", updatedTask.title);
-
-    revalidatePath("/tasks");
-    return { success: true, task: updatedTask };
+    revalidatePath("/dashboard/tasks");
+    return { success: true };
   } catch (error) {
-    console.error("💥 Exception in completeTask:", error);
+    console.error("Complete task error:", error);
     return {
       success: false,
-      error: "An unexpected error occurred: " + (error as Error).message,
+      error: error instanceof Error ? error.message : "Failed to complete task",
     };
   }
 }
 
+// Skip task (reschedule to future) - FIXED VERSION
 export async function skipTask(
   taskId: string,
-  duration: string,
+  skipDuration: string,
   reason?: string
 ) {
-  console.log("⏭️ skipTask called:", { taskId, duration, reason });
+  console.log("🚀 skipTask called with:", { taskId, skipDuration, reason });
+  const supabase = await createClient();
 
   try {
-    const supabase = await createClient();
-
-    // Get current user
     const {
       data: { user },
-      error: userError,
     } = await supabase.auth.getUser();
-    if (userError || !user) {
-      console.error("❌ User authentication failed:", userError);
-      return { success: false, error: "Authentication required" };
-    }
+    if (!user) throw new Error("Not authenticated");
 
-    console.log("👤 User authenticated:", user.id);
-
-    // Calculate next available time based on duration
-    const now = new Date();
-    const nextAvailableAt = new Date(now);
-
-    switch (duration) {
-      case "1hour":
-        nextAvailableAt.setHours(now.getHours() + 1);
-        break;
-      case "4hours":
-        nextAvailableAt.setHours(now.getHours() + 4);
-        break;
-      case "tomorrow":
-        nextAvailableAt.setDate(now.getDate() + 1);
-        nextAvailableAt.setHours(9, 0, 0, 0); // 9 AM tomorrow
-        break;
-      case "3days":
-        nextAvailableAt.setDate(now.getDate() + 3);
-        break;
-      case "1week":
-        nextAvailableAt.setDate(now.getDate() + 7);
-        break;
-      default:
-        nextAvailableAt.setHours(now.getHours() + 1);
-    }
-
-    console.log("📅 Next available at:", nextAvailableAt.toISOString());
-
-    // End any active sessions for this task
-    const { error: sessionEndError } = await supabase
-      .from("task_sessions")
-      .update({
-        ended_at: new Date().toISOString(),
-        pause_reason: `Skipped: ${reason || "User skipped task"}`,
-      })
+    // Check if there's already an active schedule for this task to prevent duplicates
+    const { data: existingSchedule } = await supabase
+      .from("task_schedules")
+      .select("id")
       .eq("task_id", taskId)
       .eq("user_id", user.id)
-      .is("ended_at", null);
+      .eq("is_active", true)
+      .single();
 
-    if (sessionEndError) {
-      console.error("❌ Failed to end active sessions:", sessionEndError);
-      // Don't return error here, continue with task skip
+    if (existingSchedule) {
+      console.log(
+        "⚠️ Task already has an active schedule, updating existing one"
+      );
+      // Update the existing schedule instead of creating a new one
+      const now = new Date();
+      const scheduledFor = new Date(now);
+
+      switch (skipDuration) {
+        case "1hour":
+          scheduledFor.setHours(now.getHours() + 1);
+          break;
+        case "4hours":
+          scheduledFor.setHours(now.getHours() + 4);
+          break;
+        case "tomorrow":
+          scheduledFor.setDate(now.getDate() + 1);
+          scheduledFor.setHours(9, 0, 0, 0);
+          break;
+        case "3days":
+          scheduledFor.setDate(now.getDate() + 3);
+          scheduledFor.setHours(9, 0, 0, 0);
+          break;
+        case "1week":
+          scheduledFor.setDate(now.getDate() + 7);
+          scheduledFor.setHours(9, 0, 0, 0);
+          break;
+        default:
+          scheduledFor.setHours(now.getHours() + 1);
+      }
+
+      const { error: updateError } = await supabase
+        .from("task_schedules")
+        .update({
+          scheduled_for: scheduledFor.toISOString(),
+          reason: reason || "Task skipped",
+          created_at: new Date().toISOString(), // Update timestamp
+        })
+        .eq("id", existingSchedule.id);
+
+      if (updateError) throw updateError;
+
+      console.log("✅ Updated existing schedule");
+      revalidatePath("/dashboard/tasks");
+      return { success: true, scheduledFor: scheduledFor.toISOString() };
     }
 
-    // Update task with skip information
-    const updateData = {
-      status: "pending",
-      next_available_at: nextAvailableAt.toISOString(),
-      skip_reason: reason,
-      current_session_id: null,
-      updated_at: new Date().toISOString(),
-    };
+    // Calculate future date based on skip duration
+    const now = new Date();
+    const scheduledFor = new Date(now);
 
-    console.log("📝 Updating task with:", updateData);
+    switch (skipDuration) {
+      case "1hour":
+        scheduledFor.setHours(now.getHours() + 1);
+        break;
+      case "4hours":
+        scheduledFor.setHours(now.getHours() + 4);
+        break;
+      case "tomorrow":
+        scheduledFor.setDate(now.getDate() + 1);
+        scheduledFor.setHours(9, 0, 0, 0); // 9 AM tomorrow
+        break;
+      case "3days":
+        scheduledFor.setDate(now.getDate() + 3);
+        scheduledFor.setHours(9, 0, 0, 0);
+        break;
+      case "1week":
+        scheduledFor.setDate(now.getDate() + 7);
+        scheduledFor.setHours(9, 0, 0, 0);
+        break;
+      default:
+        scheduledFor.setHours(now.getHours() + 1);
+    }
 
-    const { data: updatedTask, error: updateError } = await supabase
-      .from("tasks")
-      .update(updateData)
-      .eq("id", taskId)
+    console.log("📅 Calculated scheduled time:", scheduledFor.toISOString());
+
+    // First, deactivate any existing schedules for this task (belt and suspenders approach)
+    const { error: deactivateError } = await supabase
+      .from("task_schedules")
+      .update({ is_active: false })
+      .eq("task_id", taskId)
       .eq("user_id", user.id)
+      .eq("is_active", true);
+
+    if (deactivateError) {
+      console.error(
+        "⚠️ Failed to deactivate existing schedules:",
+        deactivateError
+      );
+      // Continue anyway, but log the error
+    } else {
+      console.log("✅ Deactivated existing schedules");
+    }
+
+    // Create new schedule entry
+    const { data: schedule, error: scheduleError } = await supabase
+      .from("task_schedules")
+      .insert({
+        task_id: taskId,
+        user_id: user.id,
+        scheduled_for: scheduledFor.toISOString(),
+        schedule_type: "skip",
+        reason: reason || "Task skipped",
+        is_active: true,
+      })
       .select()
       .single();
 
-    if (updateError) {
-      console.error("❌ Failed to update task:", updateError);
-      return {
-        success: false,
-        error: "Failed to skip task: " + updateError.message,
-      };
+    if (scheduleError) {
+      console.error("❌ Schedule creation error:", scheduleError);
+      throw scheduleError;
     }
 
-    console.log("✅ Task skipped:", updatedTask.title);
+    console.log("✅ Schedule created:", schedule.id);
 
-    revalidatePath("/tasks");
-    return { success: true, task: updatedTask };
+    // Update task status to scheduled
+    const { error: taskError } = await supabase
+      .from("tasks")
+      .update({
+        status: "scheduled",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", taskId)
+      .eq("created_by", user.id);
+
+    if (taskError) {
+      console.error("❌ Task update error:", taskError);
+      throw taskError;
+    }
+
+    console.log("✅ Task status updated to scheduled");
+
+    // Add note to task_notes
+    const noteText = `Task skipped for ${skipDuration}${
+      reason ? `: ${reason}` : ""
+    }`;
+    const { error: noteError } = await supabase.from("task_notes").insert({
+      task_id: taskId,
+      user_id: user.id,
+      note_text: noteText,
+      note_type: "skip_reason",
+    });
+
+    if (noteError) {
+      console.error("⚠️ Failed to add skip note:", noteError);
+      // Don't fail the whole operation for note error
+    } else {
+      console.log("✅ Skip note added successfully");
+    }
+
+    revalidatePath("/dashboard/tasks");
+    console.log("🎉 skipTask completed successfully");
+    return { success: true, scheduledFor: scheduledFor.toISOString() };
   } catch (error) {
-    console.error("💥 Exception in skipTask:", error);
+    console.error("❌ Skip task error:", error);
     return {
       success: false,
-      error: "An unexpected error occurred: " + (error as Error).message,
+      error: error instanceof Error ? error.message : "Failed to skip task",
     };
   }
 }
 
-export async function getActiveSessions() {
-  console.log("🔍 getActiveSessions called");
+// Get active sessions
+export async function getActiveSessions(): Promise<TaskSession[]> {
+  const supabase = await createClient();
 
   try {
-    const supabase = await createClient();
-
-    // Get current user
     const {
       data: { user },
-      error: userError,
     } = await supabase.auth.getUser();
-    if (userError || !user) {
-      console.error("❌ User authentication failed:", userError);
-      return [];
-    }
+    if (!user) return [];
 
-    console.log("👤 User authenticated:", user.id);
+    const { data, error } = await supabase.rpc("get_active_sessions", {
+      p_user_id: user.id,
+    });
 
-    const { data: sessions, error } = await supabase
-      .from("task_sessions")
-      .select(
-        `
-        *,
-        tasks (
-          id,
-          title,
-          description,
-          status
-        )
-      `
-      )
-      .eq("user_id", user.id)
-      .is("ended_at", null)
-      .order("started_at", { ascending: false });
-
-    if (error) {
-      console.error("❌ Failed to get active sessions:", error);
-      return [];
-    }
-
-    console.log("📊 Active sessions found:", sessions?.length || 0);
-    return sessions || [];
+    if (error) throw error;
+    return data || [];
   } catch (error) {
-    console.error("💥 Exception in getActiveSessions:", error);
+    console.error("Get active sessions error:", error);
     return [];
   }
 }
 
-export async function addTaskNote(
-  taskId: string,
-  noteText: string,
-  noteType = "general"
-) {
-  console.log("📝 addTaskNote called:", { taskId, noteText, noteType });
+// Check for stale sessions (inactive > 30 minutes)
+export async function getStaleSessionsCheck(): Promise<StaleSession[]> {
+  const supabase = await createClient();
 
   try {
-    const supabase = await createClient();
-
-    // Get current user
     const {
       data: { user },
-      error: userError,
     } = await supabase.auth.getUser();
-    if (userError || !user) {
-      console.error("❌ User authentication failed:", userError);
-      return { success: false, error: "Authentication required" };
-    }
+    if (!user) return [];
 
-    console.log("👤 User authenticated:", user.id);
+    const { data, error } = await supabase.rpc("get_stale_sessions", {
+      p_user_id: user.id,
+    });
 
-    // Insert the note
-    const { data: note, error: noteError } = await supabase
-      .from("task_notes")
-      .insert({
-        task_id: taskId,
-        user_id: user.id,
-        note_text: noteText,
-        note_type: noteType,
-        created_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    if (noteError) {
-      console.error("❌ Failed to add note:", noteError);
-      return {
-        success: false,
-        error: "Failed to add note: " + noteError.message,
-      };
-    }
-
-    console.log("✅ Note added:", note.id);
-
-    revalidatePath("/tasks");
-    return { success: true, note };
+    if (error) throw error;
+    return data || [];
   } catch (error) {
-    console.error("💥 Exception in addTaskNote:", error);
-    return {
-      success: false,
-      error: "An unexpected error occurred: " + (error as Error).message,
-    };
+    console.error("Get stale sessions error:", error);
+    return [];
   }
 }
 
+// Update estimated time for task
 export async function updateTaskEstimatedTime(
   taskId: string,
   estimatedMinutes: number
 ) {
-  console.log("⏱️ updateTaskEstimatedTime called:", {
-    taskId,
-    estimatedMinutes,
-  });
+  const supabase = await createClient();
 
   try {
-    const supabase = await createClient();
-
-    // Get current user
     const {
       data: { user },
-      error: userError,
     } = await supabase.auth.getUser();
-    if (userError || !user) {
-      console.error("❌ User authentication failed:", userError);
-      return { success: false, error: "Authentication required" };
-    }
+    if (!user) throw new Error("Not authenticated");
 
-    console.log("👤 User authenticated:", user.id);
-
-    // Update the task's estimated time
-    const { data: task, error: updateError } = await supabase
+    const { error } = await supabase
       .from("tasks")
       .update({
         estimated_minutes: estimatedMinutes,
         updated_at: new Date().toISOString(),
       })
       .eq("id", taskId)
-      .eq("user_id", user.id)
-      .select()
-      .single();
+      .eq("created_by", user.id);
 
-    if (updateError) {
-      console.error("❌ Failed to update estimated time:", updateError);
-      return {
-        success: false,
-        error: "Failed to update estimated time: " + updateError.message,
-      };
-    }
+    if (error) throw error;
 
-    console.log("✅ Estimated time updated:", task.title);
-
-    revalidatePath("/tasks");
-    return { success: true, task };
+    revalidatePath("/dashboard/tasks");
+    return { success: true };
   } catch (error) {
-    console.error("💥 Exception in updateTaskEstimatedTime:", error);
+    console.error("Update estimated time error:", error);
     return {
       success: false,
-      error: "An unexpected error occurred: " + (error as Error).message,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to update estimated time",
     };
   }
 }
 
-export async function getStaleSessionsCheck() {
-  console.log("🔍 getStaleSessionsCheck called");
+// Add task note
+export async function addTaskNote(
+  taskId: string,
+  noteText: string,
+  noteType = "general"
+) {
+  const supabase = await createClient();
 
   try {
-    const supabase = await createClient();
-
-    // Get current user
     const {
       data: { user },
-      error: userError,
     } = await supabase.auth.getUser();
-    if (userError || !user) {
-      console.error("❌ User authentication failed:", userError);
-      return [];
-    }
+    if (!user) throw new Error("Not authenticated");
 
-    console.log("👤 User authenticated:", user.id);
+    const { error } = await supabase.from("task_notes").insert({
+      task_id: taskId,
+      user_id: user.id,
+      note_text: noteText,
+      note_type: noteType,
+    });
 
-    // Get sessions that have been active for more than 30 minutes without updates
-    const thirtyMinutesAgo = new Date();
-    thirtyMinutesAgo.setMinutes(thirtyMinutesAgo.getMinutes() - 30);
+    if (error) throw error;
 
-    const { data: staleSessions, error } = await supabase
-      .from("task_sessions")
-      .select(
-        `
-        *,
-        tasks (
-          id,
-          title,
-          description,
-          status
-        )
-      `
-      )
-      .eq("user_id", user.id)
-      .is("ended_at", null)
-      .lt("started_at", thirtyMinutesAgo.toISOString())
-      .order("started_at", { ascending: false });
-
-    if (error) {
-      console.error("❌ Failed to get stale sessions:", error);
-      return [];
-    }
-
-    console.log("📊 Stale sessions found:", staleSessions?.length || 0);
-
-    // Transform to match the expected interface
-    const transformedSessions =
-      staleSessions?.map((session) => ({
-        session_id: session.id,
-        task_id: session.task_id,
-        task_title: session.tasks?.title || "Unknown Task",
-        started_at: session.started_at,
-        minutes_inactive: Math.floor(
-          (new Date().getTime() - new Date(session.started_at).getTime()) /
-            (1000 * 60)
-        ),
-      })) || [];
-
-    return transformedSessions;
+    revalidatePath("/dashboard/tasks");
+    return { success: true };
   } catch (error) {
-    console.error("💥 Exception in getStaleSessionsCheck:", error);
-    return [];
+    console.error("Add task note error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to add note",
+    };
   }
 }
 
+// Handle stale session resolution
 export async function resolveStaleSession(
   sessionId: string,
   action: "continue" | "pause" | "complete",
   reason?: string
 ) {
-  console.log("🔧 resolveStaleSession called:", { sessionId, action, reason });
+  const supabase = await createClient();
 
   try {
-    const supabase = await createClient();
-
-    // Get current user
     const {
       data: { user },
-      error: userError,
     } = await supabase.auth.getUser();
-    if (userError || !user) {
-      console.error("❌ User authentication failed:", userError);
-      return { success: false, error: "Authentication required" };
-    }
+    if (!user) throw new Error("Not authenticated");
 
-    console.log("👤 User authenticated:", user.id);
-
-    // Get the session details
+    // Get session details
     const { data: session, error: sessionError } = await supabase
       .from("task_sessions")
-      .select("*, tasks(*)")
+      .select("*, tasks(id, title)")
       .eq("id", sessionId)
       .eq("user_id", user.id)
       .single();
 
-    if (sessionError || !session) {
-      console.error("❌ Session not found:", sessionError);
-      return { success: false, error: "Session not found" };
-    }
-
-    console.log("📋 Session found:", session.id);
+    if (sessionError) throw sessionError;
 
     switch (action) {
       case "continue":
-        // Just add a note if reason provided
+        // Keep session active, just add a note
         if (reason) {
           await addTaskNote(
             session.task_id,
@@ -717,36 +563,24 @@ export async function resolveStaleSession(
             "context_update"
           );
         }
-        console.log("✅ Session continued");
         break;
 
       case "pause":
-        const pauseResult = await pauseTaskSession(sessionId, reason);
-        if (!pauseResult.success) {
-          return pauseResult;
-        }
-        console.log("✅ Session paused");
+        await pauseTaskSession(sessionId, reason);
         break;
 
       case "complete":
-        const completeResult = await completeTask(session.task_id, reason);
-        if (!completeResult.success) {
-          return completeResult;
-        }
-        console.log("✅ Task completed");
+        await completeTask(session.task_id, reason);
         break;
-
-      default:
-        return { success: false, error: "Invalid action" };
     }
 
-    revalidatePath("/tasks");
     return { success: true };
   } catch (error) {
-    console.error("💥 Exception in resolveStaleSession:", error);
+    console.error("Resolve stale session error:", error);
     return {
       success: false,
-      error: "An unexpected error occurred: " + (error as Error).message,
+      error:
+        error instanceof Error ? error.message : "Failed to resolve session",
     };
   }
 }

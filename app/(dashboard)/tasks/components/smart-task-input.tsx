@@ -1,44 +1,46 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Sparkles, Loader2, Lightbulb } from "lucide-react"
-import { createTasksFromAI } from "../actions/ai-task-actions-enhanced"
-import { toast } from "sonner"
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Sparkles, Loader2, Lightbulb } from "lucide-react";
+import { createTasksFromAI } from "../actions/ai-task-actions-enhanced";
+import { toast } from "sonner";
 
 interface SmartTaskInputProps {
-  onTaskCreated: () => void
+  onTaskCreated: () => void;
 }
 
 export function SmartTaskInput({ onTaskCreated }: SmartTaskInputProps) {
-  const [input, setInput] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleGenerate = async () => {
     if (!input.trim()) {
-      toast.error("Please enter a description")
-      return
+      toast.error("Please enter a description");
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const result = await createTasksFromAI(input)
+      const result = await createTasksFromAI(input);
 
       if (result.success) {
-        toast.success(`Created ${result.tasks?.length || 0} tasks successfully!`)
-        setInput("")
-        onTaskCreated()
+        toast.success(
+          `Created ${result.tasks?.length || 0} tasks successfully!`
+        );
+        setInput("");
+        onTaskCreated();
       } else {
-        toast.error(result.error || "Failed to generate tasks")
+        toast.error(result.error || "Failed to generate tasks");
       }
     } catch (error) {
-      toast.error("Something went wrong")
+      toast.error("Something went wrong");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const examplePrompts = [
     "Plan my week for the product launch",
@@ -46,7 +48,7 @@ export function SmartTaskInput({ onTaskCreated }: SmartTaskInputProps) {
     "Prepare for the quarterly review meeting",
     "Set up a new fitness routine",
     "Learn React and build a portfolio",
-  ]
+  ];
 
   return (
     <Card className="border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
@@ -113,5 +115,5 @@ Examples:
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

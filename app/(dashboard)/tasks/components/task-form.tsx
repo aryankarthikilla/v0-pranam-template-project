@@ -1,22 +1,45 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon, Loader2 } from "lucide-react"
-import { format } from "date-fns"
-import { cn } from "@/lib/utils"
-import { useTranslations } from "@/lib/i18n/hooks"
-import { createTask, updateTask } from "../actions/task-actions"
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarIcon, Loader2 } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { useTranslations } from "@/lib/i18n/hooks";
+import { createTask, updateTask } from "../actions/task-actions";
 
 const taskSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -25,18 +48,23 @@ const taskSchema = z.object({
   status: z.enum(["pending", "in_progress", "completed"]),
   due_date: z.date().optional(),
   parent_id: z.string().optional(),
-})
+});
 
 interface TaskFormProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  task?: any
-  onSuccess: () => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  task?: any;
+  onSuccess: () => void;
 }
 
-export function TaskForm({ open, onOpenChange, task, onSuccess }: TaskFormProps) {
-  const { t } = useTranslations("tasks")
-  const [isSubmitting, setIsSubmitting] = useState(false)
+export function TaskForm({
+  open,
+  onOpenChange,
+  task,
+  onSuccess,
+}: TaskFormProps) {
+  const { t } = useTranslations("tasks");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof taskSchema>>({
     resolver: zodResolver(taskSchema),
@@ -48,7 +76,7 @@ export function TaskForm({ open, onOpenChange, task, onSuccess }: TaskFormProps)
       due_date: undefined,
       parent_id: undefined,
     },
-  })
+  });
 
   useEffect(() => {
     if (task) {
@@ -59,7 +87,7 @@ export function TaskForm({ open, onOpenChange, task, onSuccess }: TaskFormProps)
         status: task.status || "pending",
         due_date: task.due_date ? new Date(task.due_date) : undefined,
         parent_id: task.parent_id || undefined,
-      })
+      });
     } else {
       form.reset({
         title: "",
@@ -68,33 +96,35 @@ export function TaskForm({ open, onOpenChange, task, onSuccess }: TaskFormProps)
         status: "pending",
         due_date: undefined,
         parent_id: undefined,
-      })
+      });
     }
-  }, [task, form])
+  }, [task, form]);
 
   const onSubmit = async (values: z.infer<typeof taskSchema>) => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
       if (task?.id) {
-        await updateTask(task.id, values)
+        await updateTask(task.id, values);
       } else {
-        await createTask(values)
+        await createTask(values);
       }
-      onSuccess()
-      onOpenChange(false)
-      form.reset()
+      onSuccess();
+      onOpenChange(false);
+      form.reset();
     } catch (error) {
-      console.error("Error saving task:", error)
+      console.error("Error saving task:", error);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px] bg-background border-border">
         <DialogHeader>
-          <DialogTitle className="text-foreground">{task?.id ? t("editTask") : t("createTask")}</DialogTitle>
+          <DialogTitle className="text-foreground">
+            {task?.id ? t("editTask") : t("createTask")}
+          </DialogTitle>
           <DialogDescription className="text-muted-foreground">
             {task?.id ? t("editTaskDescription") : t("createTaskDescription")}
           </DialogDescription>
@@ -107,7 +137,9 @@ export function TaskForm({ open, onOpenChange, task, onSuccess }: TaskFormProps)
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-foreground">{t("taskTitle")}</FormLabel>
+                  <FormLabel className="text-foreground">
+                    {t("taskTitle")}
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder={t("taskTitlePlaceholder")}
@@ -125,7 +157,9 @@ export function TaskForm({ open, onOpenChange, task, onSuccess }: TaskFormProps)
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-foreground">{t("description")}</FormLabel>
+                  <FormLabel className="text-foreground">
+                    {t("description")}
+                  </FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder={t("descriptionPlaceholder")}
@@ -144,8 +178,13 @@ export function TaskForm({ open, onOpenChange, task, onSuccess }: TaskFormProps)
                 name="priority"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-foreground">{t("priority")}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel className="text-foreground">
+                      {t("priority")}
+                    </FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger className="bg-background border-border text-foreground">
                           <SelectValue placeholder={t("selectPriority")} />
@@ -153,9 +192,15 @@ export function TaskForm({ open, onOpenChange, task, onSuccess }: TaskFormProps)
                       </FormControl>
                       <SelectContent className="bg-popover border-border">
                         <SelectItem value="low">{t("priority.low")}</SelectItem>
-                        <SelectItem value="medium">{t("priority.medium")}</SelectItem>
-                        <SelectItem value="high">{t("priority.high")}</SelectItem>
-                        <SelectItem value="urgent">{t("priority.urgent")}</SelectItem>
+                        <SelectItem value="medium">
+                          {t("priority.medium")}
+                        </SelectItem>
+                        <SelectItem value="high">
+                          {t("priority.high")}
+                        </SelectItem>
+                        <SelectItem value="urgent">
+                          {t("priority.urgent")}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -168,17 +213,28 @@ export function TaskForm({ open, onOpenChange, task, onSuccess }: TaskFormProps)
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-foreground">{t("status")}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel className="text-foreground">
+                      {t("status")}
+                    </FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger className="bg-background border-border text-foreground">
                           <SelectValue placeholder={t("selectStatus")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent className="bg-popover border-border">
-                        <SelectItem value="pending">{t("status.pending")}</SelectItem>
-                        <SelectItem value="in_progress">{t("status.inProgress")}</SelectItem>
-                        <SelectItem value="completed">{t("status.completed")}</SelectItem>
+                        <SelectItem value="pending">
+                          {t("status.pending")}
+                        </SelectItem>
+                        <SelectItem value="in_progress">
+                          {t("status.inProgress")}
+                        </SelectItem>
+                        <SelectItem value="completed">
+                          {t("status.completed")}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -192,7 +248,9 @@ export function TaskForm({ open, onOpenChange, task, onSuccess }: TaskFormProps)
               name="due_date"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel className="text-foreground">{t("dueDate")}</FormLabel>
+                  <FormLabel className="text-foreground">
+                    {t("dueDate")}
+                  </FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -200,20 +258,29 @@ export function TaskForm({ open, onOpenChange, task, onSuccess }: TaskFormProps)
                           variant={"outline"}
                           className={cn(
                             "w-full pl-3 text-left font-normal bg-background border-border text-foreground hover:bg-accent",
-                            !field.value && "text-muted-foreground",
+                            !field.value && "text-muted-foreground"
                           )}
                         >
-                          {field.value ? format(field.value, "PPP") : <span>{t("pickDate")}</span>}
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>{t("pickDate")}</span>
+                          )}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 bg-popover border-border" align="start">
+                    <PopoverContent
+                      className="w-auto p-0 bg-popover border-border"
+                      align="start"
+                    >
                       <Calendar
                         mode="single"
                         selected={field.value}
                         onSelect={field.onChange}
-                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                        disabled={(date) =>
+                          date < new Date(new Date().setHours(0, 0, 0, 0))
+                        }
                         initialFocus
                         className="bg-popover"
                       />
@@ -238,7 +305,9 @@ export function TaskForm({ open, onOpenChange, task, onSuccess }: TaskFormProps)
                 disabled={isSubmitting}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isSubmitting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
                 {task?.id ? t("updateTask") : t("createTask")}
               </Button>
             </div>
@@ -246,5 +315,5 @@ export function TaskForm({ open, onOpenChange, task, onSuccess }: TaskFormProps)
         </Form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

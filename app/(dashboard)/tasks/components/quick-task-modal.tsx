@@ -1,68 +1,78 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef, useEffect } from "react"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Loader2, Zap } from "lucide-react"
-import { useTranslations } from "@/lib/i18n/hooks"
-import { createTask } from "../actions/task-actions"
+import { useState, useRef, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Loader2, Zap } from "lucide-react";
+import { useTranslations } from "@/lib/i18n/hooks";
+import { createTask } from "../actions/task-actions";
 
 interface QuickTaskModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSuccess: () => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
 }
 
-export function QuickTaskModal({ open, onOpenChange, onSuccess }: QuickTaskModalProps) {
-  const { t } = useTranslations("tasks")
-  const [title, setTitle] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
+export function QuickTaskModal({
+  open,
+  onOpenChange,
+  onSuccess,
+}: QuickTaskModalProps) {
+  const { t } = useTranslations("tasks");
+  const [title, setTitle] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open && inputRef.current) {
       // Focus on input when modal opens
       setTimeout(() => {
-        inputRef.current?.focus()
-      }, 100)
+        inputRef.current?.focus();
+      }, 100);
     }
-  }, [open])
+  }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!title.trim()) return
+    e.preventDefault();
+    if (!title.trim()) return;
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
       await createTask({
         title: title.trim(),
         priority: "medium",
         status: "pending",
-      })
+      });
 
-      setTitle("")
-      onSuccess()
+      setTitle("");
+      onSuccess();
 
       // Focus back on input after successful submission
       setTimeout(() => {
-        inputRef.current?.focus()
-      }, 100)
+        inputRef.current?.focus();
+      }, 100);
     } catch (error) {
-      console.error("Error creating quick task:", error)
+      console.error("Error creating quick task:", error);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSubmit(e)
+      e.preventDefault();
+      handleSubmit(e);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -72,7 +82,9 @@ export function QuickTaskModal({ open, onOpenChange, onSuccess }: QuickTaskModal
             <Zap className="h-5 w-5 text-amber-500" />
             {t("quickTask")}
           </DialogTitle>
-          <DialogDescription className="text-muted-foreground">{t("quickTaskDescription")}</DialogDescription>
+          <DialogDescription className="text-muted-foreground">
+            {t("quickTaskDescription")}
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -113,8 +125,10 @@ export function QuickTaskModal({ open, onOpenChange, onSuccess }: QuickTaskModal
           </div>
         </form>
 
-        <div className="text-xs text-muted-foreground">{t("quickTaskHint")}</div>
+        <div className="text-xs text-muted-foreground">
+          {t("quickTaskHint")}
+        </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

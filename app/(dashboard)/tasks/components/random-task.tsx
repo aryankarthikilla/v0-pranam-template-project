@@ -1,69 +1,75 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Shuffle, RefreshCw, CheckCircle } from "lucide-react"
-import { useTranslations } from "@/lib/i18n/hooks"
-import { getRandomTask, toggleTaskStatus } from "../actions/task-actions"
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Shuffle, RefreshCw, CheckCircle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n/hooks";
+import { getRandomTask, toggleTaskStatus } from "../actions/task-actions";
 
 interface RandomTaskProps {
-  onRefresh: () => void
+  onRefresh: () => void;
 }
 
 export function RandomTask({ onRefresh }: RandomTaskProps) {
-  const { t } = useTranslations("tasks")
-  const [randomTask, setRandomTask] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isCompleting, setIsCompleting] = useState(false)
+  const { t } = useTranslations("tasks");
+  const [randomTask, setRandomTask] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
 
   const fetchRandomTask = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const task = await getRandomTask()
-      setRandomTask(task)
+      const task = await getRandomTask();
+      setRandomTask(task);
     } catch (error) {
-      console.error("Error fetching random task:", error)
+      console.error("Error fetching random task:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleMarkComplete = async () => {
-    if (!randomTask) return
+    if (!randomTask) return;
 
-    setIsCompleting(true)
+    setIsCompleting(true);
     try {
-      await toggleTaskStatus(randomTask.id)
-      onRefresh()
+      await toggleTaskStatus(randomTask.id);
+      onRefresh();
       // Get a new random task after completing this one
-      await fetchRandomTask()
+      await fetchRandomTask();
     } catch (error) {
-      console.error("Error marking task complete:", error)
+      console.error("Error marking task complete:", error);
     } finally {
-      setIsCompleting(false)
+      setIsCompleting(false);
     }
-  }
+  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "urgent":
-        return "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800"
+        return "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800";
       case "high":
-        return "bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300 border-orange-200 dark:border-orange-800"
+        return "bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300 border-orange-200 dark:border-orange-800";
       case "medium":
-        return "bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800"
+        return "bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800";
       case "low":
-        return "bg-emerald-100 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+        return "bg-emerald-100 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800";
       default:
-        return "bg-muted text-muted-foreground border-border"
+        return "bg-muted text-muted-foreground border-border";
     }
-  }
+  };
 
   useEffect(() => {
-    fetchRandomTask()
-  }, [])
+    fetchRandomTask();
+  }, []);
 
   return (
     <Card className="border-border bg-card">
@@ -72,7 +78,9 @@ export function RandomTask({ onRefresh }: RandomTaskProps) {
           <Shuffle className="h-5 w-5 text-primary" />
           {t("randomTask")}
         </CardTitle>
-        <CardDescription className="text-muted-foreground">{t("randomTaskDescription")}</CardDescription>
+        <CardDescription className="text-muted-foreground">
+          {t("randomTaskDescription")}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -83,12 +91,18 @@ export function RandomTask({ onRefresh }: RandomTaskProps) {
           <div className="space-y-4">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h3 className="font-medium text-card-foreground">{randomTask.title}</h3>
+                <h3 className="font-medium text-card-foreground">
+                  {randomTask.title}
+                </h3>
                 {randomTask.description && (
-                  <p className="text-sm text-muted-foreground mt-1">{randomTask.description}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {randomTask.description}
+                  </p>
                 )}
               </div>
-              <Badge className={getPriorityColor(randomTask.priority)}>{t(`priority.${randomTask.priority}`)}</Badge>
+              <Badge className={getPriorityColor(randomTask.priority)}>
+                {t(`priority.${randomTask.priority}`)}
+              </Badge>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -132,5 +146,5 @@ export function RandomTask({ onRefresh }: RandomTaskProps) {
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

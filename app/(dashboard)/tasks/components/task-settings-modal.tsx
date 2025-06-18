@@ -1,55 +1,82 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Settings } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { getTaskSettings, updateTaskSettings, getFilterOptions } from "../actions/task-settings-actions"
+import { useState, useEffect } from "react";
+import { Settings } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  getTaskSettings,
+  updateTaskSettings,
+  getFilterOptions,
+} from "../actions/task-settings-actions";
 
 interface TaskSettingsModalProps {
-  onSettingsChange?: () => void
+  onSettingsChange?: () => void;
 }
 
-export function TaskSettingsModal({ onSettingsChange }: TaskSettingsModalProps) {
-  const [open, setOpen] = useState(false)
-  const [currentSetting, setCurrentSetting] = useState<string>("")
-  const [filterOptions, setFilterOptions] = useState<Array<{ filter_key: string }>>([])
-  const [loading, setLoading] = useState(false)
+export function TaskSettingsModal({
+  onSettingsChange,
+}: TaskSettingsModalProps) {
+  const [open, setOpen] = useState(false);
+  const [currentSetting, setCurrentSetting] = useState<string>("");
+  const [filterOptions, setFilterOptions] = useState<
+    Array<{ filter_key: string }>
+  >([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (open) {
-      loadData()
+      loadData();
     }
-  }, [open])
+  }, [open]);
 
   const loadData = async () => {
     try {
-      const [settings, options] = await Promise.all([getTaskSettings(), getFilterOptions()])
-      setCurrentSetting(settings.show_completed_tasks || "no")
-      setFilterOptions(options)
+      const [settings, options] = await Promise.all([
+        getTaskSettings(),
+        getFilterOptions(),
+      ]);
+      setCurrentSetting(settings.show_completed_tasks || "no");
+      setFilterOptions(options);
     } catch (error) {
-      console.error("Failed to load settings:", error)
+      console.error("Failed to load settings:", error);
     }
-  }
+  };
 
   const handleSettingChange = async (value: string) => {
-    setLoading(true)
+    setLoading(true);
     try {
-      await updateTaskSettings(value)
-      setCurrentSetting(value)
-      onSettingsChange?.()
+      await updateTaskSettings(value);
+      setCurrentSetting(value);
+      onSettingsChange?.();
     } catch (error) {
-      console.error("Failed to update settings:", error)
+      console.error("Failed to update settings:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:scale-110 transition-transform duration-200">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0 hover:scale-110 transition-transform duration-200"
+        >
           <Settings className="h-3 w-3 text-muted-foreground hover:text-foreground transition-colors" />
         </Button>
       </DialogTrigger>
@@ -60,7 +87,11 @@ export function TaskSettingsModal({ onSettingsChange }: TaskSettingsModalProps) 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Show completed tasks</label>
-            <Select value={currentSetting} onValueChange={handleSettingChange} disabled={loading}>
+            <Select
+              value={currentSetting}
+              onValueChange={handleSettingChange}
+              disabled={loading}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select filter..." />
               </SelectTrigger>
@@ -69,7 +100,10 @@ export function TaskSettingsModal({ onSettingsChange }: TaskSettingsModalProps) 
                 {filterOptions
                   .filter((option) => option.filter_key !== "no")
                   .map((option) => (
-                    <SelectItem key={option.filter_key} value={option.filter_key}>
+                    <SelectItem
+                      key={option.filter_key}
+                      value={option.filter_key}
+                    >
                       {option.filter_key}
                     </SelectItem>
                   ))}
@@ -79,5 +113,5 @@ export function TaskSettingsModal({ onSettingsChange }: TaskSettingsModalProps) 
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

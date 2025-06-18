@@ -1,60 +1,68 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Calendar, Clock, Flag, Plus } from "lucide-react"
-import { createTask } from "../actions/task-actions"
-import { useRouter } from "next/navigation"
-import { toast } from "@/hooks/use-toast"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar, Clock, Flag, Plus } from "lucide-react";
+import { createTask } from "../actions/task-actions";
+import { useRouter } from "next/navigation";
+import { toast } from "@/hooks/use-toast";
 
 interface CreateTaskProps {
-  onTaskCreated?: () => void
-  className?: string
+  onTaskCreated?: () => void;
+  className?: string;
 }
 
 export function CreateTask({ onTaskCreated, className }: CreateTaskProps) {
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     priority: "medium" as "low" | "medium" | "high",
     due_date: "",
     estimated_time: "",
-  })
-  const router = useRouter()
+  });
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!formData.title.trim()) {
       toast({
         title: "Error",
         description: "Task title is required",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       const taskData = {
         ...formData,
         due_date: formData.due_date || null,
-        estimated_time: formData.estimated_time ? Number.parseInt(formData.estimated_time) : null,
-      }
+        estimated_time: formData.estimated_time
+          ? Number.parseInt(formData.estimated_time)
+          : null,
+      };
 
-      await createTask(taskData)
+      await createTask(taskData);
 
       toast({
         title: "Success",
         description: "Task created successfully",
-      })
+      });
 
       // Reset form
       setFormData({
@@ -63,25 +71,25 @@ export function CreateTask({ onTaskCreated, className }: CreateTaskProps) {
         priority: "medium",
         due_date: "",
         estimated_time: "",
-      })
+      });
 
-      onTaskCreated?.()
-      router.refresh()
+      onTaskCreated?.();
+      router.refresh();
     } catch (error) {
-      console.error("Error creating task:", error)
+      console.error("Error creating task:", error);
       toast({
         title: "Error",
         description: "Failed to create task. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   return (
     <Card className={className}>
@@ -118,7 +126,10 @@ export function CreateTask({ onTaskCreated, className }: CreateTaskProps) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="priority">Priority</Label>
-              <Select value={formData.priority} onValueChange={(value) => handleInputChange("priority", value)}>
+              <Select
+                value={formData.priority}
+                onValueChange={(value) => handleInputChange("priority", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
@@ -152,7 +163,9 @@ export function CreateTask({ onTaskCreated, className }: CreateTaskProps) {
                   id="due_date"
                   type="date"
                   value={formData.due_date}
-                  onChange={(e) => handleInputChange("due_date", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("due_date", e.target.value)
+                  }
                 />
                 <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               </div>
@@ -165,7 +178,9 @@ export function CreateTask({ onTaskCreated, className }: CreateTaskProps) {
                   id="estimated_time"
                   type="number"
                   value={formData.estimated_time}
-                  onChange={(e) => handleInputChange("estimated_time", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("estimated_time", e.target.value)
+                  }
                   placeholder="60"
                   min="1"
                 />
@@ -180,5 +195,5 @@ export function CreateTask({ onTaskCreated, className }: CreateTaskProps) {
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }

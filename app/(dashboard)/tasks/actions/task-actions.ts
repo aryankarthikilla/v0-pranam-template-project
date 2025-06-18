@@ -1,70 +1,73 @@
-"use server"
+"use server";
 
-import { createClient } from "@/utils/supabase/server"
-import { revalidatePath } from "next/cache"
+import { createClient } from "@/utils/supabase/server";
+import { revalidatePath } from "next/cache";
 
 export async function getTasks() {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   try {
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = await supabase.auth.getUser();
 
     if (!user) {
-      throw new Error("User not authenticated")
+      throw new Error("User not authenticated");
     }
 
-    console.log("🔍 Calling get_user_tasks stored procedure for user:", user.id)
+    console.log(
+      "🔍 Calling get_user_tasks stored procedure for user:",
+      user.id
+    );
 
     // Call your stored procedure
     const { data, error } = await supabase.rpc("get_user_tasks", {
       p_user_id: user.id,
-    })
+    });
 
     if (error) {
-      console.error("❌ Stored procedure error:", error)
-      throw new Error(`Error calling stored procedure: ${error.message}`)
+      console.error("❌ Stored procedure error:", error);
+      throw new Error(`Error calling stored procedure: ${error.message}`);
     }
 
-    console.log(`✅ Stored procedure returned ${data?.length || 0} tasks`)
+    console.log(`✅ Stored procedure returned ${data?.length || 0} tasks`);
 
-    return data || []
+    return data || [];
   } catch (error) {
-    console.error("❌ Error in getTasks:", error)
-    return []
+    console.error("❌ Error in getTasks:", error);
+    return [];
   }
 }
 
 export async function getCompletedFilters() {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   try {
     const { data, error } = await supabase
       .from("completed_filters")
       .select("filter_key, interval_value")
-      .order("interval_value")
+      .order("interval_value");
 
     if (error) {
-      console.error("❌ Error fetching completed filters:", error)
-      throw new Error(`Error fetching completed filters: ${error.message}`)
+      console.error("❌ Error fetching completed filters:", error);
+      throw new Error(`Error fetching completed filters: ${error.message}`);
     }
 
-    return data || []
+    return data || [];
   } catch (error) {
-    console.error("❌ Error in getCompletedFilters:", error)
-    return []
+    console.error("❌ Error in getCompletedFilters:", error);
+    return [];
   }
 }
 
 export async function createTask(taskData: any) {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
   if (!user) {
-    throw new Error("User not authenticated")
+    throw new Error("User not authenticated");
   }
 
   const { data, error } = await supabase
@@ -75,60 +78,69 @@ export async function createTask(taskData: any) {
       updated_by: user.id,
     })
     .select()
-    .single()
+    .single();
 
   if (error) {
-    throw new Error(`Error creating task: ${error.message}`)
+    throw new Error(`Error creating task: ${error.message}`);
   }
 
-  revalidatePath("/dashboard/tasks")
-  return data
+  revalidatePath("/dashboard/tasks");
+  return data;
 }
 
 export async function updateTask(taskId: string, taskData: any) {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
   if (!user) {
-    throw new Error("User not authenticated")
+    throw new Error("User not authenticated");
   }
 
   const updateData = {
     ...taskData,
     updated_by: user.id,
     updated_at: new Date().toISOString(),
-  }
+  };
 
   // Handle completed_at field for both 'completed' and 'done' status
   if (taskData.status === "completed" || taskData.status === "done") {
-    updateData.completed_at = new Date().toISOString()
-    console.log("✅ Setting completed_at to:", updateData.completed_at)
-  } else if (taskData.status && taskData.status !== "completed" && taskData.status !== "done") {
-    updateData.completed_at = null
-    console.log("🔄 Clearing completed_at")
+    updateData.completed_at = new Date().toISOString();
+    console.log("✅ Setting completed_at to:", updateData.completed_at);
+  } else if (
+    taskData.status &&
+    taskData.status !== "completed" &&
+    taskData.status !== "done"
+  ) {
+    updateData.completed_at = null;
+    console.log("🔄 Clearing completed_at");
   }
 
-  const { data, error } = await supabase.from("tasks").update(updateData).eq("id", taskId).select().single()
+  const { data, error } = await supabase
+    .from("tasks")
+    .update(updateData)
+    .eq("id", taskId)
+    .select()
+    .single();
 
   if (error) {
-    throw new Error(`Error updating task: ${error.message}`)
+    throw new Error(`Error updating task: ${error.message}`);
   }
 
-  revalidatePath("/dashboard/tasks")
-  return data
+  revalidatePath("/dashboard/tasks");
+  return data;
 }
 
 export async function deleteTask(taskId: string) {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    throw new Error("User not authenticated")
+    throw new Error("User not authenticated");
   }
 
   const { data, error } = await supabase
@@ -140,100 +152,109 @@ export async function deleteTask(taskId: string) {
     })
     .eq("id", taskId)
     .eq("is_deleted", false)
-    .select()
+    .select();
 
   if (error) {
-    throw new Error(`Error deleting task: ${error.message}`)
+    throw new Error(`Error deleting task: ${error.message}`);
   }
 
   if (!data || data.length === 0) {
-    throw new Error("Task not found or already deleted")
+    throw new Error("Task not found or already deleted");
   }
 
-  revalidatePath("/dashboard/tasks")
-  return { success: true, deletedTask: data[0] }
+  revalidatePath("/dashboard/tasks");
+  return { success: true, deletedTask: data[0] };
 }
 
 export async function toggleTaskStatus(taskId: string) {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
   if (!user) {
-    throw new Error("User not authenticated")
+    throw new Error("User not authenticated");
   }
 
   // Get current task
-  const { data: task, error: fetchError } = await supabase.from("tasks").select("status").eq("id", taskId).single()
+  const { data: task, error: fetchError } = await supabase
+    .from("tasks")
+    .select("status")
+    .eq("id", taskId)
+    .single();
 
   if (fetchError) {
-    throw new Error(`Error fetching task: ${fetchError.message}`)
+    throw new Error(`Error fetching task: ${fetchError.message}`);
   }
 
   // Toggle between completed/done and pending
-  const isCompleted = task.status === "completed" || task.status === "done"
-  const newStatus = isCompleted ? "pending" : "completed"
+  const isCompleted = task.status === "completed" || task.status === "done";
+  const newStatus = isCompleted ? "pending" : "completed";
 
   const updateData: any = {
     status: newStatus,
     updated_by: user.id,
     updated_at: new Date().toISOString(),
-  }
+  };
 
   // Handle completed_at
   if (newStatus === "completed") {
-    updateData.completed_at = new Date().toISOString()
-    console.log("✅ Toggle: Setting completed_at to:", updateData.completed_at)
+    updateData.completed_at = new Date().toISOString();
+    console.log("✅ Toggle: Setting completed_at to:", updateData.completed_at);
   } else {
-    updateData.completed_at = null
-    console.log("🔄 Toggle: Clearing completed_at")
+    updateData.completed_at = null;
+    console.log("🔄 Toggle: Clearing completed_at");
   }
 
-  const { data, error } = await supabase.from("tasks").update(updateData).eq("id", taskId).select().single()
+  const { data, error } = await supabase
+    .from("tasks")
+    .update(updateData)
+    .eq("id", taskId)
+    .select()
+    .single();
 
   if (error) {
-    throw new Error(`Error updating task status: ${error.message}`)
+    throw new Error(`Error updating task status: ${error.message}`);
   }
 
-  revalidatePath("/dashboard/tasks")
-  return data
+  revalidatePath("/dashboard/tasks");
+  return data;
 }
 
 export async function getRandomTask() {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("tasks")
     .select("*")
     .eq("is_deleted", false)
     .not("status", "in", "(completed,done)")
-    .limit(50)
+    .limit(50);
 
   if (error) {
-    throw new Error(`Error fetching random task: ${error.message}`)
+    throw new Error(`Error fetching random task: ${error.message}`);
   }
 
   if (!data || data.length === 0) {
-    return null
+    return null;
   }
 
-  const randomIndex = Math.floor(Math.random() * data.length)
-  return data[randomIndex]
+  const randomIndex = Math.floor(Math.random() * data.length);
+  return data[randomIndex];
 }
 
 export async function markTaskComplete(taskId: string) {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
   if (!user) {
-    throw new Error("User not authenticated")
+    throw new Error("User not authenticated");
   }
 
-  const completedAt = new Date().toISOString()
-  console.log("✅ Marking task complete with completed_at:", completedAt)
+  const completedAt = new Date().toISOString();
+  console.log("✅ Marking task complete with completed_at:", completedAt);
 
   const { data, error } = await supabase
     .from("tasks")
@@ -245,24 +266,24 @@ export async function markTaskComplete(taskId: string) {
     })
     .eq("id", taskId)
     .select()
-    .single()
+    .single();
 
   if (error) {
-    throw new Error(`Error marking task complete: ${error.message}`)
+    throw new Error(`Error marking task complete: ${error.message}`);
   }
 
-  revalidatePath("/dashboard/tasks")
-  return data
+  revalidatePath("/dashboard/tasks");
+  return data;
 }
 
 export async function startTaskSession(taskId: string) {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
   if (!user) {
-    throw new Error("User not authenticated")
+    throw new Error("User not authenticated");
   }
 
   // First update the task status to in_progress
@@ -275,10 +296,10 @@ export async function startTaskSession(taskId: string) {
     })
     .eq("id", taskId)
     .select()
-    .single()
+    .single();
 
   if (updateError) {
-    throw new Error(`Error updating task status: ${updateError.message}`)
+    throw new Error(`Error updating task status: ${updateError.message}`);
   }
 
   // Create a new session
@@ -291,10 +312,10 @@ export async function startTaskSession(taskId: string) {
       status: "active",
     })
     .select()
-    .single()
+    .single();
 
   if (sessionError) {
-    throw new Error(`Error creating task session: ${sessionError.message}`)
+    throw new Error(`Error creating task session: ${sessionError.message}`);
   }
 
   // Update task with current session ID
@@ -303,24 +324,24 @@ export async function startTaskSession(taskId: string) {
     .update({
       current_session_id: session.id,
     })
-    .eq("id", taskId)
+    .eq("id", taskId);
 
   if (linkError) {
-    throw new Error(`Error linking session to task: ${linkError.message}`)
+    throw new Error(`Error linking session to task: ${linkError.message}`);
   }
 
-  revalidatePath("/dashboard/tasks")
-  return { task, session }
+  revalidatePath("/dashboard/tasks");
+  return { task, session };
 }
 
 export async function completeTaskSession(taskId: string) {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
   if (!user) {
-    throw new Error("User not authenticated")
+    throw new Error("User not authenticated");
   }
 
   // Get the current task with session info
@@ -328,10 +349,10 @@ export async function completeTaskSession(taskId: string) {
     .from("tasks")
     .select("current_session_id")
     .eq("id", taskId)
-    .single()
+    .single();
 
   if (fetchError) {
-    throw new Error(`Error fetching task: ${fetchError.message}`)
+    throw new Error(`Error fetching task: ${fetchError.message}`);
   }
 
   // End the current session if it exists
@@ -342,15 +363,15 @@ export async function completeTaskSession(taskId: string) {
         ended_at: new Date().toISOString(),
         status: "completed",
       })
-      .eq("id", task.current_session_id)
+      .eq("id", task.current_session_id);
 
     if (sessionError) {
-      console.error("Error ending session:", sessionError)
+      console.error("Error ending session:", sessionError);
     }
   }
 
   // Mark task as completed
-  const completedAt = new Date().toISOString()
+  const completedAt = new Date().toISOString();
   const { data: updatedTask, error: updateError } = await supabase
     .from("tasks")
     .update({
@@ -362,12 +383,12 @@ export async function completeTaskSession(taskId: string) {
     })
     .eq("id", taskId)
     .select()
-    .single()
+    .single();
 
   if (updateError) {
-    throw new Error(`Error completing task: ${updateError.message}`)
+    throw new Error(`Error completing task: ${updateError.message}`);
   }
 
-  revalidatePath("/dashboard/tasks")
-  return updatedTask
+  revalidatePath("/dashboard/tasks");
+  return updatedTask;
 }

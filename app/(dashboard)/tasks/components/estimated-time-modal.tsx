@@ -1,24 +1,36 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Clock } from "lucide-react"
-import { updateTaskEstimatedTime } from "../actions/enhanced-task-actions"
-import { toast } from "sonner"
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Clock } from "lucide-react";
+import { updateTaskEstimatedTime } from "../actions/enhanced-task-actions";
+import { toast } from "sonner";
 
 interface EstimatedTimeModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  task: any
-  onSuccess: () => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  task: any;
+  onSuccess: () => void;
 }
 
-export function EstimatedTimeModal({ open, onOpenChange, task, onSuccess }: EstimatedTimeModalProps) {
-  const [estimatedMinutes, setEstimatedMinutes] = useState(task?.estimated_minutes || 30)
-  const [isLoading, setIsLoading] = useState(false)
+export function EstimatedTimeModal({
+  open,
+  onOpenChange,
+  task,
+  onSuccess,
+}: EstimatedTimeModalProps) {
+  const [estimatedMinutes, setEstimatedMinutes] = useState(
+    task?.estimated_minutes || 30
+  );
+  const [isLoading, setIsLoading] = useState(false);
 
   const quickTimeOptions = [
     { minutes: 10, label: "10 min", icon: "⚡" },
@@ -28,28 +40,28 @@ export function EstimatedTimeModal({ open, onOpenChange, task, onSuccess }: Esti
     { minutes: 60, label: "1 hour", icon: "⏳" },
     { minutes: 90, label: "1.5 hours", icon: "📅" },
     { minutes: 120, label: "2 hours", icon: "🗓️" },
-  ]
+  ];
 
   const handleSave = async () => {
-    if (!task?.id) return
+    if (!task?.id) return;
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const result = await updateTaskEstimatedTime(task.id, estimatedMinutes)
+      const result = await updateTaskEstimatedTime(task.id, estimatedMinutes);
 
       if (result.success) {
-        toast.success("Estimated time updated!")
-        onSuccess()
-        onOpenChange(false)
+        toast.success("Estimated time updated!");
+        onSuccess();
+        onOpenChange(false);
       } else {
-        toast.error(result.error || "Failed to update estimated time")
+        toast.error(result.error || "Failed to update estimated time");
       }
     } catch (error) {
-      toast.error("Failed to update estimated time")
+      toast.error("Failed to update estimated time");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -63,13 +75,17 @@ export function EstimatedTimeModal({ open, onOpenChange, task, onSuccess }: Esti
 
         <div className="space-y-4">
           <div>
-            <p className="text-sm text-muted-foreground mb-3">How long do you think "{task?.title}" will take?</p>
+            <p className="text-sm text-muted-foreground mb-3">
+              How long do you think "{task?.title}" will take?
+            </p>
 
             <div className="grid grid-cols-3 gap-2 mb-4">
               {quickTimeOptions.map((option) => (
                 <Button
                   key={option.minutes}
-                  variant={estimatedMinutes === option.minutes ? "default" : "outline"}
+                  variant={
+                    estimatedMinutes === option.minutes ? "default" : "outline"
+                  }
                   size="sm"
                   onClick={() => setEstimatedMinutes(option.minutes)}
                   className="flex flex-col h-auto py-2"
@@ -87,13 +103,16 @@ export function EstimatedTimeModal({ open, onOpenChange, task, onSuccess }: Esti
               id="custom-time"
               type="number"
               value={estimatedMinutes}
-              onChange={(e) => setEstimatedMinutes(Number.parseInt(e.target.value) || 0)}
+              onChange={(e) =>
+                setEstimatedMinutes(Number.parseInt(e.target.value) || 0)
+              }
               min="1"
               max="480"
               className="mt-1"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Current estimate: {Math.floor(estimatedMinutes / 60)}h {estimatedMinutes % 60}m
+              Current estimate: {Math.floor(estimatedMinutes / 60)}h{" "}
+              {estimatedMinutes % 60}m
             </p>
           </div>
 
@@ -108,5 +127,5 @@ export function EstimatedTimeModal({ open, onOpenChange, task, onSuccess }: Esti
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

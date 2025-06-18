@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useState } from "react"
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,51 +10,56 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Loader2, Trash2, AlertTriangle } from "lucide-react"
-import { useTranslations } from "@/lib/i18n/hooks"
-import { deleteTask } from "../actions/task-actions"
-import { toast } from "sonner"
+} from "@/components/ui/alert-dialog";
+import { Loader2, Trash2, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n/hooks";
+import { deleteTask } from "../actions/task-actions";
+import { toast } from "sonner";
 
 interface DeleteTaskModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  task: any
-  onSuccess: () => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  task: any;
+  onSuccess: () => void;
 }
 
-export function DeleteTaskModal({ open, onOpenChange, task, onSuccess }: DeleteTaskModalProps) {
-  const { t } = useTranslations("tasks")
-  const [isDeleting, setIsDeleting] = useState(false)
+export function DeleteTaskModal({
+  open,
+  onOpenChange,
+  task,
+  onSuccess,
+}: DeleteTaskModalProps) {
+  const { t } = useTranslations("tasks");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
     if (!task?.id) {
-      console.error("No task ID provided for deletion")
-      toast.error("Invalid task selected")
-      return
+      console.error("No task ID provided for deletion");
+      toast.error("Invalid task selected");
+      return;
     }
 
-    setIsDeleting(true)
+    setIsDeleting(true);
     try {
-      console.log("Attempting to delete task:", task.id, task.title)
+      console.log("Attempting to delete task:", task.id, task.title);
 
-      const result = await deleteTask(task.id)
+      const result = await deleteTask(task.id);
 
       if (result.success) {
-        console.log("Task deleted successfully:", result.deletedTask)
-        toast.success(`Task "${task.title}" deleted successfully`)
-        onSuccess()
-        onOpenChange(false)
+        console.log("Task deleted successfully:", result.deletedTask);
+        toast.success(`Task "${task.title}" deleted successfully`);
+        onSuccess();
+        onOpenChange(false);
       } else {
-        throw new Error("Delete operation failed")
+        throw new Error("Delete operation failed");
       }
     } catch (error) {
-      console.error("Error deleting task:", error)
-      toast.error(`Failed to delete task: ${error.message}`)
+      console.error("Error deleting task:", error);
+      toast.error(`Failed to delete task: ${error.message}`);
     } finally {
-      setIsDeleting(false)
+      setIsDeleting(false);
     }
-  }
+  };
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -73,7 +78,10 @@ export function DeleteTaskModal({ open, onOpenChange, task, onSuccess }: DeleteT
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting} className="border-border hover:bg-accent">
+          <AlertDialogCancel
+            disabled={isDeleting}
+            className="border-border hover:bg-accent"
+          >
             {t("cancel")}
           </AlertDialogCancel>
           <AlertDialogAction
@@ -96,5 +104,5 @@ export function DeleteTaskModal({ open, onOpenChange, task, onSuccess }: DeleteT
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 }
