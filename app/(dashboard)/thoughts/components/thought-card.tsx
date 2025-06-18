@@ -1,7 +1,6 @@
-// ... imports (unchanged)
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -42,6 +41,7 @@ import {
   Sun,
   Brain,
   FileText,
+  ListTodo,
 } from "lucide-react";
 import { ThoughtForm } from "./thought-form";
 import {
@@ -49,6 +49,7 @@ import {
   type Thought,
   updateThoughtStatus,
 } from "../actions/thoughts-actions";
+import { getThoughtAnalysis } from "../actions/thought-analysis-actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import {
@@ -57,6 +58,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ThoughtAnalyzerModal } from "./thought-analyzer-modal";
+import { ThoughtTasksModal } from "./thoughts-tasks-modal";
 
 type ThoughtAnalysisType = "advantage" | "disadvantage" | "neutral";
 
@@ -114,6 +116,7 @@ export function ThoughtCard({ thought }: ThoughtCardProps) {
   const router = useRouter();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isAnalyzerOpen, setIsAnalyzerOpen] = useState(false);
+  const [isTaskOpen, setIsTaskOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [analysisCounts, setAnalysisCounts] = useState<
     Record<ThoughtAnalysisType, number>
@@ -122,6 +125,21 @@ export function ThoughtCard({ thought }: ThoughtCardProps) {
     disadvantage: 0,
     neutral: 0,
   });
+
+  // ✅ Fetch analysis count on mount
+  useEffect(() => {
+    const fetchCounts = async () => {
+      const analysis = await getThoughtAnalysis(thought.id);
+      const counts = {
+        advantage: analysis.filter((a) => a.type === "advantage").length,
+        disadvantage: analysis.filter((a) => a.type === "disadvantage").length,
+        neutral: analysis.filter((a) => a.type === "neutral").length,
+      };
+      setAnalysisCounts(counts);
+    };
+
+    fetchCounts();
+  }, [thought.id]);
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -172,6 +190,11 @@ export function ThoughtCard({ thought }: ThoughtCardProps) {
     );
   };
 
+  const totalAnalysis =
+    analysisCounts.advantage +
+    analysisCounts.disadvantage +
+    analysisCounts.neutral;
+
   return (
     <>
       <Card className="w-full border-border bg-card hover:bg-accent/50 transition-colors">
@@ -188,29 +211,37 @@ export function ThoughtCard({ thought }: ThoughtCardProps) {
                 onClick={() => setIsAnalyzerOpen(true)}
               >
                 <FileText className="h-4 w-4" />
-                {analysisCounts.advantage +
-                  analysisCounts.disadvantage +
-                  analysisCounts.neutral >
-                  0 && (
+                {totalAnalysis > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 text-[10px] font-semibold rounded-full bg-pink-600 text-white flex items-center justify-center shadow">
-                    {analysisCounts.advantage +
-                      analysisCounts.disadvantage +
-                      analysisCounts.neutral}
+                    {totalAnalysis}
                   </span>
                 )}
               </Button>
 
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hover:bg-muted relative"
+                onClick={() => setIsTaskOpen(true)}
+              >
+                <ListTodo className="h-4 w-4" />
+                {thought.task_count > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 text-[10px] font-semibold rounded-full bg-blue-600 text-white flex items-center justify-center shadow">
+                    {thought.task_count}
+                  </span>
+                )}
+              </Button>
+
+              {/* ✏️ Edit Thought */}
               <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
                 <DialogTrigger asChild>
                   <Button variant="ghost" size="sm" className="hover:bg-muted">
-                    <Edit className="h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200" />
+                    <Edit className="h-3 w-3" />
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl bg-card border-border">
                   <DialogHeader>
-                    <DialogTitle className="text-card-foreground">
-                      Edit Thought
-                    </DialogTitle>
+                    <DialogTitle>Edit Thought</DialogTitle>
                   </DialogHeader>
                   <ThoughtForm
                     thought={thought}
@@ -220,6 +251,7 @@ export function ThoughtCard({ thought }: ThoughtCardProps) {
                 </DialogContent>
               </Dialog>
 
+              {/* 🗑️ Delete Thought */}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
@@ -227,27 +259,23 @@ export function ThoughtCard({ thought }: ThoughtCardProps) {
                     size="sm"
                     className="text-destructive hover:bg-destructive/10"
                   >
-                    <Trash2 className="h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200" />
+                    <Trash2 className="h-3 w-3" />
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent className="bg-card border-border">
                   <AlertDialogHeader>
-                    <AlertDialogTitle className="text-card-foreground">
-                      Delete Thought
-                    </AlertDialogTitle>
-                    <AlertDialogDescription className="text-muted-foreground">
+                    <AlertDialogTitle>Delete Thought</AlertDialogTitle>
+                    <AlertDialogDescription>
                       Are you sure you want to delete this thought? This action
                       cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel className="border-border">
-                      Cancel
-                    </AlertDialogCancel>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={handleDelete}
                       disabled={isDeleting}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      className="bg-destructive text-destructive-foreground"
                     >
                       {isDeleting ? "Deleting..." : "Delete"}
                     </AlertDialogAction>
@@ -276,22 +304,14 @@ export function ThoughtCard({ thought }: ThoughtCardProps) {
                       thought.mood
                     )}`}
                   >
-                    <Icon className="h-2 w-2 hover:h-3 hover:w-3 transition-all duration-200" />
+                    <Icon className="h-2 w-2" />
                     {getMoodLabel(thought.mood)}
                   </Badge>
-                ) : (
-                  <Badge
-                    variant="outline"
-                    className="border-primary/20 text-primary"
-                  >
-                    {getMoodLabel(thought.mood)}
-                  </Badge>
-                );
+                ) : null;
               })()}
             </div>
           )}
 
-          {/* ➕ Status Popover (Editable) */}
           {thought.status && (
             <Popover>
               <PopoverTrigger asChild>
@@ -349,7 +369,7 @@ export function ThoughtCard({ thought }: ThoughtCardProps) {
 
         <CardFooter className="text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
-            <Calendar className="h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200" />
+            <Calendar className="h-3 w-3" />
             {formatDate(thought.created_at)}
             {thought.updated_at !== thought.created_at && (
               <span className="ml-2">
@@ -360,7 +380,6 @@ export function ThoughtCard({ thought }: ThoughtCardProps) {
         </CardFooter>
       </Card>
 
-      {/* 🔍 Thought Analyzer Modal */}
       <ThoughtAnalyzerModal
         thoughtId={thought.id}
         thoughtTitle={thought.title}
@@ -368,6 +387,14 @@ export function ThoughtCard({ thought }: ThoughtCardProps) {
         open={isAnalyzerOpen}
         onClose={() => setIsAnalyzerOpen(false)}
         onCountChange={(counts) => setAnalysisCounts(counts)}
+      />
+
+      <ThoughtTasksModal
+        thoughtId={thought.id}
+        thoughtTitle={thought.title}
+        thoughtContent={thought.content}
+        open={isTaskOpen}
+        onClose={() => setIsTaskOpen(false)}
       />
     </>
   );

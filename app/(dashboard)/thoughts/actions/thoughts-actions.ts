@@ -14,6 +14,7 @@ export interface Thought {
   updated_at: string;
   user_id: string;
   status: "new" | "processing" | "completed";
+  task_count: number;
 }
 
 export interface CreateThoughtData {
@@ -26,7 +27,6 @@ export interface CreateThoughtData {
 
 export interface UpdateThoughtData extends CreateThoughtData {
   id: string;
-  status?: "new" | "processing" | "completed";
 }
 
 export async function createThought(data: CreateThoughtData) {
@@ -121,17 +121,23 @@ export async function getThoughts() {
     redirect("/login");
   }
 
-  const { data: thoughts, error } = await supabase
+  const { data, error } = await supabase
     .from("thoughts")
-    .select("*")
+    .select(
+      "id, title, content, mood, tags, created_at, updated_at, user_id, status, tasks(id)"
+    )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
-  if (error) {
-    throw new Error(`Failed to fetch thoughts: ${error.message}`);
+  if (error || !data) {
+    throw new Error(`Failed to fetch thoughts: ${error?.message}`);
   }
 
-  return thoughts as Thought[];
+  // Extract task count
+  return data.map((t) => ({
+    ...t,
+    task_count: t.tasks ? t.tasks.length : 0,
+  })) as Thought[];
 }
 
 export async function getThought(id: string) {
@@ -145,18 +151,23 @@ export async function getThought(id: string) {
     redirect("/login");
   }
 
-  const { data: thought, error } = await supabase
+  const { data, error } = await supabase
     .from("thoughts")
-    .select("*")
+    .select(
+      "id, title, content, mood, tags, created_at, updated_at, user_id, status, tasks(id)"
+    )
     .eq("id", id)
     .eq("user_id", user.id)
     .single();
 
-  if (error) {
-    throw new Error(`Failed to fetch thought: ${error.message}`);
+  if (error || !data) {
+    throw new Error(`Failed to fetch thought: ${error?.message}`);
   }
 
-  return thought as Thought;
+  return {
+    ...data,
+    task_count: data.tasks ? data.tasks.length : 0,
+  } as Thought;
 }
 
 export async function updateThoughtStatus(
