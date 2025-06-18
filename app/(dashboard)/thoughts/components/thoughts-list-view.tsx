@@ -157,7 +157,7 @@ export function ThoughtsListView({ thoughts, filters }: ThoughtsListViewProps) {
     return (
       <div className="text-center py-12">
         <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
-          <Brain className="h-12 w-12 text-muted-foreground" />
+          <Brain className="h-8 w-8 hover:h-12 hover:w-12 transition-all duration-300 text-muted-foreground" />
         </div>
         <h3 className="text-lg font-semibold mb-2 text-foreground">
           {thoughts.length === 0
@@ -205,13 +205,13 @@ export function ThoughtsListView({ thoughts, filters }: ThoughtsListViewProps) {
 
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
                           <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
+                            <Calendar className="h-2 w-2 hover:h-3 hover:w-3 transition-all duration-200" />
                             {formatDate(thought.created_at)}
                           </div>
 
                           {thought.mood && MoodIcon && (
                             <div className="flex items-center gap-1">
-                              <MoodIcon className="h-3 w-3" />
+                              <MoodIcon className="h-2 w-2 hover:h-3 hover:w-3 transition-all duration-200" />
                               <span className="capitalize">{thought.mood}</span>
                             </div>
                           )}
@@ -260,7 +260,7 @@ export function ThoughtsListView({ thoughts, filters }: ThoughtsListViewProps) {
                           className="h-8 w-8 p-0 hover:bg-muted"
                           onClick={() => setEditingThought(thought)}
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200" />
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="max-w-2xl bg-card border-border">
@@ -284,7 +284,7 @@ export function ThoughtsListView({ thoughts, filters }: ThoughtsListViewProps) {
                           size="sm"
                           className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200" />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent className="bg-card border-border">

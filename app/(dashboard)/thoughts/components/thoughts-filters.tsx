@@ -96,7 +96,7 @@ export function ThoughtsFilters({
           {/* Search and Toggle */}
           <div className="flex items-center gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200 text-muted-foreground" />
               <Input
                 placeholder="Search thoughts..."
                 value={filters.search}
@@ -111,7 +111,7 @@ export function ThoughtsFilters({
               onClick={() => setIsExpanded(!isExpanded)}
               className="border-border"
             >
-              <Filter className="h-4 w-4 mr-2" />
+              <Filter className="h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200 mr-2" />
               Filters
               {hasActiveFilters && (
                 <Badge
@@ -156,7 +156,7 @@ export function ThoughtsFilters({
                       return (
                         <SelectItem key={mood.value} value={mood.value}>
                           <div className="flex items-center gap-2">
-                            <Icon className="h-4 w-4" />
+                            <Icon className="h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200" />
                             {mood.label}
                           </div>
                         </SelectItem>
@@ -183,7 +183,7 @@ export function ThoughtsFilters({
                     {dateRanges.map((range) => (
                       <SelectItem key={range.value} value={range.value}>
                         <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4" />
+                          <Calendar className="h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200" />
                           {range.label}
                         </div>
                       </SelectItem>
@@ -216,7 +216,7 @@ export function ThoughtsFilters({
                     variant="outline"
                     size="icon"
                   >
-                    <Search className="h-4 w-4" />
+                    <Search className="h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200" />
                   </Button>
                 </div>
               </div>
@@ -237,7 +237,7 @@ export function ThoughtsFilters({
                 >
                   {tag}
                   <X
-                    className="h-3 w-3 cursor-pointer hover:text-destructive"
+                    className="h-2 w-2 hover:h-3 hover:w-3 transition-all duration-200 cursor-pointer hover:text-destructive"
                     onClick={() => removeTag(tag)}
                   />
                 </Badge>

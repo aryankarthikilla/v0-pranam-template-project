@@ -197,7 +197,7 @@ export function ThoughtForm({
             variant="outline"
             size="icon"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200" />
           </Button>
         </div>
         {formData.tags.length > 0 && (
@@ -210,7 +210,7 @@ export function ThoughtForm({
               >
                 {tag}
                 <X
-                  className="h-3 w-3 cursor-pointer hover:text-destructive"
+                  className="h-2 w-2 hover:h-3 hover:w-3 transition-all duration-200 cursor-pointer hover:text-destructive"
                   onClick={() => handleRemoveTag(tag)}
                 />
               </Badge>

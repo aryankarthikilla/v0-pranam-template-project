@@ -144,7 +144,7 @@ export function ThoughtCard({ thought }: ThoughtCardProps) {
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
               <DialogTrigger asChild>
                 <Button variant="ghost" size="sm" className="hover:bg-muted">
-                  <Edit className="h-4 w-4" />
+                  <Edit className="h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200" />
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl bg-card border-border">
@@ -168,7 +168,7 @@ export function ThoughtCard({ thought }: ThoughtCardProps) {
                   size="sm"
                   className="text-destructive hover:bg-destructive/10"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200" />
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent className="bg-card border-border">
@@ -217,7 +217,7 @@ export function ThoughtCard({ thought }: ThoughtCardProps) {
                     thought.mood
                   )}`}
                 >
-                  <Icon className="h-3 w-3" />
+                  <Icon className="h-2 w-2 hover:h-3 hover:w-3 transition-all duration-200" />
                   {getMoodLabel(thought.mood)}
                 </Badge>
               ) : (
@@ -245,7 +245,7 @@ export function ThoughtCard({ thought }: ThoughtCardProps) {
 
       <CardFooter className="text-sm text-muted-foreground">
         <div className="flex items-center gap-1">
-          <Calendar className="h-4 w-4" />
+          <Calendar className="h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200" />
           {formatDate(thought.created_at)}
           {thought.updated_at !== thought.created_at && (
             <span className="ml-2">

@@ -120,7 +120,7 @@ export function QuickThoughtInput() {
                           value={moodOption.value}
                         >
                           <div className="flex items-center gap-2">
-                            <Icon className="h-4 w-4" />
+                            <Icon className="h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200" />
                             {moodOption.label}
                           </div>
                         </SelectItem>
@@ -135,7 +135,7 @@ export function QuickThoughtInput() {
                     onClick={() => setMood("")}
                     className="h-8 w-8 p-0"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200" />
                   </Button>
                 )}
               </div>
@@ -166,7 +166,7 @@ export function QuickThoughtInput() {
                       variant="outline"
                       size="sm"
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200" />
                     </Button>
                   </div>
                 </div>
@@ -180,7 +180,7 @@ export function QuickThoughtInput() {
                       >
                         {tag}
                         <X
-                          className="h-3 w-3 cursor-pointer hover:text-destructive"
+                          className="h-2 w-2 hover:h-3 hover:w-3 transition-all duration-200 cursor-pointer hover:text-destructive"
                           onClick={() => handleRemoveTag(tag)}
                         />
                       </Badge>
