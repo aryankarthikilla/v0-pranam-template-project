@@ -58,7 +58,11 @@ export function MultiTaskWidget() {
         // Refresh sessions immediately
         await loadSessions()
       } else {
-        toast.error(result.error || "Failed to complete task")
+        if ("error" in result) {
+          toast.error(result.error || "Failed to complete task")
+        } else {
+          toast.error("Failed to complete task")
+        }
       }
     } catch (error) {
       console.error("Error completing task:", error)
@@ -71,26 +75,9 @@ export function MultiTaskWidget() {
   const loadSessions = async () => {
     setIsLoading(true)
     try {
-      const [activeSessionsRaw, stale] = await Promise.all([getActiveSessions(), getStaleSessionsCheck()])
+      const [active, stale] = await Promise.all([getActiveSessions(), getStaleSessionsCheck()])
 
-      // Transform the raw sessions to match our interface
-      const transformedSessions: TaskSession[] = activeSessionsRaw.map((session: any) => ({
-        id: session.id,
-        task_id: session.task_id,
-        user_id: session.user_id,
-        started_at: session.started_at,
-        ended_at: session.ended_at,
-        estimated_minutes: session.estimated_minutes,
-        source: session.source,
-        pause_reason: session.pause_reason,
-        task_title: session.tasks?.title || "Unknown Task",
-        task_priority: session.tasks?.priority || "normal",
-        location_context: session.location_context,
-        duration_minutes: Math.floor((new Date().getTime() - new Date(session.started_at).getTime()) / (1000 * 60)),
-        tasks: session.tasks,
-      }))
-
-      setActiveSessions(transformedSessions)
+      setActiveSessions(active)
       setStaleSessions(stale)
 
       // Show stale session modal if we have stale sessions
