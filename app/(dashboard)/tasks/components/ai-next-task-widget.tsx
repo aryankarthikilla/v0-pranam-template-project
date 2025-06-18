@@ -38,7 +38,6 @@ import {
 } from "../actions/enhanced-task-actions"
 import { toast } from "sonner"
 import { SessionRecoveryWidget } from "./session-recovery-widget"
-import { createClient } from "@/lib/supabase/server"
 
 interface AINextTaskWidgetProps {
   tasks: any[]
@@ -440,40 +439,7 @@ export function AINextTaskWidget({ tasks, loading, onTaskUpdate }: AINextTaskWid
           }
         } else {
           console.error("❌ No active sessions found for task:", selectedActiveTaskId)
-
-          // RECOVERY: Handle orphaned task (task marked as active but no session exists)
-          console.log("🔧 Attempting to recover orphaned task...")
-
-          try {
-            // Option 1: Reset the task status to pending since there's no active session
-            const supabase = await createClient()
-            const {
-              data: { user },
-            } = await supabase.auth.getUser()
-
-            if (user) {
-              const { error: resetError } = await supabase
-                .from("tasks")
-                .update({
-                  status: "pending",
-                  current_session_id: null,
-                  updated_at: new Date().toISOString(),
-                })
-                .eq("id", selectedActiveTaskId)
-                .eq("user_id", user.id)
-
-              if (resetError) {
-                console.error("❌ Failed to reset orphaned task:", resetError)
-                toast.error("Task is in an inconsistent state. Please refresh the page.")
-              } else {
-                console.log("✅ Successfully reset orphaned task to pending")
-                toast.success("Task has been reset to pending state. You can now start it again.")
-              }
-            }
-          } catch (recoveryError) {
-            console.error("❌ Recovery failed:", recoveryError)
-            toast.error("Failed to recover task. Please refresh the page.")
-          }
+          toast.error("No active session found. The task may need to be reset.")
         }
       }
 
