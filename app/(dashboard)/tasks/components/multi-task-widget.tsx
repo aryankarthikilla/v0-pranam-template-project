@@ -58,11 +58,7 @@ export function MultiTaskWidget() {
         // Refresh sessions immediately
         await loadSessions()
       } else {
-        if ("error" in result) {
-          toast.error(result.error || "Failed to complete task")
-        } else {
-          toast.error("Failed to complete task")
-        }
+        toast.error(result.error || "Failed to complete task")
       }
     } catch (error) {
       console.error("Error completing task:", error)
