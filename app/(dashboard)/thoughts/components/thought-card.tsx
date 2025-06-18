@@ -1,3 +1,4 @@
+// ... imports (unchanged)
 "use client";
 
 import { useState } from "react";
@@ -40,11 +41,24 @@ import {
   Heart,
   Sun,
   Brain,
+  FileText,
 } from "lucide-react";
 import { ThoughtForm } from "./thought-form";
-import { deleteThought, type Thought } from "../actions/thoughts-actions";
+import {
+  deleteThought,
+  type Thought,
+  updateThoughtStatus,
+} from "../actions/thoughts-actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ThoughtAnalyzerModal } from "./thought-analyzer-modal";
+
+type ThoughtAnalysisType = "advantage" | "disadvantage" | "neutral";
 
 const moodIcons = {
   happy: Smile,
@@ -75,6 +89,23 @@ const moodColors = {
     "text-purple-500 bg-purple-50 border-purple-200 dark:bg-purple-950 dark:border-purple-800",
 };
 
+const statusColors = {
+  new: "text-gray-500 bg-gray-50 border-gray-200 dark:bg-gray-900 dark:border-gray-700",
+  processing:
+    "text-blue-600 bg-blue-50 border-blue-200 dark:bg-blue-900 dark:border-blue-700",
+  completed:
+    "text-green-600 bg-green-50 border-green-200 dark:bg-green-900 dark:border-green-700",
+};
+
+const getStatusLabel = (status: string) => {
+  const map: Record<string, string> = {
+    new: "New",
+    processing: "In Progress",
+    completed: "Completed",
+  };
+  return map[status] || status;
+};
+
 interface ThoughtCardProps {
   thought: Thought;
 }
@@ -82,14 +113,22 @@ interface ThoughtCardProps {
 export function ThoughtCard({ thought }: ThoughtCardProps) {
   const router = useRouter();
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isAnalyzerOpen, setIsAnalyzerOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [analysisCounts, setAnalysisCounts] = useState<
+    Record<ThoughtAnalysisType, number>
+  >({
+    advantage: 0,
+    disadvantage: 0,
+    neutral: 0,
+  });
 
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
       await deleteThought(thought.id);
       toast.success("Thought deleted successfully!");
-      router.refresh(); // Refresh to show changes
+      router.refresh();
     } catch (error) {
       console.error("Error deleting thought:", error);
       toast.error("Error deleting thought");
@@ -134,126 +173,202 @@ export function ThoughtCard({ thought }: ThoughtCardProps) {
   };
 
   return (
-    <Card className="w-full border-border bg-card hover:bg-accent/50 transition-colors">
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <CardTitle className="text-lg text-card-foreground">
-            {thought.title}
-          </CardTitle>
-          <div className="flex gap-2">
-            <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="hover:bg-muted">
-                  <Edit className="h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl bg-card border-border">
-                <DialogHeader>
-                  <DialogTitle className="text-card-foreground">
-                    Edit Thought
-                  </DialogTitle>
-                </DialogHeader>
-                <ThoughtForm
-                  thought={thought}
-                  onSuccess={() => setIsEditOpen(false)}
-                  onCancel={() => setIsEditOpen(false)}
-                />
-              </DialogContent>
-            </Dialog>
+    <>
+      <Card className="w-full border-border bg-card hover:bg-accent/50 transition-colors">
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <CardTitle className="text-lg text-card-foreground">
+              {thought.title}
+            </CardTitle>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hover:bg-muted relative"
+                onClick={() => setIsAnalyzerOpen(true)}
+              >
+                <FileText className="h-4 w-4" />
+                {analysisCounts.advantage +
+                  analysisCounts.disadvantage +
+                  analysisCounts.neutral >
+                  0 && (
+                  <span className="absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 text-[10px] font-semibold rounded-full bg-pink-600 text-white flex items-center justify-center shadow">
+                    {analysisCounts.advantage +
+                      analysisCounts.disadvantage +
+                      analysisCounts.neutral}
+                  </span>
+                )}
+              </Button>
 
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
+              <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="hover:bg-muted">
+                    <Edit className="h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl bg-card border-border">
+                  <DialogHeader>
+                    <DialogTitle className="text-card-foreground">
+                      Edit Thought
+                    </DialogTitle>
+                  </DialogHeader>
+                  <ThoughtForm
+                    thought={thought}
+                    onSuccess={() => setIsEditOpen(false)}
+                    onCancel={() => setIsEditOpen(false)}
+                  />
+                </DialogContent>
+              </Dialog>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="bg-card border-border">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-card-foreground">
+                      Delete Thought
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-muted-foreground">
+                      Are you sure you want to delete this thought? This action
+                      cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="border-border">
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      disabled={isDeleting}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {isDeleting ? "Deleting..." : "Delete"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+          {thought.content && (
+            <p className="text-muted-foreground whitespace-pre-wrap">
+              {thought.content}
+            </p>
+          )}
+
+          {thought.mood && (
+            <div className="flex items-center gap-2">
+              {(() => {
+                const Icon = getMoodIcon(thought.mood);
+                return Icon ? (
+                  <Badge
+                    variant="outline"
+                    className={`flex items-center gap-1 ${getMoodColor(
+                      thought.mood
+                    )}`}
+                  >
+                    <Icon className="h-2 w-2 hover:h-3 hover:w-3 transition-all duration-200" />
+                    {getMoodLabel(thought.mood)}
+                  </Badge>
+                ) : (
+                  <Badge
+                    variant="outline"
+                    className="border-primary/20 text-primary"
+                  >
+                    {getMoodLabel(thought.mood)}
+                  </Badge>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* ➕ Status Popover (Editable) */}
+          {thought.status && (
+            <Popover>
+              <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="text-destructive hover:bg-destructive/10"
+                  className={`px-2 py-1 text-xs capitalize border ${
+                    statusColors[thought.status]
+                  } hover:brightness-105`}
                 >
-                  <Trash2 className="h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200" />
+                  {getStatusLabel(thought.status)}
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="bg-card border-border">
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="text-card-foreground">
-                    Delete Thought
-                  </AlertDialogTitle>
-                  <AlertDialogDescription className="text-muted-foreground">
-                    Are you sure you want to delete this thought? This action
-                    cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel className="border-border">
-                    Cancel
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              </PopoverTrigger>
+              <PopoverContent className="w-44 p-2 space-y-1 bg-card border-border">
+                {(["new", "processing", "completed"] as const).map((status) => (
+                  <Button
+                    key={status}
+                    variant="ghost"
+                    className={`w-full justify-start text-xs capitalize ${
+                      statusColors[status]
+                    } ${
+                      thought.status === status
+                        ? "ring-1 ring-ring"
+                        : "hover:bg-accent"
+                    }`}
+                    onClick={async () => {
+                      try {
+                        await updateThoughtStatus(thought.id, status);
+                        toast.success(
+                          `Status changed to "${getStatusLabel(status)}"`
+                        );
+                        router.refresh();
+                      } catch (err) {
+                        toast.error("Failed to update status");
+                        console.error(err);
+                      }
+                    }}
                   >
-                    {isDeleting ? "Deleting..." : "Delete"}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-4">
-        {thought.content && (
-          <p className="text-muted-foreground whitespace-pre-wrap">
-            {thought.content}
-          </p>
-        )}
-
-        {thought.mood && (
-          <div className="flex items-center gap-2">
-            {(() => {
-              const Icon = getMoodIcon(thought.mood);
-              return Icon ? (
-                <Badge
-                  variant="outline"
-                  className={`flex items-center gap-1 ${getMoodColor(
-                    thought.mood
-                  )}`}
-                >
-                  <Icon className="h-2 w-2 hover:h-3 hover:w-3 transition-all duration-200" />
-                  {getMoodLabel(thought.mood)}
-                </Badge>
-              ) : (
-                <Badge
-                  variant="outline"
-                  className="border-primary/20 text-primary"
-                >
-                  {getMoodLabel(thought.mood)}
-                </Badge>
-              );
-            })()}
-          </div>
-        )}
-
-        {thought.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {thought.tags.map((tag) => (
-              <Badge key={tag} variant="secondary">
-                {tag}
-              </Badge>
-            ))}
-          </div>
-        )}
-      </CardContent>
-
-      <CardFooter className="text-sm text-muted-foreground">
-        <div className="flex items-center gap-1">
-          <Calendar className="h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200" />
-          {formatDate(thought.created_at)}
-          {thought.updated_at !== thought.created_at && (
-            <span className="ml-2">
-              • Updated {formatDate(thought.updated_at)}
-            </span>
+                    {getStatusLabel(status)}
+                  </Button>
+                ))}
+              </PopoverContent>
+            </Popover>
           )}
-        </div>
-      </CardFooter>
-    </Card>
+
+          {thought.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {thought.tags.map((tag) => (
+                <Badge key={tag} variant="secondary">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </CardContent>
+
+        <CardFooter className="text-sm text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <Calendar className="h-3 w-3 hover:h-4 hover:w-4 transition-all duration-200" />
+            {formatDate(thought.created_at)}
+            {thought.updated_at !== thought.created_at && (
+              <span className="ml-2">
+                • Updated {formatDate(thought.updated_at)}
+              </span>
+            )}
+          </div>
+        </CardFooter>
+      </Card>
+
+      {/* 🔍 Thought Analyzer Modal */}
+      <ThoughtAnalyzerModal
+        thoughtId={thought.id}
+        thoughtTitle={thought.title}
+        thoughtContent={thought.content}
+        open={isAnalyzerOpen}
+        onClose={() => setIsAnalyzerOpen(false)}
+        onCountChange={(counts) => setAnalysisCounts(counts)}
+      />
+    </>
   );
 }

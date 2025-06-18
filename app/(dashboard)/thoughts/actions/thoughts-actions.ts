@@ -13,6 +13,7 @@ export interface Thought {
   created_at: string;
   updated_at: string;
   user_id: string;
+  status: "new" | "processing" | "completed";
 }
 
 export interface CreateThoughtData {
@@ -20,10 +21,12 @@ export interface CreateThoughtData {
   content?: string;
   mood?: string;
   tags: string[];
+  status?: "new" | "processing" | "completed";
 }
 
 export interface UpdateThoughtData extends CreateThoughtData {
   id: string;
+  status?: "new" | "processing" | "completed";
 }
 
 export async function createThought(data: CreateThoughtData) {
@@ -42,6 +45,7 @@ export async function createThought(data: CreateThoughtData) {
     content: data.content || "",
     mood: data.mood,
     tags: data.tags,
+    status: data.status || "new",
     user_id: user.id,
   });
 
@@ -70,6 +74,7 @@ export async function updateThought(data: UpdateThoughtData) {
       content: data.content || "",
       mood: data.mood,
       tags: data.tags,
+      status: data.status,
     })
     .eq("id", data.id)
     .eq("user_id", user.id);
@@ -152,4 +157,31 @@ export async function getThought(id: string) {
   }
 
   return thought as Thought;
+}
+
+export async function updateThoughtStatus(
+  id: string,
+  status: "new" | "processing" | "completed"
+) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { error } = await supabase
+    .from("thoughts")
+    .update({ status })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) {
+    throw new Error(`Failed to update status: ${error.message}`);
+  }
+
+  revalidatePath("/dashboard/thoughts");
 }
