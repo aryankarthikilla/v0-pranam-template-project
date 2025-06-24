@@ -1,0 +1,29 @@
+[
+  {
+    "id": "1750748504258",
+    "type": "Github",
+    "name": "Github Project",
+    "url": "https://github.com/aryankarthikilla/v0-pranam-template-project",
+    "username": "aryankarthikilla",
+    "password": "developer@108",
+    "notes": ""
+  },
+  {
+    "id": "1750748556655",
+    "type": "Supabase",
+    "name": "Supabase Project",
+    "url": "https://supabase.com/dashboard/project/tvrxrioboantoyfiwuzv",
+    "username": "Login Through Github",
+    "password": "",
+    "notes": ""
+  },
+  {
+    "id": "1750748625019",
+    "type": "Vercel",
+    "name": "Vercel Deployment",
+    "url": "https://vercel.com/two-a017e38c/v0-pranam-project/deployments",
+    "username": "Login Through Github",
+    "password": "",
+    "notes": ""
+  }
+]
