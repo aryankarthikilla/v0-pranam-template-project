@@ -64,6 +64,12 @@ export function AppSidebar({ user }: AppSidebarProps) {
       icon: Home,
     },
     {
+      title: "Contents",
+      url: "/contents",
+      icon: FileText, // or consider BookOpen, NotebookText, LayoutGrid if preferred
+    },
+
+    {
       title: "Thoughts",
       url: "/thoughts",
       icon: Brain,
