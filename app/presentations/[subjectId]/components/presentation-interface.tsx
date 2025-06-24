@@ -2,9 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
@@ -13,23 +11,25 @@ import {
   Edit,
   Plus,
   Settings,
-  Clock,
   BarChart3,
-  FileText,
   ChevronLeft,
   ChevronRight,
   Presentation,
   StickyNote,
   ArrowLeft,
+  Upload,
 } from "lucide-react";
 import { SlideEditor } from "./slide-editor";
 import { SlideRenderer } from "./slide-renderer";
 import { SlideshowMode } from "./slideshow-mode";
 import { PresentationSettings } from "./presentation-settings";
 import { PresentationAnalytics } from "./presentation-analytics";
+import { DraggableSlideList } from "./draggable-slide-list";
+import { BulkImportModal } from "./bulk-import-modal";
 import type { Subject, Slide, PresentationMode } from "@/types/presentation";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { getSubjects } from "../../actions/presentation-actions";
 
 interface Props {
   subject: Subject;
@@ -55,11 +55,26 @@ export function PresentationInterface({
   });
   const [showSettings, setShowSettings] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [showBulkImport, setShowBulkImport] = useState(false);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
   const [slideStartTime, setSlideStartTime] = useState<Date | null>(null);
   const router = useRouter();
 
   const currentSlide = slides[currentSlideIndex];
+
+  // Load subjects for bulk import
+  useEffect(() => {
+    const loadSubjects = async () => {
+      try {
+        const subjectsData = await getSubjects();
+        setSubjects(subjectsData);
+      } catch (error) {
+        console.error("Error loading subjects:", error);
+      }
+    };
+    loadSubjects();
+  }, []);
 
   // Reset currentSlideIndex if it's out of bounds
   useEffect(() => {
@@ -125,6 +140,10 @@ export function PresentationInterface({
             case "n":
               event.preventDefault();
               handleAddSlide();
+              break;
+            case "i":
+              event.preventDefault();
+              setShowBulkImport(true);
               break;
           }
         }
@@ -266,6 +285,10 @@ export function PresentationInterface({
     toast.success("Slide updated successfully!");
   };
 
+  const handleSlidesReorder = (reorderedSlides: Slide[]) => {
+    setSlides(reorderedSlides);
+  };
+
   if (presentationMode.isSlideshow) {
     return (
       <SlideshowMode
@@ -314,6 +337,15 @@ export function PresentationInterface({
               <Plus className="h-4 w-4 mr-2" />
               Add First Slide
             </Button>
+            <Button
+              onClick={() => setShowBulkImport(true)}
+              variant="outline"
+              className="w-full"
+              size="sm"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Bulk Import
+            </Button>
           </div>
 
           <div className="flex-1 flex items-center justify-center">
@@ -336,10 +368,16 @@ export function PresentationInterface({
             <p className="text-muted-foreground mb-4">
               Create your first slide to start building your presentation
             </p>
-            <Button onClick={handleAddSlide}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create First Slide
-            </Button>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={handleAddSlide}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create First Slide
+              </Button>
+              <Button onClick={() => setShowBulkImport(true)} variant="outline">
+                <Upload className="h-4 w-4 mr-2" />
+                Bulk Import
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -358,6 +396,14 @@ export function PresentationInterface({
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Bulk Import Modal */}
+        <BulkImportModal
+          isOpen={showBulkImport}
+          onClose={() => setShowBulkImport(false)}
+          subjects={subjects}
+          currentSubjectId={subject.id}
+        />
       </div>
     );
   }
@@ -401,6 +447,16 @@ export function PresentationInterface({
               Add Slide
             </Button>
             <Button
+              onClick={() => setShowBulkImport(true)}
+              variant="outline"
+              size="sm"
+            >
+              <Upload className="h-4 w-4 mr-1" />
+              Import
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
               onClick={() => setShowSettings(true)}
               variant="outline"
               size="sm"
@@ -408,8 +464,6 @@ export function PresentationInterface({
               <Settings className="h-4 w-4 mr-1" />
               Settings
             </Button>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
             <Button
               onClick={() => setShowAnalytics(true)}
               variant="outline"
@@ -418,77 +472,32 @@ export function PresentationInterface({
               <BarChart3 className="h-4 w-4 mr-1" />
               Analytics
             </Button>
-            <Button variant="outline" size="sm">
-              <FileText className="h-4 w-4 mr-1" />
-              Resources
-            </Button>
           </div>
         </div>
 
-        {/* Slides List */}
-        <ScrollArea className="flex-1">
-          <div className="p-2 space-y-1">
-            {slides.map((slide, index) => (
-              <Card
-                key={slide.id}
-                className={`p-3 cursor-pointer transition-all hover:bg-accent ${
-                  index === currentSlideIndex
-                    ? "ring-2 ring-primary bg-accent"
-                    : ""
-                }`}
-                onClick={() => goToSlide(index)}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 rounded bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
-                    {index + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-sm truncate text-card-foreground">
-                      {slide.title}
-                    </h4>
-                    {slide.subtitle && (
-                      <p className="text-xs text-muted-foreground truncate mt-1">
-                        {slide.subtitle}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge variant="outline" className="text-xs">
-                        {slide.slide_type}
-                      </Badge>
-                      {slide.duration_seconds && (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {Math.round(slide.duration_seconds / 60)}m
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditSlide(slide);
-                    }}
-                  >
-                    <Edit className="h-3 w-3" />
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </ScrollArea>
+        {/* Draggable Slides List */}
+        <DraggableSlideList
+          slides={slides}
+          currentSlideIndex={currentSlideIndex}
+          onSlideSelect={goToSlide}
+          onSlideEdit={handleEditSlide}
+          onSlidesReorder={handleSlidesReorder}
+        />
 
         {/* Keyboard Shortcuts Help */}
         <div className="p-4 border-t border-border">
           <div className="text-xs text-muted-foreground space-y-1">
             <div className="font-medium mb-2">Keyboard Shortcuts:</div>
-            <div>F5 - Start slideshow</div>
-            <div>Ctrl+Enter - Start slideshow</div>
-            <div>Ctrl+E - Edit current slide</div>
-            <div>Ctrl+N - New slide</div>
-            <div>← → - Navigate slides</div>
+            {[
+              "F5 - Start slideshow",
+              "Ctrl+Enter - Start slideshow",
+              "Ctrl+E - Edit current slide",
+              "Ctrl+N - New slide",
+              "Ctrl+I - Bulk import",
+              "← → - Navigate slides",
+            ].map((shortcut, index) => (
+              <div key={`shortcut-${index}`}>{shortcut}</div>
+            ))}
           </div>
         </div>
       </div>
@@ -621,6 +630,14 @@ export function PresentationInterface({
           />
         </DialogContent>
       </Dialog>
+
+      {/* Bulk Import Modal */}
+      <BulkImportModal
+        isOpen={showBulkImport}
+        onClose={() => setShowBulkImport(false)}
+        subjects={subjects}
+        currentSubjectId={subject.id}
+      />
     </div>
   );
 }

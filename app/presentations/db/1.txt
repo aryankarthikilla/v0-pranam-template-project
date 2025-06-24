@@ -1,0 +1,127 @@
+-- Slides table
+CREATE TABLE public.slides (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  subject_id uuid NOT NULL REFERENCES public.subjects(id) ON DELETE CASCADE,
+  title VARCHAR(500) NOT NULL,
+  subtitle VARCHAR(500),
+  content TEXT,
+  code_block TEXT,
+  code_language VARCHAR(50),
+  image_url TEXT,
+  slide_order INTEGER NOT NULL DEFAULT 1,
+  slide_type VARCHAR(50) DEFAULT 'content', -- content, title, section, code, image, quiz
+  background_color VARCHAR(20) DEFAULT '#ffffff',
+  text_color VARCHAR(20) DEFAULT '#000000',
+  template VARCHAR(50) DEFAULT 'default',
+  notes TEXT, -- Speaker notes
+  duration_seconds INTEGER DEFAULT 300, -- Estimated slide duration
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  created_by UUID REFERENCES auth.users(id),
+  updated_by UUID REFERENCES auth.users(id)
+);
+
+-- Presentation sessions (track actual presentations)
+CREATE TABLE public.presentation_sessions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  subject_id uuid NOT NULL REFERENCES public.subjects(id),
+  session_name VARCHAR(255) NOT NULL,
+  start_time TIMESTAMPTZ,
+  end_time TIMESTAMPTZ,
+  audience_size INTEGER,
+  venue VARCHAR(255),
+  session_type VARCHAR(100), -- workshop, seminar, webinar, corporate
+  feedback_score DECIMAL(3,2), -- Average feedback score
+  notes TEXT,
+  created_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Slide analytics (track slide performance)
+CREATE TABLE public.slide_analytics (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  slide_id uuid NOT NULL REFERENCES public.slides(id) ON DELETE CASCADE,
+  session_id uuid REFERENCES public.presentation_sessions(id),
+  time_spent_seconds INTEGER,
+  skip_count INTEGER DEFAULT 0,
+  engagement_score INTEGER, -- 1-10 scale
+  questions_asked INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Training resources (additional materials)
+CREATE TABLE public.training_resources (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  subject_id uuid NOT NULL REFERENCES public.subjects(id) ON DELETE CASCADE,
+  title VARCHAR(255) NOT NULL,
+  resource_type VARCHAR(50), -- pdf, video, link, document, exercise
+  url TEXT,
+  file_path TEXT,
+  description TEXT,
+  is_public BOOLEAN DEFAULT false,
+  download_count INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  created_by UUID REFERENCES auth.users(id)
+);
+
+-- Audience feedback
+CREATE TABLE public.audience_feedback (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id uuid NOT NULL REFERENCES public.presentation_sessions(id),
+  slide_id uuid REFERENCES public.slides(id),
+  rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+  comment TEXT,
+  feedback_type VARCHAR(50), -- overall, slide_specific, suggestion
+  is_anonymous BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Indexes for performance
+CREATE INDEX idx_slides_subject_id ON public.slides(subject_id);
+CREATE INDEX idx_slides_order ON public.slides(subject_id, slide_order);
+CREATE INDEX idx_slides_active ON public.slides(is_active);
+CREATE INDEX idx_presentation_sessions_subject ON public.presentation_sessions(subject_id);
+CREATE INDEX idx_slide_analytics_slide ON public.slide_analytics(slide_id);
+CREATE INDEX idx_slide_analytics_session ON public.slide_analytics(session_id);
+
+-- RLS Policies
+ALTER TABLE public.slides ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.presentation_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.slide_analytics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.training_resources ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audience_feedback ENABLE ROW LEVEL SECURITY;
+
+-- Slides policies
+CREATE POLICY "Users can manage their slides" ON public.slides
+  FOR ALL TO public
+  USING (created_by = auth.uid())
+  WITH CHECK (created_by = auth.uid());
+
+-- Presentation sessions policies
+CREATE POLICY "Users can manage their sessions" ON public.presentation_sessions
+  FOR ALL TO public
+  USING (created_by = auth.uid())
+  WITH CHECK (created_by = auth.uid());
+
+-- Analytics policies
+CREATE POLICY "Users can view their slide analytics" ON public.slide_analytics
+  FOR SELECT TO public
+  USING (EXISTS (
+    SELECT 1 FROM public.slides s 
+    WHERE s.id = slide_id AND s.created_by = auth.uid()
+  ));
+
+-- Resources policies
+CREATE POLICY "Users can manage their resources" ON public.training_resources
+  FOR ALL TO public
+  USING (created_by = auth.uid())
+  WITH CHECK (created_by = auth.uid());
+
+-- Feedback policies (read-only for session owners)
+CREATE POLICY "Session owners can view feedback" ON public.audience_feedback
+  FOR SELECT TO public
+  USING (EXISTS (
+    SELECT 1 FROM public.presentation_sessions ps 
+    WHERE ps.id = session_id AND ps.created_by = auth.uid()
+  ));

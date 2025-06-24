@@ -1,0 +1,26 @@
+-- Temporarily disable RLS policies for testing
+
+-- Drop all existing policies
+DROP POLICY IF EXISTS "Users can manage their slides" ON public.slides;
+DROP POLICY IF EXISTS "Users can manage their sessions" ON public.presentation_sessions;
+DROP POLICY IF EXISTS "Users can view their slide analytics" ON public.slide_analytics;
+DROP POLICY IF EXISTS "Users can manage their resources" ON public.training_resources;
+DROP POLICY IF EXISTS "Session owners can view feedback" ON public.audience_feedback;
+
+-- Disable RLS on all tables
+ALTER TABLE public.slides DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.presentation_sessions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.slide_analytics DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.training_resources DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audience_feedback DISABLE ROW LEVEL SECURITY;
+
+-- Grant full access to authenticated users for testing
+GRANT ALL ON public.slides TO authenticated;
+GRANT ALL ON public.presentation_sessions TO authenticated;
+GRANT ALL ON public.slide_analytics TO authenticated;
+GRANT ALL ON public.training_resources TO authenticated;
+GRANT ALL ON public.audience_feedback TO authenticated;
+
+-- Also grant to anon for public access (if needed)
+GRANT SELECT ON public.slides TO anon;
+GRANT SELECT ON public.subjects TO anon;

@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { MarkdownContent } from "@/components/markdown-content";
 import type { Slide } from "@/types/presentation";
 
 interface Props {
@@ -34,7 +35,7 @@ export function SlideRenderer({
             </div>
             {slide.content && (
               <div className="text-xl text-muted-foreground max-w-3xl">
-                <div className="whitespace-pre-wrap">{slide.content}</div>
+                <MarkdownContent content={slide.content} />
               </div>
             )}
           </div>
@@ -72,7 +73,7 @@ export function SlideRenderer({
 
             {slide.content && (
               <div className="text-lg text-muted-foreground">
-                <div className="whitespace-pre-wrap">{slide.content}</div>
+                <MarkdownContent content={slide.content} />
               </div>
             )}
 
@@ -108,7 +109,7 @@ export function SlideRenderer({
             </div>
             {slide.content && (
               <div className="text-lg text-muted-foreground max-w-3xl">
-                <div className="whitespace-pre-wrap">{slide.content}</div>
+                <MarkdownContent content={slide.content} />
               </div>
             )}
             <div className="flex items-center space-x-4 text-muted-foreground">
@@ -137,7 +138,7 @@ export function SlideRenderer({
             <div className="flex-1 flex flex-col justify-center">
               {slide.content && (
                 <div className="text-lg text-muted-foreground leading-relaxed">
-                  <div className="whitespace-pre-wrap">{slide.content}</div>
+                  <MarkdownContent content={slide.content} />
                 </div>
               )}
 

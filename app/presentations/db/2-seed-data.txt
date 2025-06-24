@@ -1,0 +1,130 @@
+-- Insert sample subject for LLM training
+INSERT INTO public.subjects (id, name, subject_type, course_name, tags, description, created_by) VALUES
+(
+  '550e8400-e29b-41d4-a716-446655440000',
+  'Large Language Models (LLM) Fundamentals',
+  'Technical Training',
+  'AI & Machine Learning Masterclass',
+  ARRAY['AI', 'Machine Learning', 'LLM', 'GPT', 'Natural Language Processing'],
+  'Comprehensive training on Large Language Models, covering fundamentals, applications, and best practices for implementation.',
+  auth.uid()
+);
+
+update  subjects set created_by = '10cb798a-d317-4276-92eb-88331d8205d6', updated_by='10cb798a-d317-4276-92eb-88331d8205d6' where id='550e8400-e29b-41d4-a716-446655440000'
+-- Insert sample slides for LLM training
+INSERT INTO public.slides (subject_id, title, subtitle, content, slide_order, slide_type, template, notes) VALUES
+(
+  '550e8400-e29b-41d4-a716-446655440000',
+  'Large Language Models',
+  'Understanding the Future of AI',
+  E'Welcome to our comprehensive training on Large Language Models!\n\n• What are LLMs?\n• Why are they revolutionary?\n• Real-world applications\n• What you''ll learn today',
+  1,
+  'title',
+  'title_slide',
+  'Start with energy! Ask audience about their experience with AI tools.'
+),
+(
+  '550e8400-e29b-41d4-a716-446655440000',
+  'What is a Large Language Model?',
+  'Definition and Core Concepts',
+  E'A Large Language Model (LLM) is an AI system trained on vast amounts of text data to understand and generate human-like text.\n\n**Key Characteristics:**\n• Trained on billions of parameters\n• Can understand context and nuance\n• Generates coherent, contextually relevant responses\n• Capable of various language tasks\n\n**Examples:**\n• GPT-4, Claude, Gemini\n• ChatGPT, Bard, Bing Chat',
+  2,
+  'content',
+  'default',
+  'Emphasize the scale - billions of parameters. Use analogies like "digital brain".'
+),
+(
+  '550e8400-e29b-41d4-a716-446655440000',
+  'How LLMs Work',
+  'The Transformer Architecture',
+  E'LLMs are built on the Transformer architecture, which uses:\n\n**Attention Mechanisms:**\n• Self-attention to understand relationships between words\n• Multi-head attention for different types of relationships\n\n**Training Process:**\n1. Pre-training on massive text datasets\n2. Fine-tuning for specific tasks\n3. Reinforcement Learning from Human Feedback (RLHF)\n\n**Key Innovation:**\n• Parallel processing vs sequential (RNNs)\n• Better handling of long-range dependencies',
+  3,
+  'content',
+  'default',
+  'Draw the attention mechanism on whiteboard if available. Show the parallel vs sequential processing difference.'
+),
+(
+  '550e8400-e29b-41d4-a716-446655440000',
+  'Code Example: Using OpenAI API',
+  'Practical Implementation',
+  E'Let''s see how to interact with an LLM programmatically:',
+  4,
+  'code',
+  'code_slide',
+  'Live demo if possible. Have backup screenshots ready.'
+),
+(
+  '550e8400-e29b-41d4-a716-446655440000',
+  'LLM Applications in Business',
+  'Real-World Use Cases',
+  E'**Content Creation:**\n• Blog posts, marketing copy\n• Technical documentation\n• Social media content\n\n**Customer Service:**\n• Chatbots and virtual assistants\n• Email response automation\n• FAQ generation\n\n**Development:**\n• Code generation and review\n• Documentation writing\n• Bug fixing assistance\n\n**Analysis:**\n• Data interpretation\n• Report summarization\n• Sentiment analysis',
+  5,
+  'content',
+  'default',
+  'Ask audience to share their use cases. Collect examples for future presentations.'
+),
+(
+  '550e8400-e29b-41d4-a716-446655440000',
+  'Best Practices & Limitations',
+  'Responsible AI Usage',
+  E'**Best Practices:**\n• Clear, specific prompts\n• Iterative refinement\n• Fact-checking outputs\n• Understanding context windows\n\n**Current Limitations:**\n• Knowledge cutoff dates\n• Potential hallucinations\n• Bias in training data\n• Computational costs\n\n**Ethical Considerations:**\n• Privacy and data security\n• Transparency in AI usage\n• Human oversight requirements',
+  6,
+  'content',
+  'default',
+  'Share real examples of hallucinations. Discuss company policies on AI usage.'
+),
+(
+  '550e8400-e29b-41d4-a716-446655440000',
+  'Thank You!',
+  'Questions & Discussion',
+  E'**What we covered:**\n• LLM fundamentals\n• How they work\n• Practical applications\n• Best practices\n\n**Next Steps:**\n• Hands-on workshop next week\n• Resources shared via email\n• Open office hours every Friday\n\n**Questions?**',
+  7,
+  'title',
+  'closing_slide',
+  'Leave 15 minutes for Q&A. Collect contact information for follow-up.'
+);
+
+-- Update the code block for the code slide
+UPDATE public.slides 
+SET code_block = E'import openai\nfrom openai import OpenAI\n\n# Initialize the client\nclient = OpenAI(api_key="your-api-key")\n\n# Create a chat completion\nresponse = client.chat.completions.create(\n    model="gpt-4",\n    messages=[\n        {"role": "system", "content": "You are a helpful AI assistant."},\n        {"role": "user", "content": "Explain quantum computing in simple terms"}\n    ],\n    max_tokens=150,\n    temperature=0.7\n)\n\n# Print the response\nprint(response.choices[0].message.content)',
+    code_language = 'python'
+WHERE title = 'Code Example: Using OpenAI API';
+
+-- Insert sample presentation session
+INSERT INTO public.presentation_sessions (subject_id, session_name, audience_size, venue, session_type, notes, created_by) VALUES
+(
+  '550e8400-e29b-41d4-a716-446655440000',
+  'LLM Training - Tech Team Q1 2024',
+  25,
+  'Conference Room A / Zoom Hybrid',
+  'corporate',
+  'Great engagement from the development team. Many questions about implementation.',
+  auth.uid()
+);
+
+-- Insert sample training resources
+INSERT INTO public.training_resources (subject_id, title, resource_type, url, description, created_by) VALUES
+(
+  '550e8400-e29b-41d4-a716-446655440000',
+  'OpenAI API Documentation',
+  'link',
+  'https://platform.openai.com/docs',
+  'Official documentation for OpenAI API integration',
+  auth.uid()
+),
+(
+  '550e8400-e29b-41d4-a716-446655440000',
+  'Attention Is All You Need - Original Transformer Paper',
+  'link',
+  'https://arxiv.org/abs/1706.03762',
+  'The foundational paper that introduced the Transformer architecture',
+  auth.uid()
+),
+(
+  '550e8400-e29b-41d4-a716-446655440000',
+  'LLM Best Practices Checklist',
+  'document',
+  '/resources/llm-best-practices.pdf',
+  'Downloadable checklist for implementing LLMs in production',
+  auth.uid()
+);

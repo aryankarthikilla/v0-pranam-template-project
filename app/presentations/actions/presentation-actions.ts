@@ -60,14 +60,21 @@ export async function getSubjectWithSlides(subjectId: string): Promise<{
 
 export async function createSubject(data: Partial<Subject>): Promise<Subject> {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
 
   const { data: subject, error } = await supabase
     .from("subjects")
     .insert([
       {
         ...data,
-        created_by: (await supabase.auth.getUser()).data.user?.id,
-        updated_by: (await supabase.auth.getUser()).data.user?.id,
+        created_by: user.id,
+        updated_by: user.id,
       },
     ])
     .select()
@@ -87,12 +94,19 @@ export async function updateSubject(
   data: Partial<Subject>
 ): Promise<Subject> {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
 
   const { data: subject, error } = await supabase
     .from("subjects")
     .update({
       ...data,
-      updated_by: (await supabase.auth.getUser()).data.user?.id,
+      updated_by: user.id,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
@@ -111,12 +125,19 @@ export async function updateSubject(
 
 export async function deleteSubject(id: string): Promise<void> {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
 
   const { error } = await supabase
     .from("subjects")
     .update({
       is_deleted: true,
-      updated_by: (await supabase.auth.getUser()).data.user?.id,
+      updated_by: user.id,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id);
@@ -129,18 +150,54 @@ export async function deleteSubject(id: string): Promise<void> {
   revalidatePath("/presentations");
 }
 
+// Get the next available slide order for a subject
+async function getNextSlideOrder(subjectId: string): Promise<number> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("slides")
+    .select("slide_order")
+    .eq("subject_id", subjectId)
+    .eq("is_active", true)
+    .order("slide_order", { ascending: false })
+    .limit(1);
+
+  if (error) {
+    console.error("Error getting max slide order:", error);
+    return 1;
+  }
+
+  return data && data.length > 0 && data[0] ? data[0].slide_order + 1 : 1;
+}
+
 export async function createSlide(data: Partial<Slide>): Promise<Slide> {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
+  // Add null check for subject_id
+  if (!data.subject_id) {
+    throw new Error("Subject ID is required");
+  }
+
+  // Get the next available slide order
+  const nextOrder = await getNextSlideOrder(data.subject_id);
+
+  const slideData = {
+    ...data,
+    slide_order: nextOrder,
+    created_by: user!.id, // Type assertion - we know user is not null
+    updated_by: user!.id, // Type assertion - we know user is not null
+  };
 
   const { data: slide, error } = await supabase
     .from("slides")
-    .insert([
-      {
-        ...data,
-        created_by: (await supabase.auth.getUser()).data.user?.id,
-        updated_by: (await supabase.auth.getUser()).data.user?.id,
-      },
-    ])
+    .insert([slideData])
     .select()
     .single();
 
@@ -158,12 +215,19 @@ export async function updateSlide(
   data: Partial<Slide>
 ): Promise<Slide> {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
 
   const { data: slide, error } = await supabase
     .from("slides")
     .update({
       ...data,
-      updated_by: (await supabase.auth.getUser()).data.user?.id,
+      updated_by: user.id,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
@@ -181,6 +245,13 @@ export async function updateSlide(
 
 export async function deleteSlide(id: string): Promise<void> {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
 
   // Get the slide to know which subject to revalidate
   const { data: slide } = await supabase
@@ -193,7 +264,7 @@ export async function deleteSlide(id: string): Promise<void> {
     .from("slides")
     .update({
       is_active: false,
-      updated_by: (await supabase.auth.getUser()).data.user?.id,
+      updated_by: user.id,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id);
@@ -210,6 +281,13 @@ export async function deleteSlide(id: string): Promise<void> {
 
 export async function duplicateSlide(id: string): Promise<Slide> {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
 
   // Get the original slide
   const { data: originalSlide, error: fetchError } = await supabase
@@ -222,6 +300,9 @@ export async function duplicateSlide(id: string): Promise<Slide> {
     throw new Error("Failed to fetch original slide");
   }
 
+  // Get the next available slide order
+  const nextOrder = await getNextSlideOrder(originalSlide.subject_id);
+
   // Create duplicate
   const { data: newSlide, error: createError } = await supabase
     .from("slides")
@@ -230,9 +311,9 @@ export async function duplicateSlide(id: string): Promise<Slide> {
         ...originalSlide,
         id: undefined, // Let the database generate a new ID
         title: `${originalSlide.title} (Copy)`,
-        slide_order: originalSlide.slide_order + 1,
-        created_by: (await supabase.auth.getUser()).data.user?.id,
-        updated_by: (await supabase.auth.getUser()).data.user?.id,
+        slide_order: nextOrder,
+        created_by: user.id,
+        updated_by: user.id,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
@@ -254,13 +335,19 @@ export async function reorderSlides(
   slideIds: string[]
 ): Promise<void> {
   const supabase = await createClient();
-  const user = (await supabase.auth.getUser()).data.user?.id;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
 
   // Update slide orders
   const updates = slideIds.map((slideId, index) => ({
     id: slideId,
     slide_order: index + 1,
-    updated_by: user,
+    updated_by: user.id,
     updated_at: new Date().toISOString(),
   }));
 
@@ -281,4 +368,72 @@ export async function reorderSlides(
   }
 
   revalidatePath(`/presentations/${subjectId}`);
+}
+
+// Bulk import slides
+export async function bulkImportSlides(
+  subjectId: string,
+  slidesData: any[]
+): Promise<Slide[]> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
+  // Get the current max slide order
+  let currentMaxOrder = 0;
+  const { data: existingSlides } = await supabase
+    .from("slides")
+    .select("slide_order")
+    .eq("subject_id", subjectId)
+    .eq("is_active", true)
+    .order("slide_order", { ascending: false })
+    .limit(1);
+
+  if (existingSlides && existingSlides.length > 0 && existingSlides[0]) {
+    currentMaxOrder = existingSlides[0].slide_order;
+  }
+
+  // Prepare slides for insertion
+  const slidesToInsert = slidesData.map((slideData, index) => ({
+    subject_id: subjectId,
+    title: slideData.title || `Slide ${index + 1}`,
+    subtitle: slideData.subtitle || "",
+    content: slideData.content || "",
+    code_block: slideData.code_block || null,
+    code_language: slideData.code_language || null,
+    image_url: slideData.image_url || null,
+    slide_order: currentMaxOrder + index + 1,
+    slide_type: slideData.slide_type || "content",
+    background_color: slideData.background_color || "#ffffff",
+    text_color: slideData.text_color || "#000000",
+    template: slideData.template || "default",
+    notes: slideData.notes || null,
+    duration_seconds: slideData.duration_seconds || 300,
+    is_active: true,
+    created_by: user!.id, // Type assertion - we know user is not null
+    updated_by: user!.id, // Type assertion - we know user is not null
+  }));
+
+  const { data: insertedSlides, error } = await supabase
+    .from("slides")
+    .insert(slidesToInsert)
+    .select();
+
+  if (error) {
+    console.error("Error bulk importing slides:", error);
+    throw new Error("Failed to import slides");
+  }
+
+  // Add null check for insertedSlides
+  if (!insertedSlides) {
+    throw new Error("No slides were inserted");
+  }
+
+  revalidatePath(`/presentations/${subjectId}`);
+  return insertedSlides;
 }

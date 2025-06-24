@@ -131,6 +131,14 @@ export function SlideshowMode({
     );
   }
 
+  const keyboardShortcuts = [
+    "← → Space: Navigate",
+    "ESC: Exit",
+    "F: Fullscreen",
+    "N: Toggle Notes",
+    "T: Toggle Timer",
+  ];
+
   return (
     <div className="fixed inset-0 bg-black z-50 flex flex-col">
       {/* Top Controls Bar */}
@@ -266,7 +274,7 @@ export function SlideshowMode({
         <div className="flex flex-col gap-2 max-h-96 overflow-y-auto">
           {slides.map((slide, index) => (
             <button
-              key={slide.id}
+              key={`thumbnail-${slide.id || index}`}
               onClick={() => {
                 // This would need to be handled by calling a prop function
                 // to navigate to the specific slide
@@ -294,11 +302,9 @@ export function SlideshowMode({
         <Card className="bg-black/80 backdrop-blur-sm border-white/20 text-white p-3">
           <div className="text-xs space-y-1">
             <div className="font-medium mb-2">Shortcuts:</div>
-            <div>← → Space: Navigate</div>
-            <div>ESC: Exit</div>
-            <div>F: Fullscreen</div>
-            <div>N: Toggle Notes</div>
-            <div>T: Toggle Timer</div>
+            {keyboardShortcuts.map((shortcut, index) => (
+              <div key={`shortcut-${index}`}>{shortcut}</div>
+            ))}
           </div>
         </Card>
       </div>
