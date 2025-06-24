@@ -25,5 +25,14 @@
     "username": "Login Through Github",
     "password": "",
     "notes": ""
+  },
+  {
+    "id": "1750748810079",
+    "type": "Hyperlink",
+    "name": "Gmail Account",
+    "url": "https://mail.google.com/",
+    "username": "aryankarthik.illa@gmail.com",
+    "password": "Arunachala@108",
+    "notes": ""
   }
 ]
